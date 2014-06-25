@@ -4434,7 +4434,11 @@ instance.web.form.One2ManyListView = instance.web.ListView.extend({
             var cached_records = _.any([ds.to_create, ds.to_delete, ds.to_write], function(value) {
                 return value.length;
             });
-            if (!self.o2m.options.reload_on_button && !cached_records) {
+            if (self.o2m.options.reload_whole_on_button && !cached_records){
+                self.handle_button(name, id, function(){
+                self.o2m.dataset.parent_view.recursive_reload();
+                });
+            }else if (!self.o2m.options.reload_on_button && !cached_records) {
                 self.handle_button(name, id, callback);
             }else {
                 self.handle_button(name, id, function(){
