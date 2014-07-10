@@ -577,6 +577,86 @@ div.media_iframe_video
         display: none
         z-index: 2
 
+.countdown-text
+    position: relative
+    display: inline-block
+    width: 100%
+    height: 0
+    border-radius: 50%
+    background-image: url("/website/static/src/img/countdown_pattern.png")
+    padding: 50% 0
+    text-align: center
+    border: 3px solid #fff
+    p
+        color: white
+        &:first-child
+            font-size: 4em
+            margin-top: -50px
+            margin-bottom: -0.2em
+        &:last-child
+            font-size: 1.4em
+
+.readable .countdown-text p
+    &:first-child
+        font-size: 2em
+        margin-top: -30px
+        margin-bottom: -0.2em
+    &:last-child
+        font-size: 1.0em
+
+.css_editable_hidden
+    display: none !important
+
+span
+    &.show_counter, &.show_release
+        cursor: pointer
+        font-size: 1.2em
+        border-top-right-radius: 0px
+        border-top-left-radius: 0px
+        -webkit-box-shadow: 0px 3px 7px 0px rgba(50, 50, 50, 0.75)
+        -moz-box-shadow: 0px 3px 7px 0px rgba(50, 50, 50, 0.75)
+        box-shadow: 0px 3px 7px 0px rgba(50, 50, 50, 0.75)
+
+@media (min-width: 400px)
+    .col-md-1 .countdown-text p
+        &:first-child
+            margin-top: -25px
+            font-size: 2em
+        &:last-child
+            font-size: 0.8em
+    .col-md-3 .countdown-text p
+        &:first-child
+            margin-top: -90px
+            font-size: 7em
+        &:last-child
+            font-size: 2.4em
+    .col-md-4 .countdown-text p
+        &:first-child
+            margin-top: -150px
+            font-size: 12em
+        &:last-child
+            font-size: 3.2em
+    .col-md-5 .countdown-text p:first-child, .col-md-6 .countdown-text p:first-child
+        margin-top: -190px
+        font-size: 15em
+    .col-md-5 .countdown-text p:last-child, .col-md-6 .countdown-text p:last-child
+        font-size: 3.8em
+    .col-md-7 .countdown-text p:first-child, .col-md-8 .countdown-text p:first-child
+        margin-top: -230px
+        font-size: 20em
+    .col-md-7 .countdown-text p:last-child, .col-md-8 .countdown-text p:last-child
+        font-size: 5em
+    .col-md-9 .countdown-text p:first-child, .col-md-10 .countdown-text p:first-child
+        margin-top: -300px
+        font-size: 24em
+    .col-md-9 .countdown-text p:last-child, .col-md-10 .countdown-text p:last-child
+        font-size: 8em
+    .col-md-11 .countdown-text p:first-child, .col-md-12 .countdown-text p:first-child
+        margin-top: -370px
+        font-size: 28em
+    .col-md-11 .countdown-text p:last-child, .col-md-12 .countdown-text p:last-child
+        font-size: 10em
+
 /* Mobile view */
 
 @media (max-width: 768px)
