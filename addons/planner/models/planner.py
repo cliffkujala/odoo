@@ -1,0 +1,53 @@
+# -*- coding: utf-8 -*-
+
+from openerp import api, models, fields
+
+
+class Planner(models.Model):
+
+    """Planner Model.
+    Each Planner has link to an ir.ui.view record that is a template used
+    to display the planner pages.
+    Each Planner has link to ir.ui.menu record that is a top menu used to display the
+    planner launcher(progressbar)
+
+    Method _prepare_<planner_application>_data(self, cr, uid, context) that
+    generate the values used to display in specific planner pages
+    """
+    _name = 'planner.planner'
+    _description = 'Planner'
+
+    @api.model
+    def _get_planner_application(self):
+        return []
+
+    name = fields.Char(string='Name', required=True)
+    menu_id = fields.Many2one('ir.ui.menu', string='Menu', required=True)
+    view_id = fields.Many2one('ir.ui.view', string='Template', required=True)
+    progress = fields.Integer(string="Progress")
+    #used to store the data filled by user in planner(JSON Data)
+    data = fields.Text(string='Data')
+    tooltip_planner = fields.Html(string='Planner Tooltips', translate=True)
+    planner_application = fields.Selection(
+        '_get_planner_application', string='Planner Application',
+        required=True)
+
+    @api.model
+    def render(self, template_id, planner_apps):
+        # prepare the planner data as per the planner application
+        planner_find_method_name = '_prepare_%s_data' % planner_apps
+        values = getattr(self, planner_find_method_name)() if hasattr(
+            self, planner_find_method_name) else {}
+        return self.env['ir.ui.view'].browse(template_id).render(values=values)
+
+    @api.model
+    def prepare_backend_url(self, action_xml_id, view_type='list', module_name=None):
+        action = self.env.ref(action_xml_id, False)
+        module_id = ''
+        if module_name:
+            module_id = self.env['ir.module.module'].search(
+                [('name', '=', module_name)], limit=1).id or ''
+        url = "/web#id=" + \
+            str(module_id) + "&view_type=" + \
+            view_type + "&action=" + str(action and action.id or '')
+        return url

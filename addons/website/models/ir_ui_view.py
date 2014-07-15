@@ -4,6 +4,7 @@ import logging
 
 from lxml import etree, html
 
+from openerp import api
 from openerp import SUPERUSER_ID, tools
 from openerp.addons.website.models import website
 from openerp.http import request
@@ -152,6 +153,7 @@ class view(osv.osv):
             xml_id = super(view, self).get_view_id(cr, uid, xml_id, context=context)
         return xml_id
 
+    @api.cr_uid_ids_context
     def render(self, cr, uid, id_or_xml_id, values=None, engine='ir.qweb', context=None):
         if request and getattr(request, 'website_enabled', False):
             engine = 'website.qweb'
