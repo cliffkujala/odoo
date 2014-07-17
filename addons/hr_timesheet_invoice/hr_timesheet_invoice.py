@@ -20,9 +20,10 @@
 ##############################################################################
 
 import time
-
+from openerp.addons.analytic.models import analytic
 from openerp.osv import fields, osv
 from openerp.tools.translate import _
+import openerp.tools
 
 class hr_timesheet_invoice_factor(osv.osv):
     _name = "hr_timesheet_invoice.factor"
@@ -296,15 +297,61 @@ class account_analytic_line(osv.osv):
 
 class hr_analytic_timesheet(osv.osv):
     _inherit = "hr.analytic.timesheet"
+
+    def _check_analytic_account_state(self, cr, uid, analytic_account, context=None):
+        analytic_account_obj = self.pool.get('account.analytic.account')
+        account_name_list = set()
+        account_ids = set()
+        for analytic_account_record in analytic_account_obj.browse(cr, uid, analytic_account):
+            if analytic_account_record.state in ('pending', 'cancelled', 'close') and context.get('analytic_account_status'):
+                # check state of analytic account on click "Approve" button.
+                account_name_list.add(analytic_account_record.name)
+                account_ids.add(analytic_account_record.id)
+            elif analytic_account_record.state in ('cancelled', 'close') and not context.get('analytic_account_status'):
+                # check state of analytic account on create Timesheet Activities.
+                account_name_list.add(analytic_account_record.name)
+                account_ids.add(analytic_account_record.id)
+
+        if account_name_list:
+            act_window_obj = self.pool.get('ir.actions.act_window')
+            ir_model_data_obj = self.pool.get('ir.model.data')
+            model, action_id = ir_model_data_obj.get_object_reference(cr, uid, 'analytic', 'action_account_analytic_account_form')
+            action = act_window_obj.read(cr, uid, action_id, [
+                'name', 'type', 'view_type', 'view_mode', 'res_model', 'views', 'view_id', 'domain'])
+            dummy, tree_view = ir_model_data_obj.get_object_reference(cr, uid, 'analytic', 'view_account_analytic_account_tree')
+            action.update({
+                'domain': [('id', 'in', list(account_ids))],
+                'views': [(tree_view or False, 'list'), (False, 'form')]
+            })
+
+            if len(account_name_list) == 1 and len(account_ids) == 1:
+                msg = _('''The %s Analytic Account is in "%s" state.\nYou should not work on this account !\n please renew it.\n''') \
+                    % (list(account_name_list)[0], analytic_account_obj.browse(cr, uid, list(account_ids)[0]).state)
+            else:
+                msg = _('''Analytic Account(s) mentioned below %s in "Closed/Cancelled/To Renew" state, please renew %s before Approve :\n%s.''') \
+                    % (len(account_ids) > 1 and 'are' or 'is', len(account_ids) > 1 and 'them' or 'it', '-' + '\n- '.join(account_name_list))
+            raise openerp.exceptions.RedirectWarning(msg, action, _('Modify Contract(s)'))
+        return True
+
+    def create(self, cr, uid, vals, context=None):
+        if 'account_id' in vals:
+            self._check_analytic_account_state(cr, uid, vals['account_id'], context=context)
+        return super(hr_analytic_timesheet, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'account_id' in vals:
+            self._check_analytic_account_state(cr, uid, vals['account_id'], context=context)
+        return super(hr_analytic_timesheet, self).write(cr, uid, ids, vals, context=context)
+
     def on_change_account_id(self, cr, uid, ids, account_id, user_id=False):
         res = {}
         if not account_id:
             return res
-        res.setdefault('value',{})
+        res.setdefault('value', {})
         acc = self.pool.get('account.analytic.account').browse(cr, uid, account_id)
         st = acc.to_invoice.id
         res['value']['to_invoice'] = st or False
-        if acc.state=='pending':
+        if acc.state == 'pending':
             res['warning'] = {
                 'title': 'Warning',
                 'message': 'The analytic account is in pending state.\nYou should not work on this account !'
