@@ -33,7 +33,7 @@
                         <filter string="User" name="group_user_id" context="{'group_by':'user_id'}"/>
                         <filter string="Company" context="{'group_by':'company_id'}" groups="base.group_multi_company"/>
                         <separator/>
-                        <filter string="Month" context="{'group_by':'date:month'}" help="Group by month of date"/>
+                        <filter string="Month" name="group_date" context="{'group_by':'date:month'}" help="Group by month of date"/>
                     </group>
                 </search>
             </field>

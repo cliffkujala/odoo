@@ -531,6 +531,12 @@ class hr_job(osv.osv):
     _name = "hr.job"
     _inherits = {'mail.alias': 'alias_id'}
 
+    _track = {
+        'state': {
+            'hr_recruitment.mt_job_new': lambda self, cr, uid, obj, ctx=None: obj.state == 'open'
+        },
+    }
+
     def _get_attached_docs(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         attachment_obj = self.pool.get('ir.attachment')
@@ -584,7 +590,10 @@ class hr_job(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         # TDE note: shouldn't it be in mail_create_nolog ?
-        alias_context = dict(context, alias_model_name='hr.applicant', alias_parent_model_name=self._name)
+        alias_context = dict(context,
+            alias_model_name='hr.applicant',
+            mail_create_nolog=True,
+            alias_parent_model_name=self._name)
         job_id = super(hr_job, self).create(cr, uid, vals, context=alias_context)
         job = self.browse(cr, uid, job_id, context=context)
         self.pool.get('mail.alias').write(cr, uid, [job.alias_id.id], {'alias_parent_thread_id': job_id, "alias_defaults": {'job_id': job_id}}, context)
@@ -622,4 +631,21 @@ class applicant_category(osv.osv):
     _description = "Category of applicant"
     _columns = {
         'name': fields.char('Name', required=True, translate=True),
+    }
+
+
+class hr_employee(osv.Model):
+    _inherit = "hr.employee"
+
+    def _newly_hired_employee(self, cr, uid, ids, field_name, arg, context=None):
+        return {}
+
+    def _search_newly_hired_employee(self, cr, uid, obj, name, args, context=None):
+        hired_emp_ids = []
+        applicant_ids = self.pool['hr.applicant'].search_read(cr, uid, [('job_id.state', '=', 'recruit')], ['emp_id'], context=context)
+        hired_emp_ids = [applicant['emp_id'][0] for applicant in applicant_ids if applicant['emp_id']]
+        return [('id', 'in', hired_emp_ids)]
+
+    _columns = {
+        'newly_hired_employee': fields.function(_newly_hired_employee, fnct_search=_search_newly_hired_employee, type='boolean', string='Newly hired employees')
     }

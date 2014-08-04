@@ -25,6 +25,7 @@
 import calendar
 import datetime
 from datetime import date
+from dateutil.relativedelta import relativedelta
 import math
 import time
 from operator import attrgetter
@@ -561,6 +562,21 @@ class hr_employee(osv.Model):
             res[employee_id] = {'leaves_count': leaves, 'approved_leaves_count': approved_leaves}
         return res
 
+    def _absent_employee(self, cr, uid, ids, field_name, arg, context=None):
+        return {}
+
+    def _search_absent_employee(self, cr, uid, obj, name, args, context=None):
+        today_start = datetime.date.today().strftime(tools.DEFAULT_SERVER_DATETIME_FORMAT)
+        today_end = (datetime.date.today() + relativedelta(hours=23, minutes=59, seconds=59)).strftime(tools.DEFAULT_SERVER_DATETIME_FORMAT)
+        absent_emp_ids = []
+        holiday_ids = self.pool['hr.holidays'].search_read(cr, uid, [
+            ('state', 'not in', ['cancel', 'refuse']),
+            ('date_from', '<=', today_end),
+            ('date_to', '>=', today_start),
+            ('type', '=', 'remove')], ['employee_id'], context=context)
+        absent_emp_ids = [holiday['employee_id'][0] for holiday in holiday_ids if holiday['employee_id']]
+        return [('id', 'in', absent_emp_ids)]
+
     _columns = {
         'remaining_leaves': fields.function(_get_remaining_days, string='Remaining Legal Leaves', fnct_inv=_set_remaining_days, type="float", help='Total number of legal leaves allocated to this employee, change this value to create allocation/leave request. Total based on all the leave types without overriding limit.'),
         'current_leave_state': fields.function(
@@ -572,4 +588,5 @@ class hr_employee(osv.Model):
         'leave_date_to': fields.function(_get_leave_status, multi='leave_status', type='date', string='To Date'),
         'leaves_count': fields.function(_leaves_count, multi='_leaves_count', type='integer', string='Number of Leaves (current month)'),
         'approved_leaves_count': fields.function(_leaves_count, multi='_leaves_count', type='integer', string='Approved Leaves not in Payslip', help="These leaves are approved but not taken into account for payslip"),
+        'absent_of_today': fields.function(_absent_employee, fnct_search=_search_absent_employee, type="boolean", string="Absent Today")
     }

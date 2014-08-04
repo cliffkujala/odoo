@@ -19,6 +19,7 @@
 #
 ##############################################################################
 
+import hr_department
 import hr_evaluation
 import report
 
