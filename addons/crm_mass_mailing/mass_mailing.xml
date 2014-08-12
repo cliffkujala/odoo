@@ -8,9 +8,26 @@
 
             <field name="arch" type="xml">
                 <xpath expr="//notebook/page[@string='Options']" position="after">
+                    <page string="Tracking" groups="base.group_no_one">
+                        <group>
+                            <field name="campaign_id" attrs="{'invisible': True}" />
+                            <field name="medium_id" />
+                            <field name="source_id" />
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="view_tracking_mass_mailing_campaign_form">
+            <field name="name">mail.mass_mailing.campaign.inherit.form</field>
+            <field name="model">mail.mass_mailing.campaign</field>
+            <field name="inherit_id" ref="mass_mailing.view_mail_mass_mailing_campaign_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook/page[@string='Related Mailing(s)']" position="after">
                     <page string="Tracking">
                         <group>
-                            <field name="campaign_id" />
+                            <field name="campaign_id" attrs="{'invisible': True}"/>
                             <field name="medium_id" />
                             <field name="source_id" />
                         </group>

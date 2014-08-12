@@ -24,6 +24,12 @@
         <record model="crm.tracking.source" id="crm_source_newsletter">
             <field name="name">Newsletter</field>
         </record>
+        <record model="crm.tracking.source" id="crm_source_facebook">
+            <field name="name">Facebook</field>
+        </record>
+        <record model="crm.tracking.source" id="crm_source_twitter">
+            <field name="name">Twitter</field>
+        </record>
 
         <!-- Crm Medium -->
         <record model="crm.tracking.medium" id="crm_medium_website">
@@ -39,10 +45,13 @@
             <field name="name">Email</field>
         </record>
         <record model="crm.tracking.medium" id="crm_medium_banner">
-            <field name="name">Banner Ad</field>
+            <field name="name">Banner Ads</field>
         </record>
         <record model="crm.tracking.medium" id="crm_medium_twitter">
             <field name="name">Twitter Ads</field>
+        </record>
+        <record model="crm.tracking.medium" id="crm_medium_facebook">
+            <field name="name">Facebook Ads</field>
         </record>
         <record model="crm.tracking.medium" id="crm_medium_television">
             <field name="name">Television</field>
