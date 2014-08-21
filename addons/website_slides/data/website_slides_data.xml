@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <record id="slide_email_notification" model="email.template">
+            <field name="name">Email Notification for Presentation</field>
+            <field name="email_from">${user.email or ''}</field>
+            <field name="subject">New ${object.slide_type} has been published on ${object.channel_id.name}</field>
+            <field name="model_id" ref="model_slide_slide"/>
+            <field name="email_to">${('' if object.partner_id and object.partner_id.email and object.partner_id.email==object.email else object.email|safe)}</field>
+            <field name="partner_to">${object.partner_id and object.partner_id.email and object.partner_id.email==object.email and object.partner_id.id or False }</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="body_html"><![CDATA[
+                <div class="snippet_row" style="padding:0px;width:600px;margin:auto;background-color:#fff">
+                <table cellpadding="0" cellspacing="0" style="margin: 0 auto;width:600px">
+                    <tbody>
+                        <tr>
+                            <td style="text-align:center" valign="center"><a href="#" style="text-decoration:none"><img alt="Odoo" src="${ctx['base_url']}/logo.png" style="padding:10px;height:auto;max-width:600px"> </a></td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+
+                <div class="snippet_row" style="padding: 20px 0px; width: 600px; margin: auto; color: #fff;background-color:#a24689;">
+                <table cellpadding="0" cellspacing="0" class="force-full-width" style="width:600px;">
+                    <tbody>
+                        <tr>
+                            <td style="text-align:center;padding:5px;" valign="center">
+                            <h2 style="margin:0px;">${ctx['message']}</h2>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+
+                <div class="snippet_row" style="padding:0px;width:600px;margin:auto;background-color:#FFFFFF;color:#8f8f8f">
+                <table cellpadding="0" cellspacing="0">
+                    <tbody>
+                        <tr>
+                            <td class="col_mv" style="vertical-align:top;text-align:center;background-color:#FFFFF;color:#414141">
+                                    <a href="${object.share_url}" style="color:#a24689">
+                                    <img alt="${object.name}" src="${ctx['base_url']}/website/image/slide.slide/${object.id}/image" style="height:auto;width:600px;background-color: #ccc;margine: 0px auto 10px auto">
+                                </a>
+                                <br>
+                                <br>
+                                <span class="colpick" style="font-size:24px;font-weight:bold">${object.name}</span>
+                                <div class="colpick" style="color: #ccc">Published on ${object.write_date}</div>
+                                <a class="btn btn-success " href="${object.share_url}" style="-webkit-user-select: none; cursor: pointer; padding: 6px 12px; margin-top: 20px; font-size: 14px; line-height: 20px; border-radius: 4px; color: rgb(255, 255, 255); border: 1px solid rgb(76, 174, 76); text-decoration: none; display: inline-block; margin-bottom: 0px; font-weight: 400; text-align: center; vertical-align: middle; white-space: nowrap; background-image: none; background-color: rgb(92, 184, 92);">Click here to open the ${object.slide_type}</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+
+                <br>
+                <br>
+
+                <div class="snippet_row" style="padding:0px;width:600px;margin:auto;background-color:#8f8f8f;color:#fff">
+                <table cellpadding="0" cellspacing="0" style="margin: 0 auto;width:100%">
+                    <tbody>
+                        <tr>
+                            <td style="font-size:12px;text-align:center;padding-top:10px;color:#a24689;padding-bottom:5px">
+                            <a href="${object.share_url}" style="color:#a24689">View in browser</a> |
+                            <a href="${object.share_url}" style="color:#a24689">Unsubscribe</a> |
+                            <a href="${ctx['base_url']}/page/contactus" style="color:#a24689">Contact</a></td>
+                        </tr>
+                        <tr>
+                            <td style="font-size:12px;text-align:center;padding-bottom:35px">2014 All Rights Reserved</td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+            ]]>
+            </field>
+        </record>
+
+        <record model="slide.channel" id="dir_public">
+            <field name="name">Public Channel</field>
+            <field name="promote_strategy">mostview</field>
+            <field name="template_id" ref="website_slides.slide_email_notification"/>
+            <field name="website_published" eval="True"/>
+            <field name="visibility">public</field>
+            <field name="description">Default channel for slide(s), all public users can access content of this channel.</field>
+        </record>
+
+        <record model="slide.channel" id="dir_private">
+            <field name="name">Partner Channel</field>
+            <field name="template_id" ref="website_slides.slide_email_notification"/>
+            <field name="group_ids" eval="[(4, ref('base.group_portal'))]"/>
+            <field name="visibility">partial</field>
+            <field name="description">Used to publish slide(s) in partner network privately.</field>
+        </record>
+
+        <record model="slide.channel" id="dir_employee">
+            <field name="name">Employee Channel</field>
+            <field name="template_id" ref="website_slides.slide_email_notification"/>
+            <field name="group_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="visibility">private</field>
+            <field name="description">Used to publish internal slide(s) of company.</field>
+        </record>
+
+        <!-- Channel subtypes -->
+        <record id="new_slides" model="mail.message.subtype">
+            <field name="name">Presentation Published</field>
+            <field name="res_model">slide.channel</field>
+            <field name="default" eval="True"/>
+            <field name="description">Presentation Published</field>
+        </record>
+
+        <!-- Channel subtypes -->
+        <record id="new_slides_validation" model="mail.message.subtype">
+            <field name="name">Presentation Validations</field>
+            <field name="res_model">slide.channel</field>
+            <field name="default" eval="False"/>
+            <field name="description">Presentation Validations</field>
+        </record>
+
+        <!-- jump to Channel on installation complete -->
+        <record id="action_open_channels" model="ir.actions.act_url">
+            <field name="name">Channels</field>
+            <field name="target">self</field>
+            <field name="url" eval="'/slides'"/>
+        </record>
+        <record id="base.open_menu_channels" model="ir.actions.todo">
+            <field name="action_id" ref="action_open_channels"/>
+            <field name="type">automatic</field>
+            <field name="state">open</field>
+        </record>
+    </data>
+</openerp>

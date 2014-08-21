@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="0">
+
+        <record id="draft_channel_public_restriction" model="ir.rule">
+            <field name="name">Don't allow draft sides to public access</field>
+            <field name="model_id" ref="model_slide_channel"/>
+            <field name="groups" eval="[(4, ref('base.group_public'))]"/>
+            <field name="domain_force">[('website_published','=','False')]</field>
+        </record>
+
+        <record id="channel_restriction_by_group" model="ir.rule">
+            <field name="name">Channel restriction by group and visibility</field>
+            <field name="model_id" ref="model_slide_channel"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|','&amp;',('group_ids','in', [g.id for g in user.groups_id]),('visibility','=', 'private'),('visibility','in', ['public','partial'])]</field>
+        </record>
+
+        <record id="slide_restriction_by_channel_group" model="ir.rule">
+            <field name="name">Slide restriction by group and visibility of channel</field>
+            <field name="model_id" ref="model_slide_slide"/>
+            <field name="global" eval="True"/>
+            <field name="domain_force">['|','&amp;',('channel_id.group_ids','in', [g.id for g in user.groups_id]),('channel_id.visibility','=', 'private'),('channel_id.visibility','in', ['public','partial'])]</field>
+        </record>
+
+        <record id="draft_slide_public_restriction" model="ir.rule">
+            <field name="name">Don't allow draft sides to public access</field>
+            <field name="model_id" ref="model_slide_slide"/>
+            <field name="groups" eval="[(4, ref('base.group_public'))]"/>
+            <field name="domain_force">[('website_published','=','False')]</field>
+        </record>
+    </data>
+</openerp>

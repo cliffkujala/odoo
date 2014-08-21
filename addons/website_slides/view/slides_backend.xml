@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <menuitem name="Marketing" id="base.marketing_menu" sequence="85" groups="base.group_user"/>
+        <menuitem id="main_slides" parent="base.marketing_menu" name="Slides"/>
+
+        <record id="view_slides_slide_form" model="ir.ui.view">
+            <field name="model">slide.slide</field>
+            <field name="arch" type="xml">
+                <form string="Slide">
+                    <sheet>
+                        <field name="image_thumb" widget="image" class="oe_left oe_avatar"/>
+                        <div class="oe_title oe_left">
+                            <div class="oe_edit_only">
+                                <label for="name" string="Name"/>
+                            </div>
+                            <h1>
+                                <field name="name" default_focus="1" placeholder="Name"/>
+                            </h1>
+                            <field name="tag_ids" widget="many2many_tags" placeholder="Tags..."/>
+                        </div>
+                        <div class="oe_right oe_button_box" name="buttons">
+                            <field name="website_published" class="pull-right" widget="website_button"/>
+                        </div>
+                        <group>
+                            <field name="downloadable"/>
+                            <field name="channel_id" string="Channel"/>
+                            <field name="category_id" domain="[('channel_id','=',channel_id)]"/>
+                            <field name="url"/>
+                        </group>
+                        <notebook>
+                            <page string="Description">
+                                <field name="description"/>
+                            </page>
+                            <page string="Indexed Content">
+                                <field name="index_content"/>
+                            </page>
+                        </notebook>
+                        <!-- don't remove this invisible group value set by onchange -->
+                        <group name="index_content_group" string="Index Content" colspan="4" invisible="1">
+                            <field name="image"/>
+                            <field name="image_medium"/>
+                            <field name="datas"/>
+                            <field name="mime_type"/>
+                            <field name="slide_type"/>
+                            <field name="document_id"/>
+
+                            <field name="dislikes"/>
+                            <field name="likes"/>
+                            <field name="youtube_views"/>
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_slides_slide_tree" model="ir.ui.view">
+            <field name="model">slide.slide</field>
+            <field name="arch" type="xml">
+                <tree string="Slides">
+                    <field name="name" string="Name"/>
+                    <field name="slide_type"/>
+                    <field name="channel_id"/>
+                    <field name="category_id"/>
+                    <field name="date_publish"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_slides_slide_search" model="ir.ui.view">
+            <field name="name">slide.slide.filter</field>
+            <field name="model">slide.slide</field>
+            <field name="arch" type="xml">
+                <search string="Search Slides">
+                    <field name="name" string="Slide Name"/>
+                    <filter name="published" string="Published" domain="[('website_published','=', True)]"/>
+                    <filter name="published" string="Waiting for validation" domain="[('website_published','=', False)]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Channel" domain="[]" context="{'group_by':'channel_id'}"/>
+                        <filter string="Category" domain="[]" context="{'group_by':'category_id'}"/>
+                        <filter string="Type" domain="[]" context="{'group_by':'slide_type'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_slides_slides" model="ir.actions.act_window">
+            <field name="name">Slide</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">slide.slide</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" eval="False"/>
+            <field name="context">{'default_slide_type':'presentation'}</field>
+        </record>
+        <menuitem action="action_slides_slides" id="submenu_action_slides_slides" parent="main_slides" sequence="10"/>
+
+        <!-- category view -->
+        <record model="ir.ui.view" id="view_slides_category_form">
+            <field name="name">slide.category.form</field>
+            <field name="model">slide.category</field>
+            <field name="arch" type="xml">
+                <form string="Category">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                            </group>
+                            <group>
+                                <field name="channel_id"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_slides_category_tree" model="ir.ui.view">
+            <field name="name">slide.category.tree</field>
+            <field name="model">slide.category</field>
+            <field name="arch" type="xml">
+                <tree string="Category">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="channel_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_ir_slide_category" model="ir.actions.act_window">
+            <field name="name">Category</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">slide.category</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" eval="False"/>
+        </record>
+        <menuitem action="action_ir_slide_category" id="menu_action_ir_slide_category" parent="main_slides" sequence="15"/>
+
+
+        <record model="ir.ui.view" id="view_slide_channel_form">
+            <field name="name">slide.channel.form</field>
+            <field name="model">slide.channel</field>
+            <field name="arch" type="xml">
+                <form string="Channels" col="4">
+                    <sheet>
+                        <div class="oe_title oe_left">
+                            <div class="oe_edit_only">
+                                <label for="name" string="Name"/>
+                            </div>
+                            <h1>
+                                <field name="name" default_focus="1" placeholder="Name"/>
+                            </h1>
+                        </div>
+                        <div class="oe_right oe_button_box" name="buttons">
+                            <field name="website_published" class="pull-right" widget="website_button"/>
+                        </div>
+
+                        <notebook colspan="4">
+                            <page string="General">
+                                <group>
+                                    <group>
+                                        <field name="template_id" domain="[('model','=','slide.slide')]"/>
+                                        <field name="promote_strategy" widget="radio"/>
+                                    </group>
+                                    <group>
+                                        <field name="promoted_slide_id" attrs="{'invisible':[('promote_strategy','!=','custom')]}" domain="[('channel_id','=',id), ('website_published','=',True)]"/>
+                                    </group>
+                                </group>
+                                <label for="description"/>
+                                <field name="description" colspan="4" nolabel="1"/>
+                            </page>
+                            <page string="Categories">
+                                <field name="category_ids" nolabel="1">
+                                    <tree editable="top">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="name" string="Category Name"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Security">
+                                <group>
+                                    <group>
+                                        <field name="visibility" string="Channel visibility" widget="radio"/>
+                                        <field name="group_ids" widget="many2many_tags" attrs="{'invisible':[('visibility','=','public')],  'required':[('visibility','in',('private', 'partial'))]}"/>
+                                    </group>
+                                    <group>
+                                         <field name="upload_group_ids" widget="many2many_tags"/>
+                                    </group>
+                                    <group attrs="{'invisible':[('visibility','in',('public'))]}" colspan="4">
+                                        <label string="Error Message"/>
+                                        <field name="access_error_msg" colspan="4" nolabel="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_slide_channel_tree" model="ir.ui.view">
+            <field name="name">slide.channel.tree</field>
+            <field name="model">slide.channel</field>
+            <field name="arch" type="xml">
+                <tree string="Channel">
+                    <field name="sequence" widget="handle"/>
+                    <field name="name"/>
+                    <field name="visibility"/>
+                    <field name="promote_strategy"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_slide_channels" model="ir.actions.act_window">
+            <field name="name">Channel</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">slide.channel</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" eval="False"/>
+        </record>
+        <menuitem action="action_slide_channels" id="menu_action_slide_channels" parent="main_slides" sequence="20"/>
+
+
+    </data>
+</openerp>

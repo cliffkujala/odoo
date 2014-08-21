@@ -1,0 +1,160 @@
+<templates id="template" xml:space="preserve">
+    <t t-name="website.slide.dialog">
+        <div class="modal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                        <h3 class="modal-title">Upload Presentation</h3>
+                    </div>
+                    <div class="load-category text-center" style="display:none"><h4><i class='fa fa-spinner fa-spin'></i> Fetching Category...</h4></div>
+                    <div class="slide-loading text-center" style="display:none"><h4><i class='fa fa-spinner fa-spin'></i> Uploading presentation...  </h4></div>
+                    <div class="modal-body">
+                        <form class="clearfix form-horizontal">
+                            <div class="form-group">
+                                <div class="control-group">
+                                    <div class="controls col-sm-4 input-group-sm slide-pr0">
+                                        <span class="oe-image-thumbnail slide-img-border" style="max-height: 168px;">
+                                            <img src="/website_slides/static/src/img/document.png"  id="slide-image" title="Content Preview" class="img-responsive" />
+                                        </span>
+                                    </div>
+                                    <div class="controls col-sm-8 input-group-sm">
+                                        <ul class="list-group">
+                                            <li class="list-group-item active">
+                                                <h5 class="list-group-item-heading">
+                                                    <label for="file" class="control-label">
+                                                        PDF or Image File
+                                                    </label>
+                                                </h5>
+                                                <input id="slide-file" name="file" accept="image/*,application/pdf" class="slide-upload" type="file"/>
+                                            </li>
+                                            <li class="list-group-item">
+                                                <h5 class="list-group-item-heading">
+                                                    <label for="slide-url" class="control-label">
+                                                        Youtube or Google Doc URL
+                                                    </label>
+                                                </h5>
+                                                <input class="form-control h5 slide-url" placeholder="Youtube Video URL" id="url"/>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="control-group">
+                                    <label for="name" class="pr0 control-label col-sm-2">
+                                        Title:
+                                    </label>
+                                    <div class="col-sm-10">
+                                        <input name="slide-name" placeholder="Title" class="form-control" required="required" id="name"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="control-group">
+                                    <label for="tags" class="control-label col-sm-2">
+                                        Tags:
+                                    </label>
+
+                                    <div class="controls col-sm-10">
+                                        <input id="tags" type="hidden"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="control-group">
+                                    <label for="category" class="pr0 control-label col-sm-2">
+                                        Category:
+                                    </label>
+
+                                    <div class="controls col-sm-10">
+                                        <input id="category" type="hidden"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="control-group">
+                                    <label for="description" name="slide-description" class="pr0 control-label col-sm-2">
+                                        Description:
+                                    </label>
+                                    <div class="controls col-sm-10">
+                                        <textarea id="description" rows="4" placeholder="Description" class="form-control"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <canvas id="the-canvas" style="display: none;"></canvas>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" data-loading-text="Loading..." class="btn btn-primary save">Save as Draft</button>
+                        <button type="button" data-loading-text="Loading..." data-published="true" class="btn btn-primary save">Save and Publish</button>
+                        or
+                        <a href="#" data-dismiss="modal" aria-hidden="true">Discard</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="website.slide.overlay">
+        <div class="slide-overlay">
+            <t t-foreach="slides" t-as="slide">
+                <div class="col-md-4 col-sm-4 col-xs-6 slide-pr0 slide-pl0">
+                    <a t-att-href="slide.url">
+                        <div class="slide-thumbnail">
+                            <div class="slide-caption">
+                                <h4><t t-esc="slide.caption"/></h4>
+                            </div>
+                            <span class="oe-suggest-image-thumbnail">
+                                <img class="img-responsive" style="min-height:185px;width:100%" t-att-src="slide.img_src"  t-attf-alt="#{slide.caption}"/>
+                            </span>
+                        </div>
+                    </a>
+                </div>
+            </t>
+        </div>
+    </t>
+
+    <t t-name="website.slide.PDFViewer">
+        <div>
+            <div id="PDFLoader" class="img-responsive slide-width">
+                <h3 class="slide-img-text text-center" id="PDFLoading" style="display:none"><i class='fa fa-spinner fa-spin'></i> Loading presentation... </h3>
+                <img t-attf-src="/website/image/slide.slide/#{widget.id}/image" id="PDFViewer-image" class="img-responsive slide-width"/>
+           </div>
+           <div class="slide-wrapper">
+                <canvas id="PDFViewer" class="img-responsive" style="display:none"></canvas>
+           </div>
+            <div class="panel-footer slides-penal-footer">
+                <div class="row">
+                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 text-left">
+                        <input type="number" class="text-center slide-img-border" style="width: 45px;" id="page_number"></input> / <span id="page_count"></span>
+                    </div>
+                    <div class="col-lg-8 col-md-8 col-sm-8 col-xs-8">
+                        <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 text-center"></div>
+                            <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1 text-center">
+                                <span id="first" title="First slide" role="button"><i class="fa fa-step-backward slide-fa-1-5x slide-cursor slide-color"></i></span>
+                            </div>
+                            <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1 text-center">
+                                <span id="previous" title="Previous slide" role="button"><i class="fa fa-arrow-circle-left slide-fa-1-5x slide-cursor slide-color"></i></span>
+                            </div>
+                            <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1 text-center">
+                                <span id="next" title="Next slide" role="button"><i class="fa fa-arrow-circle-right slide-fa-1-5x slide-cursor slide-color"></i></span>
+                            </div>
+                            <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1 text-center">
+                                <span id="last" title="Last slide" role="button"><i class="fa fa-step-forward slide-fa-1-5x slide-cursor slide-color"></i></span>
+                            </div>
+                        <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4 text-center"></div>
+                    </div>
+                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 text-right">
+                        <a t-if="widget.downloadable != 'not_downloadable'" style="margin-right: 5px" t-attf-href="/slides/download/#{widget.id}" title="Download this presentation" id="download">
+                            <i class="fa fa-download slide-fa-1-5x slide-cursor slide-color"></i>
+                        </a>
+                        <span id="fullscreen" title="View fullscreen"><i class="fa fa-arrows-alt slide-fa-1-5x slide-cursor slide-color"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>
