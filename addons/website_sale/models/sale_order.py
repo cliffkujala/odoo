@@ -9,10 +9,13 @@ from openerp.addons.web.http import request
 class sale_order(osv.Model):
     _inherit = "sale.order"
 
-    def _cart_qty(self, cr, uid, ids, field_name, arg, context=None):
+    def _cart_info(self, cr, uid, ids, field_name, arg, context=None):
         res = dict()
         for order in self.browse(cr, uid, ids, context=context):
-            res[order.id] = int(sum(l.product_uom_qty for l in (order.website_order_line or [])))
+            res[order.id] = {
+                'cart_quantity': int(sum(l.product_uom_qty for l in (order.website_order_line or []))),
+                'only_services': all(line.product_id and line.product_id.type == 'service'  for line in order.order_line)
+            }
         return res
 
     _columns = {
@@ -21,9 +24,10 @@ class sale_order(osv.Model):
             string='Order Lines displayed on Website', readonly=True,
             help='Order Lines to be displayed on the website. They should not be used for computation purpose.',
         ),
-        'cart_quantity': fields.function(_cart_qty, type='integer', string='Cart Quantity'),
+        'cart_quantity': fields.function(_cart_info, type='integer', string='Cart Quantity', multi=True),
         'payment_acquirer_id': fields.many2one('payment.acquirer', 'Payment Acquirer', on_delete='set null', copy=False),
         'payment_tx_id': fields.many2one('payment.transaction', 'Transaction', on_delete='set null', copy=False),
+        'only_services': fields.function(_cart_info, type='boolean', string='Only Services', multi=True),
     }
 
     def _get_errors(self, cr, uid, order, context=None):
