@@ -34,8 +34,6 @@
     applicant = self.browse(cr, uid, applicant_ids[0], context=context)
     resume_ids = self.pool.get('ir.attachment').search(cr, uid, [('datas_fname','=','resume.pdf'),('res_model','=',self._name),('res_id','=',applicant.id)])
     assert applicant.name == "Application for the post of Jr.application Programmer.", "Applicant name does not match."
-    assert applicant.stage_id.id == ref('hr_recruitment.stage_job1'), "Stage should be 'Initial qualification' and is '%s'." % (applicant.stage_id.name)
-    assert applicant.stage_id.sequence == 1, "Applicant stage sequence should be 1."
     assert len(resume_ids), "Resume is not attached."
 -
   I assign the Job position to the applicant
