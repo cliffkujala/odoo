@@ -205,25 +205,8 @@
         if ($('textarea.load_editor').length) {
             $('textarea.load_editor').each(function () {
                 if (this['id']) {
-                    CKEDITOR.replace(this['id']).on('instanceReady', CKEDITORLoadComplete);
+                    CKEDITOR.replace(this['id']);
                 }
             });
         }
-        
-        function CKEDITORLoadComplete(){
-            "use strict";
-            $('.cke_button__link').attr('onclick','website_forum_IsKarmaValid(33,30)');
-            $('.cke_button__unlink').attr('onclick','website_forum_IsKarmaValid(37,30)');
-            $('.cke_button__image').attr('onclick','website_forum_IsKarmaValid(41,30)');
-        }
     });
-
-   function website_forum_IsKarmaValid(eventNumber, minKarma){
-        "use strict";
-        if(parseInt($("#karma").val()) >= minKarma){
-            CKEDITOR.tools.callFunction(eventNumber, this);
-            return false;
-        } else {
-            alert("Sorry you need more than " + minKarma + " Karma.");
-        }
-    }
