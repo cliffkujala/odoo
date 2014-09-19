@@ -1117,6 +1117,9 @@ function openerp_pos_widgets(instance, module){ //module is instance.point_of_sa
 
             // --------  Misc ---------
 
+            this.notification = new module.SynchNotificationWidget(this,{});
+            this.notification.appendTo(this.$('.pos-rightheader'));
+
             this.close_button = new module.HeaderButtonWidget(this,{
                 label: _t('Close'),
                 action: function(){ 
@@ -1137,8 +1140,6 @@ function openerp_pos_widgets(instance, module){ //module is instance.point_of_sa
             });
             this.close_button.appendTo(this.$('.pos-rightheader'));
 
-            this.notification = new module.SynchNotificationWidget(this,{});
-            this.notification.appendTo(this.$('.pos-rightheader'));
 
             if(this.pos.config.use_proxy){
                 this.proxy_status = new module.ProxyStatusWidget(this,{});
