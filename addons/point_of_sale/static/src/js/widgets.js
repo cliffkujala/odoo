@@ -83,44 +83,20 @@ function openerp_pos_widgets(instance, module){ //module is instance.point_of_sa
         },
     });
 
-    // The paypad allows to select the payment method (cashregisters) 
-    // used to pay the order.
-    module.PaypadWidget = module.PosBaseWidget.extend({
-        template: 'PaypadWidget',
+    // The action pad contains the payment button and the customer selection button
+    module.ActionpadWidget = module.PosBaseWidget.extend({
+        template: 'ActionpadWidget',
         renderElement: function() {
             var self = this;
             this._super();
-
-            _.each(this.pos.cashregisters,function(cashregister) {
-                var button = new module.PaypadButtonWidget(self,{
-                    pos: self.pos,
-                    pos_widget : self.pos_widget,
-                    cashregister: cashregister,
-                });
-                button.appendTo(self.$el);
+            this.$('.pay').click(function(){
+                self.pos.pos_widget.screen_selector.set_current_screen('payment');
             });
+            this.$('.set-customer').click(function(){
+                self.pos.pos_widget.screen_selector.set_current_screen('clientlist');
+            });
+
         }
-    });
-
-    module.PaypadButtonWidget = module.PosBaseWidget.extend({
-        template: 'PaypadButtonWidget',
-        init: function(parent, options){
-            this._super(parent, options);
-            this.cashregister = options.cashregister;
-        },
-        renderElement: function() {
-            var self = this;
-            this._super();
-
-            this.$el.click(function(){
-                if (self.pos.get_order().get('screen') === 'receipt'){  //TODO Why ?
-                    console.warn('TODO should not get there...?');
-                    return;
-                }
-                self.pos.get_order().addPaymentline(self.cashregister);
-                self.pos_widget.screen_selector.set_current_screen('payment');
-            });
-        },
     });
 
     module.OrderWidget = module.PosBaseWidget.extend({
@@ -339,132 +315,6 @@ function openerp_pos_widgets(instance, module){ //module is instance.point_of_sa
             this.$('.deleteorder-button').click(function(event){
                 self.deleteorder_click_handler(event,$(this));
             });
-        },
-    });
-
-    module.OrderButtonWidget = module.PosBaseWidget.extend({
-        template:'OrderButtonWidget',
-        init: function(parent, options) {
-            this._super(parent,options);
-            var self = this;
-
-            this.order = options.order;
-            this.order.bind('destroy',this.destroy, this );
-            this.order.bind('change', this.renderElement, this );
-            this.pos.bind('change:selectedOrder', this.renderElement,this );
-        },
-        renderElement:function(){
-            this.selected = ( this.pos.get_order() === this.order )
-            this._super();
-            var self = this;
-            this.$el.click(function(){ 
-                if( self.pos.get_order() === self.order ){
-                    var ss = self.pos.pos_widget.screen_selector;
-                    if(ss.get_current_screen() === 'clientlist'){
-                        ss.back();
-                    }else if (ss.get_current_screen() !== 'receipt'){
-                        ss.set_current_screen('clientlist');
-                    }
-                }else{
-                    self.selectOrder();
-                }
-            });
-            if( this.selected){
-                this.$el.addClass('selected');
-            }
-        },
-        selectOrder: function(event) {
-            this.pos.set_order(this.order);
-        },
-        destroy: function(){
-            this.order.unbind('destroy', this.destroy, this);
-            this.order.unbind('change',  this.renderElement, this);
-            this.pos.unbind('change:selectedOrder', this.renderElement, this);
-            this._super();
-        },
-    });
-
-    module.ActionButtonWidget = instance.web.Widget.extend({
-        template:'ActionButtonWidget',
-        icon_template:'ActionButtonWidgetWithIcon',
-        init: function(parent, options){
-            this._super(parent, options);
-            this.label = options.label || 'button';
-            this.rightalign = options.rightalign || false;
-            this.click_action = options.click;
-            this.disabled = options.disabled || false;
-            if(options.icon){
-                this.icon = options.icon;
-                this.template = this.icon_template;
-            }
-        },
-        set_disabled: function(disabled){
-            if(this.disabled != disabled){
-                this.disabled = !!disabled;
-                this.renderElement();
-            }
-        },
-        renderElement: function(){
-            this._super();
-            if(this.click_action && !this.disabled){
-                this.$el.click(_.bind(this.click_action, this));
-            }
-        },
-    });
-
-    module.ActionBarWidget = instance.web.Widget.extend({
-        template:'ActionBarWidget',
-        init: function(parent, options){
-            this._super(parent,options);
-            this.button_list = [];
-            this.buttons = {};
-            this.visibility = {};
-        },
-        set_element_visible: function(element, visible, action){
-            if(visible != this.visibility[element]){
-                this.visibility[element] = !!visible;
-                if(visible){
-                    this.$('.'+element).removeClass('oe_hidden');
-                }else{
-                    this.$('.'+element).addClass('oe_hidden');
-                }
-            }
-            if(visible && action){
-                this.action[element] = action;
-                this.$('.'+element).off('click').click(action);
-            }
-        },
-        set_button_disabled: function(name, disabled){
-            var b = this.buttons[name];
-            if(b){
-                b.set_disabled(disabled);
-            }
-        },
-        destroy_buttons:function(){
-            for(var i = 0; i < this.button_list.length; i++){
-                this.button_list[i].destroy();
-            }
-            this.button_list = [];
-            this.buttons = {};
-            return this;
-        },
-        get_button_count: function(){
-            return this.button_list.length;
-        },
-        add_new_button: function(button_options){
-            var button = new module.ActionButtonWidget(this,button_options);
-            this.button_list.push(button);
-            if(button_options.name){
-                this.buttons[button_options.name] = button;
-            }
-            button.appendTo(this.$('.pos-actionbar-button-list'));
-            return button;
-        },
-        show:function(){
-            this.$el.removeClass('oe_hidden');
-        },
-        hide:function(){
-            this.$el.addClass('oe_hidden');
         },
     });
 
@@ -1193,11 +1043,9 @@ function openerp_pos_widgets(instance, module){ //module is instance.point_of_sa
             this.username   = new module.UsernameWidget(this,{});
             this.username.replace(this.$('.placeholder-UsernameWidget'));
 
-            this.action_bar = new module.ActionBarWidget(this);
-            this.action_bar.replace(this.$(".placeholder-RightActionBar"));
 
-            this.paypad = new module.PaypadWidget(this, {});
-            this.paypad.replace(this.$('.placeholder-PaypadWidget'));
+            this.actionpad = new module.ActionpadWidget(this, {});
+            this.actionpad.replace(this.$('.placeholder-ActionpadWidget'));
 
             this.numpad = new module.NumpadWidget(this);
             this.numpad.replace(this.$('.placeholder-NumpadWidget'));
@@ -1252,10 +1100,10 @@ function openerp_pos_widgets(instance, module){ //module is instance.point_of_sa
                 this.numpad_visible = visible;
                 if(visible){
                     this.numpad.show();
-                    this.paypad.show();
+                    this.actionpad.show();
                 }else{
                     this.numpad.hide();
-                    this.paypad.hide();
+                    this.actionpad.hide();
                 }
             }
         },
