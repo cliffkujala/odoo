@@ -1074,11 +1074,11 @@ td {
     background: #6EC89B;
     color: white;
 }
-.pos .paymentline.selected.edit {
+.pos .paymentline.selected .edit {
     background: white;
     color: #6EC89B;
     outline: 3px blue;
-    box-shadow: 0px 0px 3px #6EC89B;
+    box-shadow: 0px 0px 0px 3px #6EC89B;
     position: relative;
     border-radius: 3px;
 }
@@ -1090,7 +1090,7 @@ td {
 .pos .paymentline .col-change {
     min-width: 90px;
 }
-.pos .paymentline.col-change.highlight {
+.pos .paymentline .col-change.highlight {
     background: rgb(184, 152, 204);
 }
 .pos .paymentline .col-name {
