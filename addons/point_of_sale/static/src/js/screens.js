@@ -1190,6 +1190,9 @@ function openerp_pos_screens(instance, module){ //module is instance.point_of_sa
         click_set_customer: function(){
             this.pos_widget.screen_selector.set_current_screen('clientlist');
         },
+        click_back: function(){
+            this.pos_widget.screen_selector.set_current_screen('product-list');
+        },
         renderElement: function() {
             var self = this;
             this._super();
@@ -1203,7 +1206,7 @@ function openerp_pos_screens(instance, module){ //module is instance.point_of_sa
             this.render_paymentlines();
 
             this.$('.back').click(function(){
-                self.pos_widget.screen_selector.back();
+                self.click_back();
             });
 
             this.$('.next').click(function(){
