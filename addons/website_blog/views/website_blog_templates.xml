@@ -182,17 +182,9 @@
 <template id="blog_post_complete" name="Blog Post">
   <t t-call="website_blog.index">
 
-    <div class="cover js_fullheight" id="title" t-attf-style="background-image: url(#{blog_post.background_image})" t-ignore="True">
+    <div class="cover js_fullheight" id="title" t-att-style="blog_post.background_image and ('background-image: url(%s)' % blog_post.background_image)" t-ignore="True">
         <div class="container">
           <div class="container text-right mt16">
-            <div class="btn-group css_non_editable_mode_hidden">
-                <a id="change_cover" class="btn btn-primary">
-                    Change Cover
-                </a>
-                <a id="clear_cover" class="btn btn-danger">
-                    <span class="fa fa-times"/>
-                </a>
-            </div>
             <div class="cover-storage oe_hidden"></div>
             <t t-call="website.publish_management">
                 <t t-set="object" t-value="blog_post"/>

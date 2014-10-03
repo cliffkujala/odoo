@@ -20,7 +20,6 @@
         height: auto
     .scroll
         white-space: nowrap
-        overflow-y: none
     .nav
         display: inline-block
         border-bottom: none !important
@@ -55,7 +54,7 @@
                     width: 100px
                     text-align: center
                     @include transform( translate(-39px, 44px) , rotate(-90deg) )
-                    @include transform-origin(50% 50%)
+                    @include transform-origin(50%)
 
 .oe_snippet
     float: left
@@ -208,7 +207,7 @@
             top: 4px
             height: 100%
             &:before
-                content: "\f0d9-\f0da"
+                content: "\f07e"
                 line-height: 16px
             > div
                 width: 0
@@ -543,11 +542,6 @@
         margin: 4px 3px 3px 3px
         width: 0
         height: 0
-.cke_panel_container table.colorpicker
-    tr:first-child td
-        padding-top: 6px
-    tr:last-child td
-        padding-bottom: 6px
 
 // }}}
 

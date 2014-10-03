@@ -393,7 +393,7 @@ var Tour = {
                 return Tour.error(state.step, "Tour '"+state.id+"' undefined");
             }
             Tour.saveState(state.id, state.mode, state.step_id, state.number-1, state.wait+1);
-            Tour.log("Tour '"+state.id+"' wait for running (tour undefined)");
+            //Tour.log("Tour '"+state.id+"' wait for running (tour undefined)");
             setTimeout(Tour.running, Tour.retryRunningDelay);
         }
     },
@@ -491,7 +491,7 @@ var Tour = {
         step = step || state.step;
         var next = state.step.next ? Tour.search_step(state.step.next) : state.tour.steps[step.id+1];
 
-        if (state.mode === "test" && state.number > 3) {
+        if (state.mode === "test" && state.number > 5) {
             return Tour.error(next, "Cycling. Can't reach the next step");
         }
         
@@ -557,19 +557,22 @@ var Tour = {
             
             } else if ($element.is(":visible")) {
 
-                $element.trigger($.Event("mouseenter", { srcElement: $element[0] }));
-                $element.trigger($.Event("mousedown", { srcElement: $element[0] }));
-        
-                var evt = document.createEvent("MouseEvents");
-                evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-                $element[0].dispatchEvent(evt);
+                var click_event = function(type) {
+                    var evt = document.createEvent("MouseEvents");
+                    evt.initMouseEvent(type, true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, $element[0]);
+                    $element[0].dispatchEvent(evt);
+                };
+
+                click_event("mouseover");
+                click_event("mousedown");
+                click_event("click");
 
                 // trigger after for step like: mouseenter, next step click on button display with mouseenter
                 setTimeout(function () {
                     if (!Tour.getState()) return;
-                    $element.trigger($.Event("mouseup", { srcElement: $element[0] }));
-                    $element.trigger($.Event("mouseleave", { srcElement: $element[0] }));
-                }, 1000);
+                    click_event("mouseup");
+                    click_event("mouseout");
+                }, self.defaultDelay<<1);
             }
             if (step.sampleText) {
             
@@ -599,7 +602,7 @@ var Tour = {
         $thumbnail.trigger($.Event("mousemove", { which: 1, pageX: document.body.scrollWidth/2, pageY: document.body.scrollHeight/2 }));
         var $dropZone = $(".oe_drop_zone").first();
         var dropPosition = $dropZone.position();
-        $dropZone.trigger($.Event("mouseup", { which: 1, pageX: dropPosition.left, pageY: dropPosition.top }));
+        $thumbnail.trigger($.Event("mouseup", { which: 1, pageX: dropPosition.left, pageY: dropPosition.top }));
     }
 };
 openerp.Tour = Tour;
