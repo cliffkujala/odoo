@@ -293,6 +293,7 @@
                 });
         },
         cover_target: function ($el, $target){
+            if($el.data('not-cover_target')) return;
             var pos = $target.offset();
             var mt = parseInt($target.css("margin-top") || 0);
             var mb = parseInt($target.css("margin-bottom") || 0);
@@ -813,7 +814,7 @@
         drop_and_build_snippet: function () {
         },
 
-        reset: function (event) {
+        reset: function () {
             var self = this;
             var lis = self.$el.add(self.$el.find('li')).filter('.active').get();
             lis.reverse();
@@ -847,6 +848,7 @@
             clearTimeout(this.reset_time);
 
             if (type==="click") {
+                this.reset();
                 this.BuildingBlock.parent.rte.historyRecordUndo(this.$target);
             }
 
@@ -1060,9 +1062,6 @@
             var self = this;
             this.$target.find('.carousel-indicators [data-slide-to]').off('click').on('click', function () {
                 self.$target.carousel(+$(this).data('slide-to')); });
-
-            this.$target.attr('contentEditable', 'false');
-            this.$target.find('.oe_structure, .content.row, [data-slide]').attr('contentEditable', 'true');
         },
         clean_for_save: function () {
             this._super();
@@ -1551,15 +1550,15 @@
         },
         resetTransfo: function () {
             var self = this;
+            this.$overlay.data('not-cover_target', true);
             this.$target.transfo("destroy");
             this.$target.transfo({
                 hide: true,
                 callback: function () {
-                    var center = $(this).data("transfo").$markup.find('.transfo-scaler-mc').offset();
-                    var $option = self.$overlay.find('.btn-group:first');
+                    var pos = $(this).data("transfo").$center.offset();
                     self.$overlay.css({
-                        'top': center.top - $option.height()/2,
-                        'left': center.left,
+                        'top': pos.top | 0,
+                        'left': pos.left | 0,
                         'position': 'absolute',
                     });
                     self.$overlay.find(".oe_overlay_options").attr("style", "width:0; left:0!important; top:0;");

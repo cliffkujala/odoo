@@ -1059,14 +1059,12 @@
         var $prevnext = $('<div class="o_undo btn-group"/>');
         var $prev = $(renderer.tplIconButton('fa fa-undo', {
                 title: _t('Undo'),
-                event: 'history',
-                value: 'previous'
+                event: 'undo',
             }))
             .appendTo($prevnext);
         var $next = $(renderer.tplIconButton('fa fa-repeat', {
                 title: _t('Redo'),
-                event: 'history',
-                value: 'next'
+                event: 'redo',
             }))
             .appendTo($prevnext);
 
@@ -1346,7 +1344,7 @@
         $(document).on('mousedown', summernote_mousedown);
         $(document).on('mouseup', summernote_mouseup);
         $(document).on('click', summernote_click);
-        oLayoutInfo.editor.on('dblclick', 'img', function (event) {
+        oLayoutInfo.editor.on('dblclick', '.media_iframe_video, span.fa, i.fa, span.fa', function (event) {
             new website.editor.MediaDialog(oLayoutInfo.editor, event.target).appendTo(document.body);
         });
     };
@@ -1714,73 +1712,12 @@
             $('.inline-media-link').remove();
             this._super.apply(this, arguments);
         },
-        tableNavigation: function (root) {
-            var self = this;
-            $('.o_editable').on('keydown', function (e) {
-                // ignore non-TAB
-                if (e.which !== 9) { return; }
-
-                if (self.handleTab(e)) {
-                    e.preventDefault();
-                }
-            });
-        },
-        /**
-         * Performs whatever operation is necessary on a [TAB] hit, returns
-         * ``true`` if the event's default should be cancelled (if the TAB was
-         * handled by the function)
-         */
-        handleTab: function (event) {
-            var forward = !event.shiftKey;
-
-            var root = window.getSelection().getRangeAt(0).commonAncestorContainer;
-            var $cell = $(root).closest('td,th');
-
-            if (!$cell.length) { return false; }
-
-            var cell = $cell[0];
-
-            // find cell in same row
-            var row = cell.parentNode;
-            var sibling = row.cells[cell.cellIndex + (forward ? 1 : -1)];
-            if (sibling) {
-                document.getSelection().selectAllChildren(sibling);
-                return true;
-            }
-
-            // find cell in previous/next row
-            var table = row.parentNode;
-            var sibling_row = table.rows[row.rowIndex + (forward ? 1 : -1)];
-            if (sibling_row) {
-                var new_cell = sibling_row.cells[forward ? 0 : sibling_row.cells.length - 1];
-                document.getSelection().selectAllChildren(new_cell);
-                return true;
-            }
-
-            // at edge cells, copy word/openoffice behavior: if going backwards
-            // from first cell do nothing, if going forwards from last cell add
-            // a row
-            if (forward) {
-                var row_size = row.cells.length;
-                var new_row = document.createElement('tr');
-                while(row_size--) {
-                    var newcell = document.createElement('td');
-                    // zero-width space
-                    newcell.textContent = '\u200B';
-                    new_row.appendChild(newcell);
-                }
-                table.appendChild(new_row);
-                document.getSelection().selectAllChildren(new_row.cells[0]);
-            }
-
-            return true;
-        },
         /**
          * Add a record undo to history
          * @param {DOM} target where the dom is changed is editable zone
          */
         historyRecordUndo: function ($target) {
-            var $editable = $target.is('[data-oe-model]') ? $target : $target.closest('[data-oe-model]');
+            var $editable = $target.is('[data-oe-model], .o_editable') ? $target : $target.closest('[data-oe-model], .o_editable');
             $target.mousedown();
             if (!range.create()) {
                 range.create($target[0],0,$target[0],0).select();
@@ -1831,10 +1768,6 @@
                 .not('.oe_snippet_editor')
                 .addClass('o_editable');
 
-            $('#wrapwrap').on('click', '*', function (event) {
-                event.preventDefault();
-            });
-
             $('.o_editable').each(function () {
                 var node = this;
                 var $node = $(node);
@@ -1847,10 +1780,11 @@
             });
 
             if (!restart) {
-                this.tableNavigation();
+                $('#wrapwrap').on('click', '*', function (event) {
+                    event.preventDefault();
+                });
+                self.trigger('rte:ready');
             }
-
-            self.trigger('rte:ready');
         },
         _config: function () {
             return {
@@ -1904,6 +1838,8 @@
                         // ignore contenteditable modification
                         if (m.attributeName === 'contenteditable') { return false; }
                         if (m.attributeName === 'attributeeditable') { return false; }
+                        // remove content editable attribute from firefox
+                        if (m.attributeName.indexOf('_moz') === 0) { return false; }
                         // ignore id modification
                         if (m.attributeName === 'id') { return false; }
                         // style not change
@@ -2016,6 +1952,11 @@
             this.data = data;
 
             this.data.text = this.data.text.replace(/[ \t\r\n]+/g, ' ');
+            this.data.className = "";
+            if (this.data.range) {
+                this.data.iniClassName = $(this.data.range.sc).attr("class") || "";
+                this.data.className = this.data.iniClassName.replace(/(^|\s+)(btn(?!\s|$)|btn-[a-z0-9_-]*)/gi, '');
+            }
 
             // Store last-performed request to be able to cancel/abort it.
             this.page_exists_req = null;
@@ -2070,9 +2011,9 @@
                 def.reject();
             }
 
-            var style = this.$("input[name='link-style-type']:checked").val();
-            var size = this.$("input[name='link-style-size']:checked").val();
-            var classes = (style && style.length ? "btn " : "") + style + " " + size;
+            var style = this.$("input[name='link-style-type']:checked").val() || '';
+            var size = this.$("input[name='link-style-size']:checked").val() || '';
+            var classes = (this.data.className || "") + (style && style.length ? " btn " : "") + style + " " + size;
 
             var done = $.when();
             if ($e.hasClass('email-address') && $e.val().indexOf("@") !== -1) {
@@ -2100,7 +2041,7 @@
             return this.get_data()
                 .then(function (url, new_window, label, classes) {
                     self.data.url = url;
-                    self.data.isNewWindow = new_window;
+                    self.data.newWindow = new_window;
                     self.data.text = label;
                     self.data.className = classes;
 
@@ -2109,9 +2050,9 @@
         },
         bind_data: function () {
             var href = this.data.url;
-            var new_window = this.data.isNewWindow;
+            var new_window = this.data.newWindow;
             var text = this.data.text;
-            var classes = this.data.className = $(this.data.range.sc).attr("class");
+            var classes = this.data.iniClassName;
 
             this.$('input#link-text').val(text);
             this.$('input.window-new').prop('checked', new_window);
@@ -2197,7 +2138,7 @@
             this.get_data(false).then(function (url, new_window, label, classes) {
                 $preview.attr("target", new_window ? '_blank' : "")
                     .text((label && label.length ? label : url))
-                    .attr("class", classes);
+                    .attr("class", classes.replace(/pull-\w+/, ''));
             });
         }
     });
@@ -2725,7 +2666,7 @@
             this.$preview.empty();
             var $preview = this.$('#fa-preview').empty();
 
-            var sizes = ['', 'fa-2x', 'fa-3x', 'fa-4x', 'fa-5x'];
+            var sizes = ['fa-1x', 'fa-2x', 'fa-3x', 'fa-4x', 'fa-5x'];
             var classes = this.get_fa_classes();
             var no_sizes = _.difference(classes, sizes).join(' ');
             var selected = false;

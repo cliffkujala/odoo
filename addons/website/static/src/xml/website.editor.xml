@@ -40,6 +40,16 @@
         <t t-call="website.editor.dialog">
             <t t-set="title">Link to</t>
             <form>
+                <div class="list-group">
+                    <div class="form-group list-group-item active">
+                        <h3 class="list-group-item-heading">
+                            <label for="link-new" class="control-label">
+                                Link Label
+                            </label>
+                        </h3>
+                        <input type="text" class="form-control" id="link-text" required="required"/>
+                    </div>
+                </div>
                 <ul class="list-group">
                     <li class="list-group-item form-group active">
                         <h4 class="list-group-item-heading">
@@ -66,16 +76,6 @@
                                id="link-external" placeholder="http://openerp.com"/>
                     </li>
                 </ul>
-                <div class="form-horizontal">
-                    <div class="form-group">
-                        <label for="link-text" class="col-sm-2 control-label">
-                            Link text
-                        </label>
-                        <div class="col-sm-10">
-                            <input type="text" class="form-control" id="link-text"/>
-                        </div>
-                    </div>
-                </div>
                 <div class="form-horizontal link-style">
                     <div class="form-group">
                         <label class="col-sm-2 control-label">

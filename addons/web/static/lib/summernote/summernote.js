@@ -3237,7 +3237,7 @@
 
         var sEvent = keyMap[aKey.join('+')];
 
-        if (!sEvent && event.keyCode !== 229 && event.keyCode >= 48) { // hack odoo
+        if (!sEvent && ((event.keyCode !== 229 && event.keyCode >= 48) || event.keyCode === 32)) { // hack odoo
           sEvent = 'visible';
         }
 
