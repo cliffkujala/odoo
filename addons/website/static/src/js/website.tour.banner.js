@@ -6,7 +6,7 @@
     openerp.Tour.register({
         id:   'banner',
         name: _t("Build a page"),
-        path: '/page/website.homepage',
+        path: '/page/homepage',
         steps: [
             {
                 title:     _t("Welcome to your website!"),

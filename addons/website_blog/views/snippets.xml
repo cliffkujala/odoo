@@ -4,7 +4,7 @@
 <template id="website_blog" inherit_id="website.snippets" name="Snippet Blog">
 
     <xpath expr="//div[@id='snippet_options']" position="inside">
-        <div data-option='website_blog'
+        <div data-js='website_blog'
             data-selector=".js_blog #title.cover"
             data-no-check="true">
 

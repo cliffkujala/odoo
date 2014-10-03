@@ -897,10 +897,12 @@
        * @return {String}
        */
       onCreateLink: function (sLinkUrl) {
-        if (sLinkUrl.indexOf('@') !== -1 && sLinkUrl.indexOf(':') === -1) {
-          sLinkUrl =  'mailto:' + sLinkUrl;
-        } else if (sLinkUrl.indexOf('://') === -1 && sLinkUrl.indexOf('/') !== 0 && sLinkUrl.indexOf('#') !== 0) { // fix by odoo
-          sLinkUrl = 'http://' + sLinkUrl;
+        if (sLinkUrl.indexOf('mailto:') !== 0) { // fix by odoo
+          if (sLinkUrl.indexOf('@') !== -1 && sLinkUrl.indexOf(':') === -1) {
+            sLinkUrl =  'mailto:' + sLinkUrl;
+          } else if (sLinkUrl.indexOf('://') === -1 && sLinkUrl.indexOf('/') !== 0 && sLinkUrl.indexOf('#') !== 0) { // fix by odoo
+            sLinkUrl = 'http://' + sLinkUrl;
+          }
         }
 
         return sLinkUrl;
@@ -1355,6 +1357,22 @@
      * @param {Number} eo - end offset
      */
     var WrappedRange = function (sc, so, ec, eo) {
+      // fix/hack from odoo (for ie)
+      //if (!!document.documentMode) {
+      if (dom.isBR(sc) || dom.isImg(sc)) {
+        so = dom.listPrev(sc).length-1;
+        sc = sc.parentNode;
+      }
+      if (dom.isImg(ec)) {
+        eo = dom.listPrev(ec).length;
+        ec = ec.parentNode;
+      }
+      if (dom.isBR(ec)) {
+        eo = dom.listPrev(ec).length-1;
+        ec = ec.parentNode;
+      }
+      //}
+
       this.sc = sc;
       this.so = so;
       this.ec = ec;
@@ -1409,6 +1427,7 @@
         } else {
           nativeRng.select();
         }
+        return this; // hack odoo
       };
 
       /**
@@ -1509,30 +1528,6 @@
           boundaryPoints.eo
         );
       };
-
-      /**
-       * delete contents on range
-       * @return {WrappedRange}
-       */
-      this.deleteContents = function () {
-        if (this.isCollapsed()) {
-          return this;
-        }
-
-        var rng = this.splitText();
-        var prevBP = dom.prevBP(rng.getStartBP());
-
-        $.each(rng.nodes(), function (idx, node) {
-          dom.remove(node, !dom.isPara(node));
-        });
-
-        return new WrappedRange(
-          prevBP.node,
-          prevBP.offset,
-          prevBP.node,
-          prevBP.offset
-        );
-      };
       
       /**
        * makeIsOn: return isOn(pred) function
@@ -1602,6 +1597,7 @@
     };
   
     return {
+      WrappedRange: WrappedRange, //hack oddoo
       /**
        * create Range Object From arguments or Browser Selection
        *
@@ -1650,7 +1646,7 @@
        * @return {WrappedRange}
        */
       createFromNode: function (node) {
-        return this.create(node, 0, node, 1);
+        return this.create(node, 0, node, dom.length(node)); // fix by odoo
       },
 
       /**
@@ -1757,10 +1753,6 @@
      */
     this.currentStyle = function (elTarget) {
       var rng = range.create();
-      if (rng && rng.sc !== elTarget && rng.ec !== elTarget && !$.contains(elTarget, rng.sc) && !$.contains(elTarget, rng.ec)) { // fix odoo
-        rng = range.create(elTarget,0,elTarget,0);
-        rng.select();
-      }
       return rng ? rng.isOnEditable() && style.current(rng, elTarget) : false;
     };
 
@@ -1873,11 +1865,13 @@
      * @param {jQuery} $editable
      * @param {String} sUrl
      */
-    this.insertVideo = function ($editable, sUrl) {
-      recordUndo($editable);
+    this.insertVideo = function ($editable, sUrl, returnVideo) { // hack odoo
+      if (!returnVideo) {
+        recordUndo($editable);
+      }
 
       // video url patterns(youtube, instagram, vimeo, dailymotion, youku)
-      var ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      var ytRegExp = /^.*(youtu.\w+\/|youtube.\w+\/|\/v\/|u\/\w\/|\/embed\/|\/watch\?v=|\&v=)([^#\&\?]*).*/; // fix odoo (youtube.com)
       var ytMatch = sUrl.match(ytRegExp);
 
       var igRegExp = /\/\/instagram.com\/p\/(.[a-zA-Z0-9]*)/;
@@ -1927,6 +1921,10 @@
           .attr('src', '//player.youku.com/embed/' + youkuMatch[1]);
       } else {
         // this is not a known video link. Now what, Cat? Now what?
+      }
+
+      if (returnVideo) {
+        return $video;
       }
 
       if ($video) {
@@ -2035,16 +2033,21 @@
         sLinkUrl = options.onCreateLink(sLinkUrl);
       }
 
-      rng = rng.deleteContents();
 
-      // Create a new link when there is no anchor on range.
-      var anchor = rng.insertNode($('<A>' + sLinkText + '</A>')[0]);
+      var anchor = dom.ancestor(rng.sc, dom.isAnchor); // fix odoo
+
+      if (!anchor) {
+        rng = rng.deleteContents();
+        // Create a new link when there is no anchor on range.
+        anchor = rng.insertNode($('<A>' + sLinkText + '</A>')[0]);
+      }
+
       $(anchor).attr({
         href: sLinkUrl,
-        target: isNewWindow ? '_blank' : ''
+        target: isNewWindow ? '_blank' : null // fix by odoo: don't have target in the dom if empty attribute
       });
 
-      rng = range.createFromNode(anchor);
+      linkInfo.range = rng = range.createFromNode(anchor);
       rng.select();
 
       // odoo hack: allow to overwrite the methods
@@ -2098,14 +2101,27 @@
       var foreColor = oColor.foreColor, backColor = oColor.backColor;
 
       recordUndo($editable);
-      if (foreColor) { document.execCommand('foreColor', false, foreColor); }
-      if (backColor) { document.execCommand('backColor', false, backColor); }
+      if (backColor) { this.backColor($editable, backColor); } // fix odoo
+      if (foreColor) { this.foreColor($editable, foreColor); } // fix odoo
     };
 
-    this.insertTable = function ($editable, sDim) {
+    this.insertTable = function ($editable, sDim) { // fixed by odoo because if you create a table in <p>, chrome split the table when you undo => thow error
       recordUndo($editable);
       var aDim = sDim.split('x');
-      range.create().insertNode(table.createTable(aDim[0], aDim[1]));
+      var tab = table.createTable(aDim[0], aDim[1]);
+      range.create().insertNode(tab);
+
+      var forbidden = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small font span".split(" ");
+      var node = tab.parentNode;
+      var last = node;
+      while (forbidden.indexOf(node.tagName.toLowerCase()) !== -1) {
+        last = node;
+        node = node.parentNode;
+      }
+      if (node !== last) {
+        var p = dom.splitTree(last, tab, 0);
+        p.parentNode.insertBefore(tab, p);
+      }
     };
 
     /**
@@ -2431,8 +2447,7 @@
       }
 
       var $airPopover = $popover.find('.note-air-popover');
-      if (isAirMode && !oStyle.range.isCollapsed()) {
-        // if = Odoo fix for summernote if remove link with content = <br>
+      if (isAirMode && oStyle.range && !oStyle.range.isCollapsed()) { // Odoo fix for summernote if remove link with content = <br>
         var rect = list.last(oStyle.range.getClientRects());
         if (!rect) return;
         var bnd = func.rect2bnd(rect);
@@ -2956,14 +2971,16 @@
       //preventDefault Selection for FF, IE8+
       if (dom.isImg(event.target)) {
         event.preventDefault();
+        range.createFromNode(event.target).select(); // fix by odoo
       }
     };
 
-    var hToolbarAndPopoverUpdate = function (event) {
+    var hToolbarAndPopoverUpdate = function (event, target) { // hack odoo
       // delay for range after mouseup
       setTimeout(function () {
-        var oLayoutInfo = makeLayoutInfo(event.srcElement || event.target); // fix odoo
-        var oStyle = editor.currentStyle(event.target);
+        var oLayoutInfo = makeLayoutInfo(target || event.srcElement || event.target); // fix odoo
+        var oStyle = editor.currentStyle(target || event.srcElement || event.target);
+
         if (!oStyle) { return; }
 
         var isAirMode = oLayoutInfo.editor().data('options').airMode;
@@ -3048,6 +3065,7 @@
     var hToolbarAndPopoverMousedown = function (event) {
       // prevent default event when insertTable (FF, Webkit)
       var $btn = $(event.target).closest('[data-event]');
+      
       if ($btn.length) {
         event.preventDefault();
       }
@@ -3064,14 +3082,15 @@
 
         event.preventDefault();
 
-        // before command: detect control selection element($target)
+        // hack odoo detect $target
         var $target;
-        if ($.inArray(sEvent, ['resize', 'floatMe', 'removeMedia', 'padding']) !== -1) { // hack odoo
-          var $selection = oLayoutInfo.handle().find('.note-control-selection');
-          $target = $($selection.data('target'));
-        }
 
+        // fix by odoo (if double undo button then redo: raise)
         if (editor[sEvent]) { // on command
+          // before command: detect control selection element($target)
+          var $selection = oLayoutInfo.handle().find('.note-control-selection');
+          $target = $selection && $($selection.data('target'));
+
           var $editable = oLayoutInfo.editable();
           $editable.trigger('focus');
           editor[sEvent]($editable, sValue, $target);
@@ -3085,7 +3104,7 @@
           var module = options.airMode ? popover : toolbar;
           module.updateRecentColor(list.head($btn), sEvent, sValue);
         }
-        hToolbarAndPopoverUpdate(event);
+        hToolbarAndPopoverUpdate(event, $target && $target[0]); // hack odoo
       }
     };
 
@@ -3236,13 +3255,21 @@
         if (keyName) { aKey.push(keyName); }
 
         var sEvent = keyMap[aKey.join('+')];
+        var keycode = event.keyCode;
 
-        if (!sEvent && event.keyCode !== 229 && event.keyCode >= 48) { // hack odoo
+        if (!sEvent && // hack odoo
+            !event.ctrlKey && !event.metaKey && ( // special code/command
+            (keycode > 47 && keycode < 58)   || // number keys
+            keycode == 32 || keycode == 13   || // spacebar & return
+            (keycode > 64 && keycode < 91)   || // letter keys
+            (keycode > 95 && keycode < 112)  || // numpad keys
+            (keycode > 185 && keycode < 193) || // ;=,-./` (in order)
+            (keycode > 218 && keycode < 223))) {   // [\]' (in order))
           sEvent = 'visible';
         }
 
         if (sEvent) {
-          var res = false;
+          var res = null;
 
           if (editor[sEvent]) {
             res = editor[sEvent]($editable, $editor.data('options'));
@@ -3250,7 +3277,7 @@
             res = commands[sEvent].call(this, oLayoutInfo);
           }
 
-          if (!res) { // hack odoo
+          if (res === false) { // hack odoo
             event.preventDefault();
           }
 
@@ -3416,6 +3443,9 @@
              '</button>' +
              (dropdown || '');
     };
+
+    // odoo hack: allow to overwrite the methods
+    this.tplButton = tplButton;
 
     /**
      * bootstrap icon button template
@@ -3824,6 +3854,9 @@
              '</div>';
     };
 
+    // odoo hack: allow to overwrite the methods
+    this.tplPopovers = tplPopovers;
+
     var tplHandles = function () {
       return '<div class="note-handle">' +
                '<div class="note-control-selection">' +
@@ -4053,6 +4086,9 @@
       });
     };
 
+    // odoo hack: allow to overwrite the methods
+    this.createPalette = createPalette;
+
     /**
      * create summernote layout (air mode)
      *
@@ -4074,12 +4110,12 @@
       var body = document.body;
 
       // create Popover
-      var $popover = $(tplPopovers(langInfo, options));
+      var $popover = $(this.tplPopovers(langInfo, options)); // hack odoo to overwrite tplPopovers
       $popover.addClass('note-air-layout');
       $popover.attr('id', 'note-popover-' + id);
       $popover.appendTo(body);
       createTooltip($popover, keyMap);
-      createPalette($popover, options);
+      this.createPalette($popover, options); // hack odoo to overwrite tplPopovers
 
       // create Handle
       var $handle = $(tplHandles());
@@ -4152,12 +4188,12 @@
 
       var $toolbar = $(sToolbar).prependTo($editor);
       var keyMap = options.keyMap[agent.isMac ? 'mac' : 'pc'];
-      createPalette($toolbar, options);
+      this.createPalette($toolbar, options); // hack odoo to overwrite tplPopovers
       createTooltip($toolbar, keyMap, 'bottom');
 
       //05. create Popover
-      var $popover = $(tplPopovers(langInfo, options)).prependTo($editor);
-      createPalette($popover, options);
+      var $popover = $(this.tplPopovers(langInfo, options)).prependTo($editor); // hack odoo to overwrite tplPopovers
+      this.createPalette($popover, options); // hack odoo to overwrite tplPopovers
       createTooltip($popover, keyMap);
 
       //06. handle(control selection, ...)

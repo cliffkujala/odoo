@@ -30,960 +30,26 @@
     var renderer = $.summernote.objects.renderer;
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /* Add method to Summernote
-    * merge:
-    *  - for every node (text or not) when mergeFilter return true by default mergeFilter is dom.mergeFilter
-    *  - return {merged, sc, so, ec, eo}
-    * removeSpace:
-    *  - remove space but keep html space char (&nbsp;) ans all space in 'script' tag and node with 'pre' style
-    *  - return {merged, sc, so, ec, eo}
-    * pasteText:
-    *  - paste text and convert into different 'p' tag .
-    *  - Close the dom.pasteTextClose list for the parent node of the caret
-    *  - All line are converted as 'p' tag by default or by parent node of the caret if the tag is a dom.pasteTextApply
-    * reRange:
-    *  - change the selected range in function off the reRangeFilter to don't break the dom items
-    */
-
-    dom.orderClass = function (node) {
-        if (!node.className) return;
-        var className = node.className.replace(/^\s+|\s+$/g, '').replace(/[\s\n\r]+/g, ' ').split(" ");
-        if (!className.length) {
-            node.removeAttribute("class");
-            return;
-        }
-        className.sort();
-        node.className = className.join(" ");
-    };
-    dom.isEqual = function (prev, cur) {
-        if (prev.tagName !== cur.tagName) {
-            return false;
-        }
-        if ((prev.attributes ? prev.attributes.length : 0) !== (cur.attributes ? cur.attributes.length : 0)) {
-            return false;
-        }
-
-        function strip(text) {
-            return text && text.replace(/^\s+|\s+$/g, '').replace(/\s+/g, ' ');
-        }
-        var att, att2;
-        loop_prev:
-        for(var a in prev.attributes) {
-            att = prev.attributes[a];
-            for(var b in cur.attributes) {
-                att2 = cur.attributes[b];
-                if (att.name === att2.name) {
-                    if (strip(att.value) != strip(att2.value)) return false;
-                    continue loop_prev;
-                }
-            }
-            return false;
-        }
-        return true;
-    };
-    dom.mergeFilter = function (prev, cur) {
-        if (prev && !prev.tagName && !cur.tagName) {
-            return true;
-        }
-        if (prev && !cur.tagName && !cur.textContent.match(/\S/) && (!prev.tagName || prev.textContent.match(/\S/))) {
-            return true;
-        }
-        if (prev && dom.isEqual(prev, cur) &&
-            ((prev.tagName && "inline".indexOf(window.getComputedStyle(prev).display) !== -1 &&
-              cur.tagName && "inline".indexOf(window.getComputedStyle(cur).display) !== -1))) {
-            return true;
-        }
-        if (cur.tagName === "FONT" && !cur.attributes.getNamedItem('style')) {
-            return true;
-        }
-        if (cur.tagName === "SPAN" && !cur.className) {
-            return true;
-        }
-    };
-    dom.doMerge = function (prev, cur) {
-        if (prev.tagName) {
-            if (cur.tagName) {
-                while (cur.firstChild) {
-                    prev.appendChild(cur.firstChild);
-                }
-                cur.parentNode.removeChild(cur);
-            } else {
-                prev.appendChild(cur);
-            }
-        } else {
-            if (cur.tagName) {
-                var deep = cur;
-                while (deep.tagName && deep.firstChild) {deep = deep.firstChild;}
-                prev.appendData(deep.textContent);
-                cur.parentNode.removeChild(cur);
-            } else {
-                prev.appendData(cur.textContent);
-                cur.parentNode.removeChild(cur);
-            }
-        }
-    };
-    dom.merge = function (node, begin, so, end, eo, mergeFilter, all) {
-        mergeFilter = mergeFilter || dom.mergeFilter;
-        var _merged = false;
-        var add = all || false;
-
-        if (!begin) {
-            begin = node;
-            while(begin.firstChild) {begin = begin.firstChild;}
-            so = 0;
-        }
-        if (!end) {
-            end = node;
-            while(end.lastChild) {end = end.lastChild;}
-            eo = end.textContent.length-1;
-        }
-
-        while (begin && begin.tagName && begin.firstChild) {begin = begin.firstChild;}
-        while (end && end.tagName && begin.firstChild) {end = end.firstChild;}
-
-        (function __merge (node) {
-            var merged = false;
-            var prev;
-            for (var k=0; k<node.childNodes.length; k++) {
-                var cur = node.childNodes[k];
-
-                if (cur === begin) {
-                    if (!all) add = true;
-                }
-                
-                __merge(cur);
-                dom.orderClass(cur);
-
-                if (!add || !cur) continue;
-                if (cur === end) {
-                    if (!all) add = false;
-                }
-
-                // create the first prev value
-                if (!prev) {
-                    if (mergeFilter.call(dom, prev, cur)) {
-                        for (var i=0; i<cur.childNodes.length; i++) {
-                            cur.parentNode.insertBefore(cur.childNodes[i], cur);
-                            k--;
-                        }
-                        cur.parentNode.removeChild(cur);
-                    }
-                    prev = cur;
-                    continue;
-                }
-
-                // merge nodes
-                if (mergeFilter.call(dom, prev, cur)) {
-                    var p = prev;
-                    var c = cur;
-                    // compute prev/end and offset
-                    if (prev.tagName) {
-                        if (cur.tagName) {
-                            if (cur === begin) begin = prev;
-                            if (cur === end) end = prev;
-                        }
-                    } else {
-                        if (cur.tagName) {
-                            var deep = cur;
-                            while (deep.tagName && deep.lastChild) {deep = deep.lastChild;}
-                            if (deep === begin) {
-                                so += prev.textContent.length;
-                                begin = prev;
-                            }
-                            if (deep === end) {
-                                eo += prev.textContent.length;
-                                end = prev;
-                            }
-                        } else {
-                            // merge text nodes
-                            if (cur === begin) {
-                                so += prev.textContent.length;
-                                begin = prev;
-                            }
-                            if (cur === end) {
-                                eo += prev.textContent.length;
-                                end = prev;
-                            }
-                        }
-                    }
-
-                    dom.doMerge(p, c);
-
-                    merged = true;
-                    k--;
-                    continue;
-                }
-
-                prev = cur;
-            }
-
-            // an other loop to merge the new shibbing nodes
-            if (merged) {
-                _merged = true;
-                __merge(node);
-            }
-        })(node);
-
-        return {
-            merged: _merged,
-            sc: begin,
-            ec: end,
-            so: so,
-            eo: eo
-        };
-    };
-    dom.removeSpace = function (node, begin, so, end, eo) {
-        var removed = false;
-        var offsetEnd = end && (end.textContent.length - eo);
-        var add = node === begin;
-
-        (function __remove_space (node) {
-            if (!node) return;
-            for (var k=0; k<node.childNodes.length; k++) {
-                var cur = node.childNodes[k];
-
-                if (cur === begin) add = true;
-
-                if (cur.tagName && cur.tagName !== "SCRIPT" && cur.tagName !== "STYLE" && window.getComputedStyle(cur).whiteSpace !== "pre") {
-                    __remove_space(cur);
-                }
-
-                if (!add) continue;
-                if (cur === end) add = false;
-
-                // remove begin empty text node
-                if (node.childNodes.length > 1 && !cur.tagName && !cur.textContent.match(/\S/)) {
-                    removed = true;
-                    if (cur === begin) {
-                        so -= cur.textContent.length;
-                        begin = cur.parentNode;
-                    }
-                    if (cur === end) {
-                        offsetEnd = 0;
-                        end = cur.parentNode;
-                    }
-                    cur.parentNode.removeChild(cur);
-                    while (begin.tagName && begin.lastChild) {begin = begin.lastChild;}
-                    while (end.tagName && end.lastChild) {end = end.lastChild;}
-                    k--;
-                    continue;
-                }
-
-                // convert HTML space
-                if (!cur.tagName) {
-                    var text;
-                    var exp1 = /[\t\n\r ]+/g;
-                    var exp2 = /(?!([ ]|\u00A0)|^)\u00A0(?!([ ]|\u00A0)|$)/g;
-                    if (cur === begin) {
-                        var temp = cur.textContent.substr(0, so);
-                        var _temp = temp.replace(exp1, ' ').replace(exp2, ' ');
-                        so -= temp.length - _temp.length;
-                    }
-                    if (cur === end) {
-                        var temp = cur.textContent.substr(-offsetEnd, cur.textContent.length);
-                        var _temp = temp.replace(exp1, ' ').replace(exp2, ' ');
-                        offsetEnd -= temp.length - _temp.length;
-                    }
-                    var text = cur.textContent.replace(exp1, ' ').replace(exp2, ' ');
-                    removed = removed || cur.textContent.length !== text.length;
-                    cur.textContent = text;
-                }
-            }
-        })(node);
-
-        return {
-            removed: removed,
-            sc: begin,
-            ec: end,
-            so: so > 0 ? so : 0,
-            eo: end && end.textContent.length > offsetEnd ? end.textContent.length - offsetEnd : 0
-        };
-    };
-    dom.pasteTextApply = "h1 h2 h3 h4 h5 h6 li".split(" ");
-    dom.pasteTextClose = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li pre".split(" ");
-    dom.pasteText = function (textNode, offset, text, isOnlyText) {
-        // clean the node
-        var data = dom.merge(textNode.parentElement.parentElement, textNode, offset, textNode, offset, null, true);
-        var node = textNode.parentNode;
-        data = dom.removeSpace(textNode.parentElement.parentElement, data.sc, data.so, data.ec, data.eo);
-        while(!node.tagName) {node = node.parentNode;}
-        // Break the text node up
-        if (data.sc.tagName) {
-            if (data.sc.tagName.toLowerCase() === "br") {
-                data.sc = data.sc.parentNode.insertBefore(document.createTextNode(" "), data.sc);
-            } else if (data.sc.firstChild) {
-                data.sc = data.sc.insertBefore(document.createTextNode(" "), data.sc.firstChild);
-            } else {
-                data.sc = data.sc.appendChild(document.createTextNode(" "));
-            }
-            data.so = 0;
-        }
-        data.sc.splitText(data.so);
-        node = data.sc.parentNode;
-        var first = data.sc;
-        var last = data.sc.nextSibling;
-
-        isOnlyText = isOnlyText || !text.match('\n');
-        
-        if (!isOnlyText) {
-            // tag to close and open
-            var tag = node.tagName.toLowerCase();
-            if(dom.pasteTextApply.indexOf(tag) === -1) {
-                text = "<p>"+text.split('\n').join("</p><p>")+"</p>";
-            } else {
-                text = "<"+tag+">"+text.split('\n').join("</"+tag+"><"+tag+">")+"</"+tag+">";
-            }
-
-            var $text = $(text);
-
-            // split parent node and insert text
-            if(dom.pasteTextClose.indexOf(tag) !== -1) {
-                var $next = $(node).clone().empty();
-                $next.append( last );
-                $(node).after( $next );
-                $(node).after( $text );
-            } else {
-                $(data.sc).after( $text );
-            }
-        } else {
-            first.appendData( text );
-        }
-
-        // clean the dom content
-        data = dom.merge(node.parentElement.parentElement, last, 0, last, 0, null, true);
-        data = dom.removeSpace(node.parentElement.parentElement, data.sc, data.so, data.ec, data.eo);
-
-        // move caret
-        range.create(data.sc, data.so, data.ec, data.eo).select();
-    };
-
-    var fn_rc = range.create;
-    range.create = function (sc, so, ec, eo) {
-        var wrappedRange = fn_rc.apply(this, arguments);
-        if (!wrappedRange) return;
-        wrappedRange.clean = function (mergeFilter) {
-            var node = this.sc === this.ec ? this.sc : this.commonAncestor();
-            if (node.childNodes.length <=1) {
-                return this;
-            }
-
-            var merge = dom.merge(node, this.sc, this.so, this.ec, this.eo, mergeFilter);
-            var rem = dom.removeSpace(node, this.sc, merge.so, this.ec, merge.eo);
-
-            if (merge.merged || rem.removed) {
-                return range.create(rem.sc, rem.so, merge.ec, rem.eo);
-            }
-            return this;
-        };
-        return wrappedRange;
-    };
-    range.reRangeFilter = function () { return true; };
-    range.reRange = function (sc, so, ec, eo, keep_end) {
-        // search the first snippet editable node
-        var start = keep_end ? ec : sc;
-        while (start) {
-            if ($(start).filter(range.reRangeFilter).length) {
-                break;
-            }
-            start = start.parentNode;
-        }
-
-        // check if the end caret have the same node
-        var lastFilterEnd;
-        var end = keep_end ? sc : ec;
-        while (end) {
-            if (start === end) {
-                break;
-            }
-            if ($(end).filter(range.reRangeFilter).length) {
-                lastFilterEnd = end;
-            }
-            end = end.parentNode;
-        }
-        if (lastFilterEnd) {
-            end = lastFilterEnd;
-        }
-        if (!end) {
-            end = document.getElementsByTagName('body')[0];
-        }
-
-        // if same node, keep range
-        if (start === end || !start) {
-            return range.create(sc, so, ec, eo);
-        }
-
-        // reduce or extend the range to don't break a reRangeFilter area
-        if ($.contains(start, end)) {
-
-            if (keep_end) {
-                while (!end.previousElementSibling) {
-                    end = end.parentNode;
-                }
-                sc = end.previousElementSibling;
-                while (sc.lastChild) {
-                    sc = sc.lastChild;
-                }
-                so = sc.textContent.length;
-            } else {
-                while (!end.nextElementSibling) {
-                    end = end.parentNode;
-                }
-                ec = end.nextElementSibling;
-                while (ec.firstChild) {
-                    ec = ec.firstChild;
-                }
-                eo = 0;
-            }
-        } else {
-
-            if (keep_end) {
-                sc = start;
-                while (sc.firstChild) {
-                    sc = sc.firstChild;
-                }
-                so = 0;
-            } else {
-                ec = start;
-                while (ec.lastChild) {
-                    ec = ec.lastChild;
-                }
-                eo = ec.textContent.length;
-            }
-        }
-
-        return range.create(sc, so, ec, eo);
-    };
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /* add some text commands */
-
-    key.nameFromCode[46] = 'DELETE';
-    key.nameFromCode[27] = 'ESCAPE';
-
-    settings.options.keyMap.pc['BACKSPACE'] = 'backspace';
-    settings.options.keyMap.pc['DELETE'] = 'delete';
-    settings.options.keyMap.pc['ENTER'] = 'enter';
-    settings.options.keyMap.pc['ESCAPE'] = 'cancel';
-
-    settings.options.keyMap.mac['BACKSPACE'] = 'backspace';
-    settings.options.keyMap.mac['CMD+BACKSPACE'] = 'delete';
-    settings.options.keyMap.mac['ENTER'] = 'enter';
-    settings.options.keyMap.mac['ESCAPE'] = 'cancel';
-
-    function clean_dom_onkeydown () {
-        setTimeout(function () {
-            var r = range.create();
-            if (!r) return;
-            var parent = r.sc.parentElement.parentElement;
-            r = dom.merge(parent, r.sc, r.so, r.sc, r.so, null, true);
-            r = dom.removeSpace(parent, r.sc, r.so, r.sc, r.so);
-            if (r.ec.tagName === "BR") {
-                r.sc = r.ec = r.sc.previousSibling || r.sc.parentNode;
-            }
-            r.eo = r.eo > r.ec.textContent.length ? r.ec.textContent.length : r.eo;
-            if (r.so > r.eo) r.so = r.eo;
-            range.create(r.sc, r.so, r.ec, r.eo).select();
-        },0);
-    }
-    
-    var mergeOnDelete = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li a ul ol".split(" ");
-    var forbiddenWrite = ".fa img".split(" ");
-
-    eventHandler.editor.tab = function ($editable, options, outdent) {
-        var r = range.create();
-        var outdent = outdent || false;
-
-        if (r.isCollapsed()) {
-            if (r.isOnCell()) {
-                this.table.tab(r, outdent);
-                return false;
-            }
-            if (r.so) {
-                if (!outdent){
-                    var next = r.sc.splitText(r.so);
-                    this.insertTab($editable, r, options.tabsize);
-                    r = range.create(next, 0, next, 0);
-                    r = dom.merge(r.sc.parentNode, r.sc, r.so, r.ec, r.eo, null, true);
-                    range.create(r.sc, r.so, r.ec, r.eo).select();
-                } else {
-                    r = dom.merge(r.sc.parentNode, r.sc, r.so, r.ec, r.eo, null, true);
-                    r = range.create(r.sc, r.so, r.ec, r.eo);
-                    var next = r.sc.splitText(r.so);
-                    r.sc.textContent = r.sc.textContent.replace(/(\u00A0)+$/g, '');
-                    next.textContent = next.textContent.replace(/^(\u00A0)+/g, '');
-                    range.create(r.sc, r.sc.textContent.length, r.sc, r.sc.textContent.length).select();
-                }
-                return false;
-            }
-        }
-
-        if (outdent) {
-            this.outdent($editable);
-        } else {
-            this.indent($editable);
-        }
-    };
-    eventHandler.editor.untab = function ($editable, options) {
-        var r = range.create();
-        if (r.isCollapsed() && r.isOnCell()) {
-            this.table.tab(r, true);
-        }
-        this.tab($editable, options, true);
-    };
-    eventHandler.editor.enter = function ($editable, options) {
-        $editable.data('NoteHistory').recordUndo($editable, "visible");
-        
-        var r = range.create();
-        if (!r.isCollapsed()) {
-            return false;
-        }
-
-        if (!r.sc.tagName) return true;
-        var $node = $(r.sc);
-        var clone = $node.clone()[0];
-        $node.after(clone);
-        range.createFromNode(clone).select();
-    };
-    eventHandler.editor.visible = function ($editable, options) {
-        $editable.data('NoteHistory').recordUndo($editable, "visible");
-        
-        var r = range.create();
-        var node = r.sc;
-        var needChange = false;
-        while (node.parentNode) {
-            if ($(node).is(forbiddenWrite.join(","))) {
-                needChange = true;
-                break;
-            }
-            node = node.parentNode;
-        }
-
-        if (needChange) {
-            var text = node.previousSibling;
-            if (text && !text.tagName && text.textContent.match(/\S/)) {
-                range.create(text, text.textContent.length, text, text.textContent.length).select();
-            } else {
-                text = node.parentNode.insertBefore(document.createTextNode( "_ " ), node);
-                range.create(text, 0, text, 0).select();
-                setTimeout(function () {
-                    var text = range.create().sc;
-                    text.textContent = text.textContent.replace(/_ $/, ' ');
-                    range.create(text, text.textContent.length-1, text, text.textContent.length-1).select();
-                },0);
-            }
-        }
-        return true;
-    };
-    eventHandler.editor.delete = function ($editable, options) {
-        $editable.data('NoteHistory').recordUndo($editable, "delete");
-        
-        var r = range.create();
-        if (!r || !r.isCollapsed()) {
-            return true;
-        }
-        var node = r.ec;
-        while (!node.nextSibling && !node.previousSibling) {node = node.parentNode;}
-        
-        var content = r.ec.textContent.replace(/\s+$/, '');
-
-        // empty tag
-        if (r.sc===r.ec && !content.length && node.nextSibling) {
-            var next = node.nextSibling;
-            while (next.tagName && next.firstChild) {next = next.firstChild;}
-            node.parentNode.removeChild(node);
-            range.create(next, 0, next, 0).select();
-        }
-        // normal feature if same tag and not the end
-        else if (r.sc===r.ec && r.eo<content.length && content.match(/\S/)) return true;
-        // merge with the next text node
-        else if (r.ec.nextSibling && !r.ec.nextSibling.tagName) return true;
-        // jump to next node for delete
-        else if (r.sc.nextSibling) {
-            node = r.sc.nextSibling;
-            while (node.firstChild) {
-                node = node.firstChild;
-            }
-            r = range.create(node, node.textContent.length, node, node.textContent.length);
-            r.select();
-            return this.delete($editable, options);
-        }
-        //merge with the next block
-        else if (r.isCollapsed() && r.eo>=content.length && mergeOnDelete.indexOf(r.ec.parentNode.tagName.toLowerCase()) !== -1) {
-
-            summernote_keydown_clean("ec");
-            var next = r.ec.parentNode.nextElementSibling;
-            var style = window.getComputedStyle(next);
-
-            if (next && (r.sc.parentNode.tagName === next.tagName || style.display !== "block" || !parseInt(style.height))) {
-
-                dom.doMerge(r.sc.parentNode, next);
-                range.create(r.sc, r.so, r.sc, r.so).select();
-
-            } else {
-                var check = false;
-                var node = r.sc;
-                var nodes = [node];
-
-                do {
-                    nodes.push(node);
-                    node = node.parentNode;
-                    if (node.nextElementSibling) {
-                        if (node.nextElementSibling.tagName === node.tagName) {
-                            nodes.push(node);
-                        }
-                        break;
-                    }
-                }  while (node && mergeOnDelete.indexOf(node.tagName.toLowerCase()) !== -1);
-
-                while (nodes.length) {
-                    node = nodes.pop();
-                    if (node && node.nextElementSibling && node.nextElementSibling.tagName === node.tagName) {
-                        dom.doMerge(node, node.nextElementSibling);
-                    }
-                }
-                range.create(r.ec, r.ec.textContent.length, r.ec, r.ec.textContent.length).select();
-            }
-        }
-        clean_dom_onkeydown();
-        return false;
-    };
-    eventHandler.editor.backspace = function ($editable, options) {
-        $editable.data('NoteHistory').recordUndo($editable, "backspace");
-
-        var r = range.create();
-        if (!r || !r.isCollapsed()) {
-            return true;
-        }
-        var node = r.sc;
-        while (!node.nextSibling && !node.previousSibling) {node = node.parentNode;}
-        
-        // empty tag
-        if (r.sc===r.ec && !r.sc.textContent.replace(/\s+$/, '').length && node.previousSibling) {
-            var next = node.previousSibling;
-            while (next.tagName && next.lastChild) {next = next.lastChild;}
-            node.parentNode.removeChild(node);
-            range.create(next, next.textContent.length, next, next.textContent.length).select();
-        }
-        // normal feature if same tag and not the begin
-        else if (r.sc===r.ec && r.so || r.eo) return true;
-        // merge with the previous text node
-        else if (r.sc.previousSibling && !r.sc.previousSibling.tagName) return true;
-        // jump to previous node for delete
-        else if (r.sc.previousSibling) {
-            node = r.sc.previousSibling;
-            while (node.lastChild) {
-                node = node.lastChild;
-            }
-            r = range.create(node, node.textContent.length, node, node.textContent.length);
-            r.select();
-            return this.backspace($editable, options);
-        }
-        //merge with the previous block
-        else if (r.isCollapsed() && !r.eo && mergeOnDelete.indexOf(r.sc.parentNode.tagName.toLowerCase()) !== -1) {
-
-            summernote_keydown_clean("sc");
-            var prev = r.sc.parentNode.previousElementSibling;
-            var style = window.getComputedStyle(prev);
-
-            if (prev && (r.sc.parentNode.tagName === prev.tagName || style.display !== "block" || !parseInt(style.height))) {
-
-                dom.doMerge(prev, r.sc.parentNode);
-                range.create(r.sc, 0, r.sc, 0).select();
-
-            } else {
-                var check = false;
-                var node = r.sc;
-                var nodes = [node];
-
-                do {
-                    nodes.push(node);
-                    node = node.parentNode;
-                    if (node.previousElementSibling) {
-                        if (node.previousElementSibling.tagName === node.tagName) {
-                            nodes.push(node);
-                        }
-                        break;
-                    }
-                }  while (node && mergeOnDelete.indexOf(node.tagName.toLowerCase()) !== -1);
-
-                while (nodes.length) {
-                    node = nodes.pop();
-                    if (node && node.previousElementSibling && node.previousElementSibling.tagName === node.tagName) {
-                        dom.doMerge(node.previousElementSibling, node);
-                    }
-                }
-                range.create(r.sc, 0, r.sc, 0).select();
-            }
-        }
-
-        clean_dom_onkeydown();
-        return false;
-    };
-    var fn_editor_fontSize = eventHandler.editor.fontSize;
-    eventHandler.editor.fontSize = function ($editable, sValue) {
-        fn_editor_fontSize.call(this, $editable, sValue);
-        var r = range.create();
-        var ancestor = dom.commonAncestor(r.sc, r.ec);
-        var $fonts = $(ancestor).find('font, span');
-        if (!$fonts.length) {
-            $fonts = $(ancestor).closest('font, span');
-        }
-
-        $fonts.each(function () {
-            $(this).removeAttr('size');
-
-            $(this).css('font-size', parseInt(window.getComputedStyle(this).fontSize) != sValue ? sValue + 'px' : null);
-        });
-
-        r = dom.merge($fonts.parent()[0], r.sc, r.so, r.ec, r.eo, null, true);
-        range.create(r.sc, r.so, r.ec, r.eo).select();
-    };
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /* add list command (create a uggly dom for chrome) */
-
-    function isFormatNode(node) {
-        return node.tagName && settings.options.styleTags.indexOf(node.tagName.toLowerCase()) !== -1;
-    }
-
-    eventHandler.editor.insertUnorderedList = function ($editable, sorted) {
-        history.recordUndo($editable);
-
-        var rng = range.create();
-        var node = rng.sc;
-        while (node && node !== $editable[0]) {
-            if (node.tagName === (sorted ? "UL" : "OL")) {
-
-                var ul = document.createElement(sorted ? "ol" : "ul");
-                ul.className = node.className;
-                node.parentNode.insertBefore(ul, node);
-                while (node.firstChild) {
-                    ul.appendChild(node.firstChild);
-                }
-                node.parentNode.removeChild(node);
-                rng.select();
-                return;
-
-            } else if (node.tagName === (sorted ? "OL" : "UL")) {
-
-                var lis = $(node).find("li").get();
-                _.each(lis, function (li) {
-                    while (li.firstChild) {
-                        node.parentNode.insertBefore(li.firstChild, node);
-                    }
-                });
-                node.parentNode.removeChild(node);
-                rng.select();
-                return;
-
-            }
-            node = node.parentNode;
-        }
-
-        var p0 = rng.sc;
-        while (p0 && p0 !== $editable[0] && !isFormatNode(p0)) {
-            p0 = p0.parentNode;
-        }
-        if (!p0) return;
-        var p1 = rng.ec;
-        while (p1 && p1 !== $editable[0] && !isFormatNode(p1)) {
-            p1 = p1.parentNode;
-        }
-        if (p0.parentNode !== p1.parentNode) return;
-
-        var parent = p0.parentNode;
-        var ul = document.createElement(sorted ? "ol" : "ul");
-        var childNodes = parent.childNodes;
-        parent.insertBefore(ul, p0);
-        for (var i=0; i<childNodes.length; i++) {
-            if (!isFormatNode(childNodes[i]) || (!ul.firstChild && childNodes[i] !== p0)) {
-                continue;
-            }
-            var li = document.createElement('li');
-            ul.appendChild(li);
-            li.appendChild(childNodes[i]);
-            if (li.firstChild === p1) {
-                break;
-            }
-            i--;
-        }
-        rng.select();
-    };
-    eventHandler.editor.insertOrderedList = function ($editable) {
-        this.insertUnorderedList($editable, true);
-    };
-    eventHandler.editor.indent = function ($editable, outdent) {
-        history.recordUndo($editable);
-        var r = range.create();
-
-        var flag = false;
-        function indentUL (UL, start, end) {
-            var tagName = UL.tagName;
-            var className = UL.className;
-            var node = UL.firstChild;
-            var ul = UL;
-            var li;
-
-            // search the first
-            while (node && !flag) {
-                if (node === start || $.contains(node, start)) {
-                    flag = true;
-                    break;
-                }
-                node = node.nextElementSibling;
-            }
-
-            if (!flag) {
-                return;
-            }
-
-            // add li into the indented ul
-            if (node.previousElementSibling) {
-                ul = document.createElement(tagName);
-
-                while (node && flag) {
-                    li = node;
-                    node = node.nextElementSibling;
-                    if (li === end || $.contains(li, end)) {
-                        ul.appendChild(li);
-                        flag = false;
-                        break;
-                    }
-                    ul.appendChild(li);
-                }
-                if (UL.nextSibling) {
-                    UL.parentNode.insertBefore(ul, UL.nextSibling);
-                } else {
-                    UL.parentNode.appendChild(ul);
-                }
-            } else {
-                while (node) {
-                    li = node;
-                    node = node.nextElementSibling;
-                    if (li === end || $.contains(li, end)) {
-                        flag = false;
-                        break;
-                    }
-                }
-            }
-
-            if (className.length) {
-                ul.className = className.replace(/indent([0-9])/, function (a,b,c) {
-                        var num = (b ? +b : 0 ) + (outdent ? -1 : 1);
-                        return 'indent' + (num < 0 ? 0 : (num > 6 ? 6 : num));
-                    }).replace(/\s*indent0/, '');
-
-                if (!ul.className.length) {
-                    ul.removeAttribute("class");
-                }
-            } else {
-                ul.className += ' indent1';
-            }
-
-            // insert the rest of the non-indented ul
-            if (node) {
-                var UL2 = document.createElement(tagName);
-                if (className.length) {
-                    UL2.className = className;
-                } else {
-                    UL2.removeAttribute("class");
-                }
-
-                while (node) {
-                    li = node;
-                    node = node.nextElementSibling;
-                    UL2.appendChild(li);
-                }
-
-                if (ul.nextElementSibling) {
-                    ul.parentNode.insertBefore(UL2, ul.nextSibling);
-                } else {
-                    ul.parentNode.appendChild(UL2);
-                }
-            }
-        }
-        function indentOther (dom, start, end) {
-            flag = true;
-            if (dom.className.match(/indent([0-9])/)) {
-                dom.className = dom.className.replace(/indent([0-9])/, function (a,b,c) {
-                    var num = (b ? +b : 0 ) + (outdent ? -1 : 1);
-                    if (!num) return "";
-                    return 'indent' + (num > 6 ? 6 : num);
-                });
-            } else if(!outdent) {
-                dom.className = (dom.className || "") + ' indent1';
-            }
-            if ($.contains(dom, end)) {
-                flag = false;
-            }
-        }
-
-        var ancestor = dom.commonAncestor(r.sc, r.ec);
-        var $dom = $(ancestor);
-
-        if (!$(ancestor).is("ul, ol")) {
-            $dom = $(ancestor).children();
-        }
-        if (!$dom.length) {
-            $dom = $(r.sc).closest("ul, ol");
-            if (!$dom.length) {
-                $dom = $(r.sc).closest(settings.options.styleTags.join(','));
-            }
-        }
-
-        $dom.each(function () {
-            if (flag || $.contains(this, r.sc)) {
-                if (this.tagName === "UL" || this.tagName === "OL") {
-                    indentUL(this, r.sc, r.ec);
-                } else if (isFormatNode(this)) {
-                    indentOther(this, r.sc, r.ec);
-                }
-            }
-        });
-
-        if ($dom.length) {
-            var $parent = $dom.parent();
-
-            // remove text nodes between lists
-            var $ul = $parent.find('ul, ol');
-            if (!$ul.length) {
-                $ul = $(r.sc).closest("ul, ol");
-            }
-            $ul.each(function () {
-                if (this.previousSibling &&
-                    this.previousSibling !== this.previousElementSibling &&
-                    !this.previousSibling.textContent.match(/\S/)) {
-                    this.parentNode.removeChild(this.previousSibling);
-                }
-                if (this.nextSibling &&
-                    this.nextSibling !== this.nextElementSibling &&
-                    !this.nextSibling.textContent.match(/\S/)) {
-                    this.parentNode.removeChild(this.nextSibling);
-                }
-            });
-
-            // merge same ul or ol
-            r = dom.merge($parent[0], r.sc, r.so, r.ec, r.eo, function (prev, cur) {
-                    if (prev && (prev.tagName === "UL" || prev.tagName === "OL") && dom.isEqual(prev, cur)) {
-                        return true;
-                    }
-                }, true);
-            range.create(r.sc, r.so, r.ec, r.eo).select();
-        }
-    };
-    eventHandler.editor.outdent = function ($editable) {
-        this.indent($editable, true);
-    };
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////
     /* update and change the popovers content, and add history button */
 
-    var fn_handle_update = eventHandler.handle.update;
-    eventHandler.handle.update = function ($handle, oStyle, isAirMode) {
-        fn_handle_update.call(this, $handle, oStyle, isAirMode);
-        $handle.find('.note-control-selection').hide();
+    var fn_createPalette = renderer.createPalette;
+    renderer.createPalette = function ($container, options) {
+        fn_createPalette.call(this, $container, options);
+
+        var $color = $container.find('.note-color');
+        var html = openerp.qweb.render('website.colorpicker');
+        $color.find('.note-color-palette').prepend(html);
+        var $bg = $color.find('.colorpicker:first button');
+        var $fore = $color.find('.colorpicker:last button');
+
+        $bg.each(function () { $(this).attr('data-event', 'backColor').attr('data-value', $(this).attr('class')); });
+        $fore.each(function () { $(this).attr('data-event', 'foreColor').attr('data-value', $(this).attr('class').replace(/bg-/, 'text-')); });
     };
-    function summernote_popover_update ($popover) {
+    
+    var fn_tplPopovers = renderer.tplPopovers;
+    renderer.tplPopovers = function (lang, options) {
+        var $popover = $(fn_tplPopovers.call(this, lang, options));
+
         var $imagePopover = $popover.find('.note-image-popover');
         var $linkPopover = $popover.find('.note-link-popover');
         var $airPopover = $popover.find('.note-air-popover');
@@ -999,8 +65,12 @@
         $imagePopover.find('button[data-event="removeMedia"]').parent().remove();
         $imagePopover.find('button[data-event="floatMe"][data-value="none"]').remove();
 
+        var $alt = $('<div class="btn-group"/>');
+        $alt.prependTo($imagePopover.find('.popover-content'));
+        $alt.append('<button class="btn btn-default btn-sm btn-small" data-event="alt"><strong>Alt: </strong><span class="o_image_alt"></span></button>');
+
         // padding button
-        var $padding = $('<div class="o_undo btn-group"/>');
+        var $padding = $('<div class="btn-group"/>');
         $padding.insertBefore($imagePopover.find('.btn-group:first'));
         var $button = $(renderer.tplIconButton('fa fa-plus-square-o', {
                 title: _t('Padding'),
@@ -1011,10 +81,39 @@
         $ul.append('<li><a data-event="padding" href="#" data-value="small">'+_t('Small')+'</a></li>');
         $ul.append('<li><a data-event="padding" href="#" data-value="medium">'+_t('Medium')+'</a></li>');
         $ul.append('<li><a data-event="padding" href="#" data-value="large">'+_t('Large')+'</a></li>');
-        $ul.append('<li><a data-event="padding" href="#" data-value="xl">'+_t('xl')+'</a></li>');
+        $ul.append('<li><a data-event="padding" href="#" data-value="xl">'+_t('Xl')+'</a></li>');
 
-        // padding button
-        var $imageprop = $('<div class="o_image btn-group"/>');
+        // resize for fa
+        var $resizefa = $('<div class="btn-group hidden"/>')
+            .insertAfter($imagePopover.find('.btn-group:has([data-event="resize"])'));
+        $(renderer.tplButton('<span class="note-fontsize-10">1x</span>', {
+          title: "1x",
+          event: 'resizefa',
+          value: '1'
+        })).appendTo($resizefa);
+        $(renderer.tplButton('<span class="note-fontsize-10">2x</span>', {
+          title: "2x",
+          event: 'resizefa',
+          value: '2'
+        })).appendTo($resizefa);
+        $(renderer.tplButton('<span class="note-fontsize-10">3x</span>', {
+          title: "3x",
+          event: 'resizefa',
+          value: '3'
+        })).appendTo($resizefa);
+        $(renderer.tplButton('<span class="note-fontsize-10">4x</span>', {
+          title: "4x",
+          event: 'resizefa',
+          value: '4'
+        })).appendTo($resizefa);
+        $(renderer.tplButton('<span class="note-fontsize-10">5x</span>', {
+          title: "5x",
+          event: 'resizefa',
+          value: '5'
+        })).appendTo($resizefa);
+
+        // show dialog box and delete
+        var $imageprop = $('<div class="btn-group"/>');
         $imageprop.appendTo($imagePopover.find('.popover-content'));
         $(renderer.tplIconButton('fa fa-picture-o', {
                 title: _t('Edit'),
@@ -1025,54 +124,28 @@
                 event: 'delete'
             })).appendTo($imageprop);
 
+        $imagePopover.find('.popover-content').append($airPopover.find(".note-history").clone());
+
+        $imagePopover.find('[data-event="showImageDialog"]').before($linkPopover.find('[data-event="showLinkDialog"]').clone());
+        
+        //////////////// link popover
+
+        $linkPopover.find('.popover-content').append($airPopover.find(".note-history").clone());
+
         //////////////// text/air popover
 
-        var $para = $airPopover.find(".note-para");
-        var $parent = $('<div class="note-ul btn-group"/>').insertBefore($para);
-        var $button = $(renderer.tplIconButton('fa fa-list-ul', {
-                title: _t('List'),
-                dropdown: true
-            }))
-            .appendTo($parent);
-        var $div = $('<div class="dropdown-menu"><div class="note-li btn-group"/></div>').insertAfter($button);
-        $para.find('[data-event="insertUnorderedList"]').appendTo($div.children());
-        $para.find('[data-event="insertOrderedList"]').appendTo($div.children());
-        $para.find('div.note-list').appendTo($div);
-
         //// highlight the text format
-
         $airPopover.find('.note-style').on('mousedown', function () {
             var $format = $airPopover.find('[data-event="formatBlock"]');
-            var r = range.create();
-            var node = r.sc;
+            var node = range.create().sc;
             var formats = $format.map(function () { return $(this).data("value"); }).get();
             while (node && (!node.tagName || (!node.tagName || formats.indexOf(node.tagName.toLowerCase()) === -1))) {
                 node = node.parentNode;
             }
             $format.parent().removeClass('active');
-            $format.filter('[data-value="'+node.tagName.toLowerCase()+'"]')
+            $format.filter('[data-value="'+(node ? node.tagName.toLowerCase() : "p")+'"]')
                 .parent().addClass("active");
         });
-
-        //////////////// history Undo & Redo
-
-        var $prevnext = $('<div class="o_undo btn-group"/>');
-        var $prev = $(renderer.tplIconButton('fa fa-undo', {
-                title: _t('Undo'),
-                event: 'history',
-                value: 'previous'
-            }))
-            .appendTo($prevnext);
-        var $next = $(renderer.tplIconButton('fa fa-repeat', {
-                title: _t('Redo'),
-                event: 'history',
-                value: 'next'
-            }))
-            .appendTo($prevnext);
-
-        $imagePopover.find('.popover-content').append($prevnext);
-        $linkPopover.find('.popover-content').append($prevnext.clone());
-        $airPopover.find('.popover-content').append($prevnext.clone());
 
         //////////////// tooltip
 
@@ -1083,58 +156,84 @@
                 trigger: 'hover',
                 placement: 'bottom'
             }).on('click', function () {$(this).tooltip('hide');});
-    }
+
+        return $popover;
+    };
+
     var fn_boutton_update = eventHandler.popover.button.update;
     eventHandler.popover.button.update = function ($container, oStyle) {
         fn_boutton_update.call(this, $container, oStyle);
 
-        $container.find('[data-event]').parent().removeClass("active");
+        $container.find('button[data-event="undo"]').attr('disabled', !history.hasUndo());
+        $container.find('button[data-event="redo"]').attr('disabled', !history.hasRedo());
 
-        $container.find('a[data-event="padding"][data-value="small"]').parent().toggleClass("active", $(oStyle.image).hasClass("padding-small"));
-        $container.find('a[data-event="padding"][data-value="medium"]').parent().toggleClass("active", $(oStyle.image).hasClass("padding-medium"));
-        $container.find('a[data-event="padding"][data-value="large"]').parent().toggleClass("active", $(oStyle.image).hasClass("padding-large"));
-        $container.find('a[data-event="padding"][data-value="xl"]').parent().toggleClass("active", $(oStyle.image).hasClass("padding-xl"));
-        $container.find('a[data-event="padding"][data-value=""]').parent().toggleClass("active", !$container.find('.active a[data-event="padding"]').length);
+        if (oStyle.image) {
+            $container.find('[data-event]').parent().removeClass("active");
 
-        $container.find('button[data-event="resize"][data-value="1"]').toggleClass("active", $(oStyle.image).hasClass("img-responsive"));
-        $container.find('button[data-event="resize"][data-value="0.5"]').toggleClass("active", $(oStyle.image).hasClass("img-responsive-50"));
-        $container.find('button[data-event="resize"][data-value="0.25"]').toggleClass("active", $(oStyle.image).hasClass("img-responsive-25"));
+            $container.find('a[data-event="padding"][data-value="small"]').parent().toggleClass("active", $(oStyle.image).hasClass("padding-small"));
+            $container.find('a[data-event="padding"][data-value="medium"]').parent().toggleClass("active", $(oStyle.image).hasClass("padding-medium"));
+            $container.find('a[data-event="padding"][data-value="large"]').parent().toggleClass("active", $(oStyle.image).hasClass("padding-large"));
+            $container.find('a[data-event="padding"][data-value="xl"]').parent().toggleClass("active", $(oStyle.image).hasClass("padding-xl"));
+            $container.find('a[data-event="padding"][data-value=""]').parent().toggleClass("active", !$container.find('.active a[data-event="padding"]').length);
 
-        $container.find('button[data-event="floatMe"][data-value="left"]').toggleClass("active", $(oStyle.image).hasClass("pull-left"));
-        $container.find('button[data-event="floatMe"][data-value="center"]').toggleClass("active", $(oStyle.image).hasClass("center-block"));
-        $container.find('button[data-event="floatMe"][data-value="right"]').toggleClass("active", $(oStyle.image).hasClass("pull-right"));
+            if ($(oStyle.image).is(".fa")) {
+
+                $container.find('.btn-group:has(button[data-event="resize"])').addClass("hidden");
+                $container.find('.btn-group:has(button[data-event="resizefa"])').removeClass("hidden");
+                $container.find('button[data-event="resizefa"][data-value="2"]').toggleClass("active", $(oStyle.image).hasClass("fa-2x"));
+                $container.find('button[data-event="resizefa"][data-value="3"]').toggleClass("active", $(oStyle.image).hasClass("fa-3x"));
+                $container.find('button[data-event="resizefa"][data-value="4"]').toggleClass("active", $(oStyle.image).hasClass("fa-4x"));
+                $container.find('button[data-event="resizefa"][data-value="5"]').toggleClass("active", $(oStyle.image).hasClass("fa-5x"));
+                $container.find('button[data-event="resizefa"][data-value="1"]').toggleClass("active", !$container.find('.active[data-event="resizefa"]').length);
+                
+            } else {
+
+                $container.find('.btn-group:has(button[data-event="resizefa"])').addClass("hidden");
+                $container.find('.btn-group:has(button[data-event="resize"])').removeClass("hidden");
+                $container.find('button[data-event="resize"][data-value="1"]').toggleClass("active", $(oStyle.image).hasClass("img-responsive"));
+                $container.find('button[data-event="resize"][data-value="0.5"]').toggleClass("active", $(oStyle.image).hasClass("img-responsive-50"));
+                $container.find('button[data-event="resize"][data-value="0.25"]').toggleClass("active", $(oStyle.image).hasClass("img-responsive-25"));
+                
+            }
+
+            $container.find('button[data-event="floatMe"][data-value="left"]').toggleClass("active", $(oStyle.image).hasClass("pull-left"));
+            $container.find('button[data-event="floatMe"][data-value="center"]').toggleClass("active", $(oStyle.image).hasClass("center-block"));
+            $container.find('button[data-event="floatMe"][data-value="right"]').toggleClass("active", $(oStyle.image).hasClass("pull-right"));
+
+            $(oStyle.image).trigger('attributes_change');
+        }
     };
+
     var fn_popover_update = eventHandler.popover.update;
     eventHandler.popover.update = function ($popover, oStyle, isAirMode) {
         var $imagePopover = $popover.find('.note-image-popover');
         var $linkPopover = $popover.find('.note-link-popover');
         var $airPopover = $popover.find('.note-air-popover');
 
-        $popover.children().css('z-index', 1040);
-
         fn_popover_update.call(this, $popover, oStyle, isAirMode);
 
-        if (!$popover.data('loaded')) {
-            summernote_popover_update ($popover);
-            $popover.data('loaded', true);
-        }
-
-        $('.o_undo button:has(.fa-undo)').attr('disabled', !history.hasUndo());
-        $('.o_undo button:has(.fa-repeat)').attr('disabled', !history.hasRedo());
-
-        if (oStyle.range.sc.tagName === "IMG") {
-            oStyle.image = oStyle.range.sc;
+        if (!isAirMode || $(oStyle.range.sc).closest('[data-oe-model]:not([data-oe-model="ir.ui.view"]):not([data-oe-type="html"])').length) {
+            $imagePopover.hide();
+            $linkPopover.hide();
+            $airPopover.hide();
+            return;
         }
 
         if (oStyle.image) {
             if (oStyle.image.parentNode.className.match(/(^|\s)media_iframe_video(\s|$)/i)) {
                 oStyle.image = oStyle.image.parentNode;
             }
+            var alt =  $(oStyle.image).attr("alt");
+
+            $imagePopover.find('.o_image_alt').text( (alt || "").replace(/&quot;/g, '"') ).parent().toggle(oStyle.image.tagName === "IMG");
             $imagePopover.show();
-            range.create(oStyle.image,0,oStyle.image,0).select();
+
+            range.createFromNode(dom.firstChild(oStyle.image)).select();
+        } else {
+            $(".note-control-selection").hide();
         }
 
-        if (oStyle.anchor && ($airPopover.is(':visible') || (oStyle.image && !$(oStyle.image).closest('a').length))) {
+        if (oStyle.image || (!oStyle.range.isCollapsed() || (oStyle.range.sc.tagName && !dom.isAnchor(oStyle.range.sc)) || (oStyle.image && !$(oStyle.image).closest('a').length))) {
             $linkPopover.hide();
             oStyle.anchor = false;
         }
@@ -1146,28 +245,36 @@
         }
     };
 
+    eventHandler.handle.update = function ($handle, oStyle, isAirMode) {
+        $handle.toggle(!!oStyle.image);
+        var $selection = $handle.find('.note-control-selection');
+        var $image = $(oStyle.image);
+        var szImage = {
+          w: $image.outerWidth(true),
+          h: $image.outerHeight(true)
+        };
+        $selection.data('target', oStyle.image); // save current image element.
+        var sSizing = szImage.w + 'x' + szImage.h;
+        $selection.find('.note-control-selection-info').text(szImage.w > 50 ? sSizing : "");
+
+        $selection.find('.note-control-sizing').toggleClass('note-control-sizing note-control-holder').css({
+                'border-top': 0,
+                'border-left': 0
+            });
+    };
+
     $(document).on('click keyup', function () {
-        $('.o_undo button:has(.fa-undo)').attr('disabled', !history.hasUndo());
-        $('.o_undo button:has(.fa-repeat)').attr('disabled', !history.hasRedo());
+        $('button[data-event="undo"]').attr('disabled', !history.hasUndo());
+        $('button[data-event="redo"]').attr('disabled', !history.hasRedo());
     });
 
     eventHandler.editor.undo = function ($popover) {
         if(!$popover.attr('disabled')) history.undo();
+        return false;
     };
     eventHandler.editor.redo = function ($popover) {
         if(!$popover.attr('disabled')) history.redo();
-    };
-    eventHandler.editor.cancel = function ($popover) {
-        setTimeout(function () {
-            $('#website-top-navbar [data-action="cancel"]').click();
-            var $modal = $('.modal-content > .modal-body').parents(".modal:first");
-            $modal.off('keyup.dismiss.bs.modal');
-            setTimeout(function () {
-                $modal.on('keyup.dismiss.bs.modal', function () {
-                    $(this).modal('hide');
-                });
-            },500);
-        },0);
+        return false;
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1181,7 +288,7 @@
             $target.toggleClass('padding-'+sValue);
         }
         $target.removeClass("padding-" + paddings.join(" padding-"));
-        setTimeout(function () { $target.trigger("mouseup"); },0);
+        return false;
     };
     eventHandler.editor.resize = function ($editable, sValue, $target) {
         $editable.data('NoteHistory').recordUndo($editable);
@@ -1190,7 +297,15 @@
             case 0.5: $target.toggleClass('img-responsive-50').removeClass('img-responsive img-responsive-25'); break;
             case 0.25: $target.toggleClass('img-responsive-25').removeClass('img-responsive img-responsive-50'); break;
         }
-        setTimeout(function () { $target.trigger("mouseup"); },0);
+        return false;
+    };
+    eventHandler.editor.resizefa = function ($editable, sValue, $target) {
+        $editable.data('NoteHistory').recordUndo($editable);
+        $target.removeClass('fa-1x fa-2x fa-3x fa-4x fa-5x');
+        if (+sValue > 1) {
+            $target.addClass('fa-'+sValue+'x');
+        }
+        return false;
     };
     eventHandler.editor.floatMe = function ($editable, sValue, $target) {
         $editable.data('NoteHistory').recordUndo($editable);
@@ -1199,7 +314,7 @@
             case 'left': $target.toggleClass('pull-left').removeClass('pull-right center-block'); break;
             case 'right': $target.toggleClass('pull-right').removeClass('pull-left center-block'); break;
         }
-        setTimeout(function () { $target.trigger("mouseup"); },0);
+        return false;
     };
 
     eventHandler.dialog.showLinkDialog = function ($editable, $dialog, linkInfo) {
@@ -1210,6 +325,9 @@
         editor.on("save", this, function (linkInfo) {
             def.resolve(linkInfo);
             $('.note-popover .note-link-popover').show();
+            setTimeout(function () {
+                $(dom.node(linkInfo.range.sc)).trigger('keyup');
+            },0);
         });
         editor.on("cancel", this, function () { def.reject(); });
         return def;
@@ -1218,168 +336,215 @@
     eventHandler.editor.createLink = function ($editable, linkInfo, options) {
         var a = fn_editor_createLink.call(this, $editable, linkInfo, options);
         $(a).attr("class", linkInfo.className);
+        return false;
     };
     eventHandler.dialog.showImageDialog = function ($editable) {
-        var r = range.create();
+        var r = $editable.data('range');
+        if (r.sc.tagName && r.sc.childNodes.length) {
+            r.sc = r.sc.childNodes[r.so];
+        }
         var editor = new website.editor.MediaDialog($editable, dom.isImg(r.sc) ? r.sc : null);
         editor.appendTo(document.body);
         return new $.Deferred().reject();
+    };
+    eventHandler.editor.alt = function ($editable) {
+        var media = $editable.data('summernote').handle.find('.note-control-selection').data('target');
+        new website.editor.alt($editable, media).appendTo(document.body);
     };
 
     dom.isImg = function (node) {
         return node && (node.nodeName === "IMG" ||
             (node.nodeName === "SPAN" && node.className.match(/(^|\s)fa(-|\s|$)/i)) ||
             (node.className && node.className.match(/(^|\s)media_iframe_video(\s|$)/i)) ||
-            (node.parentNode.className && node.parentNode.className.match(/(^|\s)media_iframe_video(\s|$)/i)) );
+            (node.parentNode && node.parentNode.className && node.parentNode.className.match(/(^|\s)media_iframe_video(\s|$)/i)) );
+    };
+    dom.isForbiddenNode = function (node) {
+        return $(node).is(".media_iframe_video, .fa, img");
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /* attach event to Summernote
-    * paste:
-    *  - change the default feature of contentEditable
-    * mousedown:
-    *  - re-active snippet and carret
-    *  - display editor popover
-    */
+    /* fix ie and re-range to don't break snippet*/
 
-    function reRangeSelect (event) {
+    function reRangeSelectKey (event) {
+        if ((!event.keyCode || event.shiftKey) && !$(event.target).is("input, textarea, select")) {
+            var r = range.create();
+            if (r) {
+                r.reRange().select();
+            }
+        }
+    }
+
+    function reRangeSelect (event, dx, dy) {
         var r = range.create();
         if (!r || r.isCollapsed()) return;
 
         // check if the user move the caret on up or down
-        var ref = false;
-        var node = r.sc;
-        var parent = r.ec.parentNode;
-        while (node) {
-            if (parent === node) {
-                break;
-            }
-            if(event.target === node || event.target.parentNode === node) { /*check parent node for image, iframe and tag without child text node*/
-                ref = true;
-                break;
-            }
-            node = node.parentNode;
-        }
-
-        var data = range.reRange(r.sc, r.so, r.ec, r.eo, ref);
+        var data = r.reRange(dy < 0);
 
         if (data.sc !== r.sc || data.so !== r.so || data.ec !== r.ec || data.eo !== r.eo) {
             setTimeout(function () {
                 data.select();
+                $(data.sc.parentNode).closest('.note-popover');
             },0);
         }
 
         $(data.sc).closest('.o_editable').data('range', r);
         return r;
     }
-    function summernote_paste (event) {
-        // keep norma feature if copy a picture
-        var clipboardData = event.originalEvent.clipboardData;
-        if (clipboardData.items) {
-            var item = list.last(clipboardData.items);
-            var isClipboardImage = item.kind === 'file' && item.type.indexOf('image/') !== -1;
-            if (isClipboardImage) {
-                return true;
-            }
-        }
-
-        var $editable = $(event.currentTarget);
-        $editable.data('NoteHistory').recordUndo($editable);
-
-        event.preventDefault();
-        var r = range.create();
-        dom.pasteText(r.sc, r.so, clipboardData.getData("text/plain"));
-        return false;
-    }
-    function summernote_keydown_clean (field) {
-        setTimeout(function () {
-            var r = range.create();
-            var node = r[field];
-            while (!node.tagName) {node = node.parentNode;}
-            node = node.parentNode;
-            var data = dom.merge(node, r.sc, r.so, r.ec, r.eo, null, true);
-            data = dom.removeSpace(node, data.sc, data.so, data.sc, data.so);
-
-            range.create(data.sc, data.so, data.sc, data.so).select();
-        },0);
-    }
     var cursor_mousedown;
+    $(document).mousedown(function (event) {
+        cursor_mousedown = event;
+    });
     function summernote_mouseup (event) {
-        if ($(event.target).closest("#website-top-navbar, .note-popover, .o_undo").length) {
+        if ($(event.target).closest("#website-top-navbar, .note-popover").length) {
             return;
         }
         // don't rerange if simple click
-        if (!cursor_mousedown || 10 < Math.pow(cursor_mousedown.clientX-event.clientX, 2)+Math.pow(cursor_mousedown.clientY-event.clientY, 2) ) {
-            reRangeSelect(event);
-        }
-    }
-    function summernote_mousedown (event) {
-        cursor_mousedown = event;
-        var $btn = $(event.target).closest('.note-popover, .o_undo');
-        if ($btn.length) {
-            var r = range.create();
-            if (r) {
-              $(document).one('mouseup', function () {
-                setTimeout(function () {
-                    r = range.create() || r;
-                    var node = r.sc.tagName ? r.sc : r.sc.parentNode;
-                    $(node).trigger("mouseup");
-                    setTimeout(function () {
-                        r.select();
-                        $(node).trigger("keydown");
-                    },0);
-                },0);
-              });
+        if (cursor_mousedown) {
+            var dx = event.clientX-cursor_mousedown.clientX;
+            var dy = event.clientY-cursor_mousedown.clientY;
+            if (10 < Math.pow(dx, 2)+Math.pow(dy, 2) ) {
+                reRangeSelect(event, dx, dy);
             }
         }
     }
-    function summernote_click (event) {
-        if (!$(event.srcElement).closest('.o_undo, .note-editable, .note-popover, .note-link-dialog, .note-image-dialog, .note-air-dialog').length) {
-            $(".note-popover > *").hide();
+    var remember_selection;
+    function summernote_mousedown (event) {
+        history.splitNext();
+        if (!!document.documentMode) {
+            summernote_ie_fix(event);
+        }
+        var r = range.create();
+        if ($(r ? dom.node(r.sc) : event.srcElement || event.target).closest('#website-top-navbar, #oe_main_menu_navbar, .note-popover, .modal').length) {
+            if (remember_selection && !$(event.target).is('input, select, label, button, a')) {
+                remember_selection.select();
+            }
+        } else if (r && $(dom.node(r.sc)).closest('.o_editable, .note-editable').length) {
+            remember_selection = r;
         }
     }
+
+    var last_div;
+    var last_div_change;
+    var last_editable;
+    function summernote_ie_fix (event) {
+        var editable;
+        var div;
+        var node = event.target;
+        while(node.parentNode) {
+            if (!div && (node.tagName === "DIV" || node.tagName === "IMG" || (node.dataset && node.dataset.oeModel))) {
+                div = node;
+            }
+            if(last_div !== node && (node.getAttribute('contentEditable')==='false' || node.className && (node.className.indexOf('o_not_editable') !== -1))) {
+                break;
+            }
+            if (node.className && node.className.indexOf('o_editable') !== -1) {
+                if (!div) {
+                    div = node;
+                }
+                editable = node;
+                break;
+            }
+            node = node.parentNode;
+        }
+
+        if (!editable) {
+            $(last_div_change).removeAttr("contentEditable").removeProp("contentEditable");
+            $(last_editable).attr("contentEditable", "true").prop("contentEditable", "true");
+            last_div_change = null;
+            last_editable = null;
+            return;
+        }
+
+        if (div === last_div) {
+            return;
+        }
+
+        last_div = div;
+
+        $(last_div_change).removeAttr("contentEditable").removeProp("contentEditable");
+
+        if (last_editable !== editable) {
+            if ($(editable).is("[contentEditable='true']")) {
+               $(editable).removeAttr("contentEditable").removeProp("contentEditable");
+                last_editable = editable;
+            } else {
+                last_editable = null;
+            }
+        }
+        if (!$(div).attr("contentEditable") && !$(div).is("[data-oe-type='many2one'], [data-oe-type='contact']")) {
+            $(div).attr("contentEditable", "true").prop("contentEditable", "true");
+            last_div_change = div;
+        } else {
+            last_div_change = null;
+        }
+    }
+
     var fn_attach = eventHandler.attach;
     eventHandler.attach = function (oLayoutInfo, options) {
         fn_attach.call(this, oLayoutInfo, options);
-        oLayoutInfo.editor.on("paste", summernote_paste);
         oLayoutInfo.editor.on('dragstart', 'img', function (e) { e.preventDefault(); });
         $(document).on('mousedown', summernote_mousedown);
         $(document).on('mouseup', summernote_mouseup);
-        $(document).on('click', summernote_click);
-        oLayoutInfo.editor.on('dblclick', 'img', function (event) {
+        oLayoutInfo.editor.off('click').on('click', function (e) {e.preventDefault();}); // if the content editable is a link
+        oLayoutInfo.editor.on('dblclick', 'img, .media_iframe_video, span.fa, i.fa, span.fa', function (event) {
             new website.editor.MediaDialog(oLayoutInfo.editor, event.target).appendTo(document.body);
         });
+        $(document).on("keydown keyup", reRangeSelectKey);
+        
+        var clone_data = false;
+        var $node = oLayoutInfo.editor;
+        if ($node.data('oe-model')) {
+            $node.on('content_changed', function () {
+
+            var $nodes = $('[data-oe-model]')
+                .filter(function () { return this != $node[0];})
+                .filter('[data-oe-model="'+$node.data('oe-model')+'"]')
+                .filter('[data-oe-id="'+$node.data('oe-id')+'"]')
+                .filter('[data-oe-field="'+$node.data('oe-field')+'"]');
+            if ($node.data('oe-type')) $nodes = $nodes.filter('[data-oe-type="'+$node.data('oe-type')+'"]');
+            if ($node.data('oe-expression')) $nodes = $nodes.filter('[data-oe-expression="'+$node.data('oe-expression')+'"]');
+            if ($node.data('oe-xpath')) $nodes = $nodes.filter('[data-oe-xpath="'+$node.data('oe-xpath')+'"]');
+            if ($node.data('oe-contact-options')) $nodes = $nodes.filter('[data-oe-contact-options="'+$node.data('oe-contact-options')+'"]');
+
+            var nodes = $node.get();
+
+            if ($node.data('oe-type') === "many2one") {
+                $nodes = $nodes.add($('[data-oe-model]')
+                    .filter(function () { return this != $node[0] && nodes.indexOf(this) === -1; })
+                    .filter('[data-oe-many2one-model="'+$node.data('oe-many2one-model')+'"]')
+                    .filter('[data-oe-many2one-id="'+$node.data('oe-many2one-id')+'"]')
+                    .filter('[data-oe-type="many2one"]'));
+
+                $nodes = $nodes.add($('[data-oe-model]')
+                    .filter(function () { return this != $node[0] && nodes.indexOf(this) === -1; })
+                    .filter('[data-oe-model="'+$node.data('oe-many2one-model')+'"]')
+                    .filter('[data-oe-id="'+$node.data('oe-many2one-id')+'"]')
+                    .filter('[data-oe-field="name"]'));
+            }
+
+                if (!clone_data) {
+                    clone_data = true;
+                    $nodes.html(this.innerHTML);
+                    clone_data = false;
+                }
+            });
+        }
     };
     var fn_dettach = eventHandler.dettach;
     eventHandler.dettach = function (oLayoutInfo, options) {
         fn_dettach.call(this, oLayoutInfo, options);
-        oLayoutInfo.editor.off("paste", summernote_paste);
         oLayoutInfo.editor.off("dragstart");
         $(document).off('mousedown', summernote_mousedown);
         $(document).off('mouseup', summernote_mouseup);
-        $(document).off('click', summernote_click);
         oLayoutInfo.editor.off("dblclick");
+        $(document).off("keydown keyup", reRangeSelectKey);
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     /* Change History to have a global History for all summernote instances */
 
     var History = function History () {
-        function re_enable_snippet (r) {
-            $("#wrapwrap").trigger("click");
-            $(".oe_overlay").remove();
-            $("#wrapwrap *").filter(function () {
-                var $el = $(this);
-                if($el.data('snippet-editor')) {
-                    $el.removeData();
-                }
-            });
-
-            setTimeout(function () {
-                $(r.sc.tagName ? r.sc : r.sc.parentNode).trigger("click");
-            },0);
-        }
-
         var aUndo = [];
         var pos = 0;
 
@@ -1396,16 +561,43 @@
 
         this.applySnap = function (oSnap) {
             var $editable = $(oSnap.editable);
+
+            if (!!document.documentMode) {
+                $editable.removeAttr("contentEditable").removeProp("contentEditable");
+            }
+
             $editable.html(oSnap.contents).scrollTop(oSnap.scrollTop);
-            var r = range.createFromBookmark($editable[0], oSnap.bookmark);
-            re_enable_snippet(r);
+            $(".oe_overlay").remove();
+            $(".note-control-selection").hide();
+
+            var r = range.createFromBookmark(oSnap.editable, oSnap.bookmark);
             r.select();
+
+            $(document).trigger("click");
+            $(".o_editable *").filter(function () {
+                var $el = $(this);
+                if($el.data('snippet-editor')) {
+                    $el.removeData();
+                }
+            });
+
+            setTimeout(function () {
+                var target = dom.isBR(r.sc) ? r.sc.parentNode : dom.node(r.sc);
+                var evt = document.createEvent("MouseEvents");
+                evt.initMouseEvent("mousedown", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, target);
+                target.dispatchEvent(evt);
+
+                var evt = document.createEvent("MouseEvents");
+                evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, target);
+                target.dispatchEvent(evt);
+            },0);
         };
 
         this.undo = function ($editable) {
             if (!pos) { return; }
             last = null;
             if (!aUndo[pos]) aUndo[pos] = this.makeSnap($editable || $('.o_editable.note-editable:first'));
+            if (aUndo[pos-1].jump) pos--;
             this.applySnap(aUndo[--pos]);
         };
         this.hasUndo = function ($editable) {
@@ -1414,6 +606,7 @@
 
         this.redo = function () {
             if (aUndo.length <= pos+1) { return; }
+            if (aUndo[pos].jump) pos++;
             this.applySnap(aUndo[++pos]);
         };
         this.hasRedo = function () {
@@ -1427,15 +620,165 @@
         var last;
         this.recordUndo = function ($editable, event) {
             if (event) {
-                if (event === last) return;
-                else last = event;
+                if (last && aUndo[pos-1] && aUndo[pos-1].editable !== $editable[0]) {
+                    // => make a snap when the user change editable zone (because: don't make snap for each keydown)
+                    aUndo.splice(pos, aUndo.length);
+                    var prev = aUndo[pos-1];
+                    aUndo[pos] = {
+                        editable: prev.editable,
+                        contents: $(prev.editable).html(),
+                        bookmark: prev.bookmark,
+                        scrollTop: prev.scrollTop,
+                        jump: true
+                    };
+                    pos++;
+                }
+                else if (event === last) return;
             }
+            last = event;
             aUndo.splice(pos, aUndo.length);
             aUndo[pos] = this.makeSnap($editable);
             pos++;
         };
+
+        this.splitNext = function () {
+            last = false;
+        };
     };
     var history = new History();
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /* Translation for odoo */
+
+    settings.lang.odoo = {
+        font: {
+          bold: _t('Bold'),
+          italic: _t('Italic'),
+          underline: _t('Underline'),
+          strikethrough: _t('Strikethrough'),
+          subscript: _t('Subscript'),
+          superscript: _t('Superscript'),
+          clear: _t('Remove Font Style'),
+          height: _t('Line Height'),
+          name: _t('Font Family'),
+          size: _t('Font Size')
+        },
+        image: {
+          image: _t('Picture'),
+          insert: _t('Insert Image'),
+          resizeFull: _t('Resize Full'),
+          resizeHalf: _t('Resize Half'),
+          resizeQuarter: _t('Resize Quarter'),
+          floatLeft: _t('Float Left'),
+          floatRight: _t('Float Right'),
+          floatNone: _t('Float None'),
+          dragImageHere: _t('Drag an image here'),
+          selectFromFiles: _t('Select from files'),
+          url: _t('Image URL'),
+          remove: _t('Remove Image')
+        },
+        link: {
+          link: _t('Link'),
+          insert: _t('Insert Link'),
+          unlink: _t('Unlink'),
+          edit: _t('Edit'),
+          textToDisplay: _t('Text to display'),
+          url: _t('To what URL should this link go?'),
+          openInNewWindow: _t('Open in new window')
+        },
+        video: {
+          video: _t('Video'),
+          videoLink: _t('Video Link'),
+          insert: _t('Insert Video'),
+          url: _t('Video URL?'),
+          providers: _t('(YouTube, Vimeo, Vine, Instagram, DailyMotion or Youku)')
+        },
+        table: {
+          table: _t('Table')
+        },
+        hr: {
+          insert: _t('Insert Horizontal Rule')
+        },
+        style: {
+          style: _t('Style'),
+          normal: _t('Normal'),
+          blockquote: _t('Quote'),
+          pre: _t('Code'),
+          h1: _t('Header 1'),
+          h2: _t('Header 2'),
+          h3: _t('Header 3'),
+          h4: _t('Header 4'),
+          h5: _t('Header 5'),
+          h6: _t('Header 6')
+        },
+        lists: {
+          unordered: _t('Unordered list'),
+          ordered: _t('Ordered list')
+        },
+        options: {
+          help: _t('Help'),
+          fullscreen: _t('Full Screen'),
+          codeview: _t('Code View')
+        },
+        paragraph: {
+          paragraph: _t('Paragraph'),
+          outdent: _t('Outdent'),
+          indent: _t('Indent'),
+          left: _t('Align left'),
+          center: _t('Align center'),
+          right: _t('Align right'),
+          justify: _t('Justify full')
+        },
+        color: {
+          recent: _t('Recent Color'),
+          more: _t('More Color'),
+          background: _t('Background Color'),
+          foreground: _t('Foreground Color'),
+          transparent: _t('Transparent'),
+          setTransparent: _t('Set transparent'),
+          reset: _t('Reset'),
+          resetToDefault: _t('Reset to default')
+        },
+        shortcut: {
+          shortcuts: _t('Keyboard shortcuts'),
+          close: _t('Close'),
+          textFormatting: _t('Text formatting'),
+          action: _t('Action'),
+          paragraphFormatting: _t('Paragraph formatting'),
+          documentStyle: _t('Document Style')
+        },
+        history: {
+          undo: _t('Undo'),
+          redo: _t('Redo')
+        }
+    };
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // add focusIn to jQuery to allow to move caret into a div of a contentEditable area
+
+    $.fn.extend({
+        focusIn: function () {
+            if (this.length) {
+                range.create(dom.firstChild(this[0]), 0).select();
+            }
+            return this;
+        },
+        selectContent: function () {
+            if (this.length) {
+                var next = dom.lastChild(this[0]);
+                range.create(dom.firstChild(this[0]), 0, next, next.textContent.length).select();
+            }
+            return this;
+        },
+        activateBlock: function () {
+            var target = website.snippet.globalSelector.closest($(this))[0] || (dom.isBR(this) ? this.parentNode : dom.node(this));
+            var evt = document.createEvent("MouseEvents");
+            evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, target);
+            target.dispatchEvent(evt);
+            return this;
+        }
+    });
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1467,7 +810,7 @@
             ev.preventDefault();
         });
 
-        $(document).on('submit', '.note-editable form', function (ev) {
+        $(document).on('submit', '.note-editable form .btn', function (ev) {
             // Disable form submition in editable mode
             ev.preventDefault();
         });
@@ -1538,18 +881,23 @@
             this.rte.appendTo(this.$('#website-top-edit .nav.js_editor_placeholder'));
             return this._super.apply(this, arguments);
         },
-        edit: function () {
+        edit: function (no_editor) {
             this.$buttons.edit.prop('disabled', true);
             this.$('#website-top-view').hide();
             this.$el.show();
             this.$('#website-top-edit').show();
             $('.css_non_editable_mode_hidden').removeClass("css_non_editable_mode_hidden");
             
-            this.rte.start_edition();
-            this.trigger('rte:called');
+            if (!no_editor) {
+                this.rte.start_edition();
+                this.trigger('rte:called');
+            }
 
+            var flag = false;
             window.onbeforeunload = function(event) {
-                if ($('.o_editable.o_dirty').length) {
+                if ($('.o_editable.o_dirty').length && !flag) {
+                    flag = true;
+                    setTimeout(function () {flag=false;},0);
                     return _t('This document is not saved!');
                 }
             };
@@ -1560,6 +908,8 @@
         save: function () {
             var self = this;
 
+            var saved = {}; // list of allready saved views and data
+
             observer.disconnect();
             var defs = $('.o_editable')
                 .filter('.o_dirty')
@@ -1567,6 +917,11 @@
                 .removeClass('o_dirty o_editable cke_focus oe_carlos_danger')
                 .map(function () {
                     var $el = $(this);
+
+                    // remove multi edition
+                    var key =  $el.data('oe-model')+":"+$el.data('oe-id')+":"+$el.data('oe-field')+":"+$el.data('oe-type')+":"+$el.data('oe-expression');
+                    if (saved[key]) return true;
+                    saved[key] = true;
 
                     // TODO: Add a queue with concurrency limit in webclient
                     // https://github.com/medikoo/deferred/blob/master/lib/ext/function/gate.js
@@ -1603,7 +958,7 @@
                     if (html) {
                         var msg = $("<div/>").text(failure.error.message).html();
                         var data = msg.substring(3,msg.length-2).split(/', u'/);
-                        failure.error.message = '<b>' + data[0] + '</b><br/>' + data[1];
+                        failure.error.message = '<b>' + data[0] + '</b>' + dom.blank + data[1];
                     }
                     $(root).find('.' + failure.id)
                         .removeClass(failure.id)
@@ -1714,76 +1069,15 @@
             $('.inline-media-link').remove();
             this._super.apply(this, arguments);
         },
-        tableNavigation: function (root) {
-            var self = this;
-            $('.o_editable').on('keydown', function (e) {
-                // ignore non-TAB
-                if (e.which !== 9) { return; }
-
-                if (self.handleTab(e)) {
-                    e.preventDefault();
-                }
-            });
-        },
-        /**
-         * Performs whatever operation is necessary on a [TAB] hit, returns
-         * ``true`` if the event's default should be cancelled (if the TAB was
-         * handled by the function)
-         */
-        handleTab: function (event) {
-            var forward = !event.shiftKey;
-
-            var root = window.getSelection().getRangeAt(0).commonAncestorContainer;
-            var $cell = $(root).closest('td,th');
-
-            if (!$cell.length) { return false; }
-
-            var cell = $cell[0];
-
-            // find cell in same row
-            var row = cell.parentNode;
-            var sibling = row.cells[cell.cellIndex + (forward ? 1 : -1)];
-            if (sibling) {
-                document.getSelection().selectAllChildren(sibling);
-                return true;
-            }
-
-            // find cell in previous/next row
-            var table = row.parentNode;
-            var sibling_row = table.rows[row.rowIndex + (forward ? 1 : -1)];
-            if (sibling_row) {
-                var new_cell = sibling_row.cells[forward ? 0 : sibling_row.cells.length - 1];
-                document.getSelection().selectAllChildren(new_cell);
-                return true;
-            }
-
-            // at edge cells, copy word/openoffice behavior: if going backwards
-            // from first cell do nothing, if going forwards from last cell add
-            // a row
-            if (forward) {
-                var row_size = row.cells.length;
-                var new_row = document.createElement('tr');
-                while(row_size--) {
-                    var newcell = document.createElement('td');
-                    // zero-width space
-                    newcell.textContent = '\u200B';
-                    new_row.appendChild(newcell);
-                }
-                table.appendChild(new_row);
-                document.getSelection().selectAllChildren(new_row.cells[0]);
-            }
-
-            return true;
-        },
         /**
          * Add a record undo to history
          * @param {DOM} target where the dom is changed is editable zone
          */
         historyRecordUndo: function ($target) {
-            var $editable = $target.is('[data-oe-model]') ? $target : $target.closest('[data-oe-model]');
+            var $editable = $target.is('[data-oe-model], .o_editable') ? $target : $target.closest('[data-oe-model], .o_editable');
             $target.mousedown();
             if (!range.create()) {
-                range.create($target[0],0,$target[0],0).select();
+                range.create($target[0],0).select();
             }
             this.history.recordUndo( $editable );
             $target.mousedown();
@@ -1800,6 +1094,23 @@
 
             this.history = history;
 
+            // handler for cancel editor
+            $(document).on('keydown', function (event) {
+                if (event.keyCode === 27 && !$('.modal-content:visible').length) {
+                    setTimeout(function () {
+                        $('#website-top-navbar [data-action="cancel"]').click();
+                        var $modal = $('.modal-content > .modal-body').parents(".modal:first");
+                        $modal.off('keyup.dismiss.bs.modal');
+                        setTimeout(function () {
+                            $modal.on('keyup.dismiss.bs.modal', function () {
+                                $(this).modal('hide');
+                            });
+                        },500);
+                    },0);
+                }
+            });
+
+            // activate editor
             var $last;
             $(document).on('mousedown', function (event) {
                 var $target = $(event.target);
@@ -1810,30 +1121,47 @@
                 }
 
                 if ($last && (!$editable.size() || $last[0] != $editable[0])) {
-                    $last.destroy();
+                    var $destroy = $last;
+                    setTimeout(function () {$destroy.destroy();},150); // setTimeout to remove flickering when change to editable zone (re-create an editor)
                     $last = null;
                 }
-                if ($editable.size() && (!$last || $last[0] != $editable[0])) {
+                if ($editable.size() && (!$last || $last[0] != $editable[0]) &&
+                        ($target.closest('[contenteditable]').attr('contenteditable') || "").toLowerCase() !== 'false') {
                     $editable.summernote(self._config());
                     $editable.data('NoteHistory', self.history);
                     $editable.data('rte', self);
                     $last = $editable;
 
+                    // firefox & IE fix
+                    try {
+                        document.execCommand('enableObjectResizing', false, false);
+                        document.execCommand('enableInlineTableEditing', false, false);
+                        document.execCommand( '2D-position', false, false);
+                    } catch (e) {}
+                    document.body.addEventListener('resizestart', function (evt) {evt.preventDefault(); return false;});
+                    document.body.addEventListener('movestart', function (evt) {evt.preventDefault(); return false;});
+                    document.body.addEventListener('dragstart', function (evt) {evt.preventDefault(); return false;});
+
                     if (!range.create()) {
-                        range.create($editable[0].firstChild || $editable[0],0,$editable[0].firstChild || $editable[0],0).select();
+                        range.create(dom.firstChild($editable[0]),0).select();
                     }
+
+                    $target.trigger('mousedown'); // for activate selection on picture
                 }
             });
 
+            $('.o_not_editable').attr("contentEditable", false);
+
             $('#wrapwrap [data-oe-model]')
+                .not('.o_not_editable')
+                .filter(function () {
+                    return !$(this).closest('.o_not_editable').length;
+                })
                 .not('link, script')
+                .not('[data-oe-readonly]')
                 .not('img[data-oe-field="arch"], br[data-oe-field="arch"], input[data-oe-field="arch"]')
                 .not('.oe_snippet_editor')
                 .addClass('o_editable');
-
-            $('#wrapwrap').on('click', '*', function (event) {
-                event.preventDefault();
-            });
 
             $('.o_editable').each(function () {
                 var node = this;
@@ -1846,12 +1174,16 @@
                 });
             });
 
-            if (!restart) {
-                this.tableNavigation();
-            }
+            $(document).trigger('mousedown');
 
-            self.trigger('rte:ready');
+            if (!restart) {
+                $('#wrapwrap, .o_editable').on('click', '*', function (event) {
+                    event.preventDefault();
+                });
+                self.trigger('rte:ready');
+            }
         },
+
         _config: function () {
             return {
                 airMode : true,
@@ -1864,11 +1196,13 @@
                     ['para', ['ul', 'ol', 'paragraph']],
                     ['table', ['table']],
                     ['insert', ['link', 'picture']],
+                    ['history', ['undo', 'redo']],
                 ],
                 oninit: function() {
                 },
                 styleWithSpan: false,
-                inlinemedia : ['p']
+                inlinemedia : ['p'],
+                lang: "odoo"
             };
         }
     });
@@ -1904,6 +1238,14 @@
                         // ignore contenteditable modification
                         if (m.attributeName === 'contenteditable') { return false; }
                         if (m.attributeName === 'attributeeditable') { return false; }
+                        // remove content editable attribute from firefox
+                        if (m.attributeName.indexOf('_moz') === 0) {
+                            if (!m.oldValue) {
+                                // remove stupid _moz attributes
+                                $(m.target).filter(function () { return this.attributes[m.attributeName]; }).removeAttr(m.attributeName);
+                            }
+                            return false;
+                        }
                         // ignore id modification
                         if (m.attributeName === 'id') { return false; }
                         // style not change
@@ -2013,7 +1355,58 @@
         init: function (editable, data) {
             this._super(editable, data);
             this.editable = editable;
-            this.data = data;
+            this.data = data || {};
+
+            this.data.className = "";
+            if (this.data.range) {
+                this.data.iniClassName = $(this.data.range.sc).filter("a").attr("class") || "";
+                this.data.className = this.data.iniClassName.replace(/(^|\s+)btn(-[a-z0-9_-]*)?/gi, ' ');
+
+                var is_link = this.data.range.isOnAnchor();
+                var r = this.data.range;
+
+                var nodes;
+                if (!is_link) {
+                    if (r.sc.tagName) {
+                        r.sc = dom.firstChild(r.so ? r.sc.childNodes[r.so] : r.sc);
+                        r.so = 0;
+                    }
+                    if (r.ec.tagName) {
+                        if (r.eo === r.ec.childNodes.length) {
+                            r.ec = dom.lastChild(r.ec);
+                            r.eo = r.ec.textContent.length;
+                        } else {
+                            r.ec = dom.firstChild(r.eo ? r.ec.childNodes[r.eo] : r.ec);
+                            r.eo = 0;
+                        }
+                    }
+                    this.data.range = range.create(r.sc, r.so, r.ec, r.eo).select();
+                    nodes = dom.listBetween(r.sc, r.ec);
+                } else {
+                    nodes = dom.ancestor(r.sc, dom.isAnchor).childNodes;
+                }
+
+                if (dom.isImg(r.sc) && nodes.indexOf(r.sc) === -1) {
+                    nodes.push(r.sc);
+                }
+                if (nodes.length > 1 || dom.isImg(nodes[0])) {
+                    var text = "";
+                    this.data.images = [];
+                    for (var i=0; i<nodes.length; i++) {
+                        if (dom.isImg(nodes[i])) {
+                            this.data.images.push(nodes[i]);
+                            text += '[IMG]';
+                        } else if (!is_link && i===0) {
+                            text += nodes[i].textContent.slice(r.so, Infinity);
+                        } else if (!is_link && i===nodes.length-1) {
+                            text += nodes[i].textContent.slice(0, r.eo);
+                        } else {
+                            text += nodes[i].textContent;
+                        }
+                    }
+                    this.data.text = text;
+                }
+            }
 
             this.data.text = this.data.text.replace(/[ \t\r\n]+/g, ' ');
 
@@ -2063,34 +1456,41 @@
                 val = $e.val(),
                 label = this.$('#link-text').val() || val;
 
-            if (test !== false && (!val || !$e[0].checkValidity())) {
+            if (label && this.data.images) {
+                for(var i=0; i<this.data.images.length; i++) {
+                    label = label.replace(/</, "&lt;").replace(/>/, "&gt;").replace(/\[IMG\]/, this.data.images[i].outerHTML);
+                }
+            }
+
+            if (!test && (!val || !$e[0].checkValidity())) {
                 // FIXME: error message
                 $e.closest('.form-group').addClass('has-error');
                 $e.focus();
                 def.reject();
             }
 
-            var style = this.$("input[name='link-style-type']:checked").val();
-            var size = this.$("input[name='link-style-size']:checked").val();
-            var classes = (style && style.length ? "btn " : "") + style + " " + size;
+            var style = this.$("input[name='link-style-type']:checked").val() || '';
+            var size = this.$("input[name='link-style-size']:checked").val() || '';
+            var classes = (this.data.className || "") + (style && style.length ? " btn " : "") + style + " " + size;
+            var isNewWindow = this.$('input.window-new').prop('checked');
 
             var done = $.when();
             if ($e.hasClass('email-address') && $e.val().indexOf("@") !== -1) {
-                def.resolve('mailto:' + val, false, label, classes);
+                def.resolve(val.indexOf("mailto:") === 0 ? val : 'mailto:' + val, isNewWindow, label, classes);
             } else if ($e.val() && $e.val().length && $e.hasClass('page')) {
                 var data = $e.select2('data');
-                if (!data.create) {
-                    def.resolve(data.id, false, label || data.text, classes);
+                if (test || !data.create) {
+                    def.resolve(data.id, isNewWindow, label || data.text, classes);
                 } else {
                     // Create the page, get the URL back
                     $.get(_.str.sprintf(
                             '/website/add/%s?noredirect=1', encodeURI(data.id)))
                         .then(function (response) {
-                            def.resolve(response, false, label, classes);
+                            def.resolve(response, isNewWindow, label, classes);
                         });
                 }
             } else {
-                def.resolve(val, this.$('input.window-new').prop('checked'), label, classes);
+                def.resolve(val, isNewWindow, label, classes);
             }
             return def;
         },
@@ -2100,9 +1500,9 @@
             return this.get_data()
                 .then(function (url, new_window, label, classes) {
                     self.data.url = url;
-                    self.data.isNewWindow = new_window;
+                    self.data.newWindow = new_window;
                     self.data.text = label;
-                    self.data.className = classes;
+                    self.data.className = classes.replace(/\s+/gi, ' ').replace(/^\s+|\s+$/gi, '');
 
                     self.trigger("save", self.data);
                 }).then(_super);
@@ -2111,7 +1511,7 @@
             var href = this.data.url;
             var new_window = this.data.isNewWindow;
             var text = this.data.text;
-            var classes = this.data.className = $(this.data.range.sc).attr("class");
+            var classes = this.data.iniClassName;
 
             this.$('input#link-text').val(text);
             this.$('input.window-new').prop('checked', new_window);
@@ -2194,53 +1594,71 @@
         },
         preview: function () {
             var $preview = this.$("#link-preview");
-            this.get_data(false).then(function (url, new_window, label, classes) {
+            this.get_data(true).then(function (url, new_window, label, classes) {
                 $preview.attr("target", new_window ? '_blank' : "")
-                    .text((label && label.length ? label : url))
-                    .attr("class", classes);
+                    .attr("href", url && url.length ? url : "#")
+                    .html((label && label.length ? label : url))
+                    .attr("class", classes.replace(/pull-\w+/, ''));
             });
         }
     });
 
-    website.editor.Media = openerp.Widget.extend({
-        init: function (parent, media) {
-            this._super();
-            this.parent = parent;
+    /**
+     * alt widget. Lets users change a alt & title on a media
+     */
+    website.editor.alt = website.editor.Dialog.extend({
+        template: 'website.editor.dialog.alt',
+        init: function ($editable, media) {
+            this.$editable = $editable;
             this.media = media;
-        },
-        start: function () {
-            this.$preview = this.$('.preview-container').detach();
+            this.alt = ($(this.media).attr('alt') || "").replace(/&quot;/g, '"');
+            this.title = ($(this.media).attr('title') || "").replace(/&quot;/g, '"');
             return this._super();
         },
-        search: function (needle) {
-        },
         save: function () {
-        },
-        clear: function () {
-        },
-        cancel: function () {
-        },
-        close: function () {
+            var self = this;
+            range.createFromNode(self.media).select();
+            this.$editable.data('NoteHistory').recordUndo(this.$editable);
+            var alt = this.$('#alt').val();
+            var title = this.$('#title').val();
+            $(this.media).attr('alt', alt ? alt.replace(/"/g, "&quot;") : null).attr('title', title ? title.replace(/"/g, "&quot;") : null);
+            setTimeout(function () {
+                $(self.media).trigger("mouseup");
+            },0);
+            return this._super();
         },
     });
 
+    /**
+     * MediaDialog widget. Lets users change a media, including uploading a
+     * new image, font awsome or video and can change a media into an other
+     * media
+     *
+     * options: select_images: allow the selection of more of one image
+     */
     website.editor.MediaDialog = website.editor.Dialog.extend({
         template: 'website.editor.dialog.media',
         events : _.extend({}, website.editor.Dialog.prototype.events, {
             'input input#icon-search': 'search',
         }),
-        init: function ($editable, media) {
+        init: function ($editable, media, options) {
             this._super();
             if ($editable) {
                 this.$editable = $editable;
                 this.rte = this.$editable.rte || this.$editable.data('rte');
             }
+            this.options = options || {};
             this.media = media;
+            this.isNewMedia = !media;
+            this.range = range.create();
         },
         start: function () {
             var self = this;
 
-            this.range = range.create();
+            this.only_images = this.options.select_images || (this.media && $(this.media).parent().data("oe-field") === "image");
+            if (this.only_images) {
+                this.$('[href="#editor-media-video"], [href="#editor-media-icon"]').addClass('hidden');
+            }
 
             if (this.media) {
                 if (this.media.nodeName === "IMG") {
@@ -2253,17 +1671,13 @@
                 } else if (this.media.className.match(/(^|\s)fa($|\s)/)) {
                     this.$('[href="#editor-media-icon"]').tab('show');
                 }
-
-                if ($(this.media).parent().data("oe-field") === "image") {
-                    this.$('[href="#editor-media-video"], [href="#editor-media-icon"]').addClass('hidden');
-                }
             }
 
-            this.imageDialog = new website.editor.RTEImageDialog(this, this.media);
+            this.imageDialog = new website.editor.ImageDialog(this, this.media, this.options);
             this.imageDialog.appendTo(this.$("#editor-media-image"));
-            this.iconDialog = new website.editor.FontIconsDialog(this, this.media);
+            this.iconDialog = new website.editor.FontIconsDialog(this, this.media, this.options);
             this.iconDialog.appendTo(this.$("#editor-media-icon"));
-            this.videoDialog = new website.editor.VideoDialog(this, this.media);
+            this.videoDialog = new website.editor.VideoDialog(this, this.media, this.options);
             this.videoDialog.appendTo(this.$("#editor-media-video"));
 
             this.active = this.imageDialog;
@@ -2285,8 +1699,12 @@
             return this._super();
         },
         save: function () {
+            if (this.options.select_images) {
+                this.trigger("saved", this.active.save());
+                this.close();
+                return;
+            }
             if(this.rte) this.rte.historyRecordUndo(this.$editable);
-            this.trigger("save");
 
             var self = this;
             if (self.media) {
@@ -2304,18 +1722,24 @@
                 this.media = document.createElement("img");
                 this.range.insertNode(this.media);
                 this.active.media = this.media;
-                this.media.className = "img-responsive pull-right";
             }
-            var $el = $(self.active.media);
+
             this.active.save();
-            //this.media.className = this.media.className.replace(/\s+/g, ' ');
+
+            self.trigger("saved", self.active.media, self.media);
             setTimeout(function () {
-                $el.trigger("saved", self.active.media);
-                $(document.body).trigger("media-saved", [$el[0], self.active.media]);
-                range.create(self.active.media, 0, self.active.media.nextSibling || self.active.media, 0).select();
-                $(self.active.media).trigger("mouseup");
+                range.createFromNode(self.active.media).select();
+                $(self.active.media).trigger("mousedown");
+                if (!this.only_images) {
+                    setTimeout(function () {
+                        var e = jQuery.Event( "click", { srcElement: self.active.media } );
+                        $(self.active.media).trigger(e);
+                        $(self.active.media).trigger("mouseup");
+                    },0);
+                }
             },0);
-            this._super();
+
+            this.close();
         },
         searchTimer: null,
         search: function () {
@@ -2332,22 +1756,10 @@
      * ImageDialog widget. Lets users change an image, including uploading a
      * new image in OpenERP or selecting the image style (if supported by
      * the caller).
-     *
-     * Initialized as usual, but the caller can hook into two events:
-     *
-     * @event start({url, style}) called during dialog initialization and
-     *                            opening, the handler can *set* the ``url``
-     *                            and ``style`` properties on its parameter
-     *                            to provide these as default values to the
-     *                            dialog
-     * @event save({url, style}) called during dialog finalization, the handler
-     *                           is provided with the image url and style
-     *                           selected by the users (or possibly the ones
-     *                           originally passed in)
      */
     var IMAGES_PER_ROW = 6;
     var IMAGES_ROWS = 2;
-    website.editor.ImageDialog = website.editor.Media.extend({
+    website.editor.ImageDialog = openerp.Widget.extend({
         template: 'website.editor.dialog.image',
         events: _.extend({}, website.editor.Dialog.prototype.events, {
             'change .url-source': function (e) {
@@ -2374,17 +1786,26 @@
             'click .existing-attachments img': 'select_existing',
             'click .existing-attachment-remove': 'try_remove',
         }),
-        init: function (parent, media) {
+        init: function (parent, media, options) {
+            this._super();
+            this.options = options || {};
+            this.parent = parent;
+            this.media = media;
+            this.images = [];
             this.page = 0;
-            this._super(parent, media);
         },
         start: function () {
+            this.$preview = this.$('.preview-container').detach();
             var self = this;
             var res = this._super();
-            var o = { url: null };
+            var o = { url: null, alt: null };
             // avoid typos, prevent addition of new properties to the object
             Object.preventExtensions(o);
-            this.trigger('start', o);
+
+            if (!this.media) { this.media = document.getElementsByClassName('insert-media')[0]; }
+            if (this.media) {
+                o.url = this.media.getAttribute('src');
+            }
             this.parent.$(".pager > li").click(function (e) {
                 e.preventDefault();
                 var $target = $(e.currentTarget);
@@ -2394,13 +1815,33 @@
                 self.page += $target.hasClass('previous') ? -1 : 1;
                 self.display_attachments();
             });
-            this.set_image(o.url);
+            this.set_image(o.url, o.alt);
+            this.fetch_existing();
             return res;
         },
-        save: function () {
-            if (!this.link) {
-                this.link = this.$(".existing-attachments img:first").attr('src');
+        push: function (url, alt, id) {
+            if (this.options.select_images) {
+                var img = _.select(this.images, function (v) { return v.url == url;});
+                if (img.length) {
+                    this.images.splice(this.images.indexOf(img[0]),1);
+                    return;
+                }
+            } else {
+                this.images = [];
             }
+            this.images.push({'url': url, 'alt': alt, 'id': id});
+        },
+        save: function () {
+            if (this.options.select_images) {
+                this.parent.trigger("save", this.images);
+                return this.images;
+            }
+            this.parent.trigger("save", this.media);
+
+            var img = this.images[0] || {
+                    'url': this.$(".existing-attachments img:first").attr('src'),
+                    'alt': this.$(".existing-attachments img:first").attr('alt')
+                };
 
             if (this.media.tagName !== "IMG") {
                 var media = document.createElement('img');
@@ -2408,12 +1849,32 @@
                 this.media = media;
             }
 
-            this.trigger('save', {
-                url: this.link
-            });
+            $(this.media).attr('src', img.url).attr('alt', img.alt);
+            
+            var element = document.getElementsByClassName('insert-media')[0];
+            $('p').removeClass('insert-media');
 
-            $(this.media).attr('src', this.link);
-            return this._super();
+
+            if (!(element = this.media)) {
+                element = document.createElement('img');
+                element.addClass('img');
+                element.addClass('img-responsive');
+                setTimeout(function () {
+                    editor.insertElement(element);
+                }, 0);
+                this.media = element;
+            }
+
+            // not air mode
+            if (!$(this.media).closest(".o_editable").length) {
+                $(this.media).addClass("img-responsive");
+            }
+
+            var style = this.style;
+            element.setAttribute('src', img.url);
+            if (style) { element.addClass(style); }
+
+            return this.media;
         },
         clear: function () {
             this.media.className = this.media.className.replace(/(^|\s)(img(\s|$)|img-[^\s]*)/g, ' ');
@@ -2433,15 +1894,17 @@
         search: function (needle) {
             var self = this;
             this.fetch_existing(needle).then(function () {
-                self.selected_existing(self.$('input.url').val());
+                self.selected_existing();
             });
         },
-        set_image: function (url, error) {
+        set_image: function (url, alt, error) {
             var self = this;
-            if (url) this.link = url;
+            if (url) {
+                this.push(url, alt);
+            }
             this.$('input.url').val('');
             this.fetch_existing().then(function () {
-                self.selected_existing(url);
+                self.selected_existing();
             });
         },
         form_submit: function (event) {
@@ -2449,16 +1912,25 @@
             var $form = this.$('form[action="/website/attach"]');
             if (!$form.find('input[name="upload"]').val().length) {
                 var url = $form.find('input[name="url"]').val();
-                if (this.selected_existing(url).size()) {
+                if (this.selected_existing().size()) {
                     event.preventDefault();
                     return false;
                 }
             }
+            $form.find('.well > div').hide().last().after('<span class="fa fa-spin fa-3x fa-refresh"/>');
+
             var callback = _.uniqueId('func_');
             this.$('input[name=func]').val(callback);
             window[callback] = function (attachments, error) {
                 delete window[callback];
-                self.file_selected(attachments[0]['website_url'], error);
+                $form.find('.well > span').remove();
+                $form.find('.well > div').show();
+                if (error || !attachments.length) {
+                    self.file_selected(null, error || !attachments.length);
+                }
+                for (var i=0; i<attachments.length; i++) {
+                    self.file_selected(attachments[i]['website_url'], error);
+                }
             };
         },
         file_selection: function () {
@@ -2477,9 +1949,12 @@
                     .find('.help-block').text(error);
                 $button.addClass('btn-danger');
             }
-            this.set_image(url, error);
-            // auto save and close popup
-            this.parent.save();
+            this.set_image(url, null, error);
+
+            if (!this.options.select_images) {
+                // auto save and close popup
+                this.parent.save();
+            }
         },
         fetch_existing: function (needle) {
             var domain = [['res_model', '=', 'ir.ui.view'], '|',
@@ -2492,10 +1967,10 @@
                 method: 'search_read',
                 args: [],
                 kwargs: {
-                    fields: ['name', 'website_url'],
                     domain: domain,
+                    fields: ['name', 'website_url'],
                     order: 'id desc',
-                    context: website.get_context(),
+                    context: website.get_context()
                 }
             }).then(this.proxy('fetched_existing'));
         },
@@ -2522,17 +1997,30 @@
             this.parent.$('.pager')
                 .find('li.previous').toggleClass('disabled', (from === 0)).end()
                 .find('li.next').toggleClass('disabled', (from + per_screen >= records.length));
+
+            this.selected_existing();
         },
         select_existing: function (e) {
-            var link = $(e.currentTarget).attr('src');
-            this.link = link;
-            this.selected_existing(link);
+            var $img = $(e.currentTarget);
+            this.push($img.attr('src'), $img.attr('alt'), $img.data('id'));
+            this.selected_existing();
         },
-        selected_existing: function (link) {
+        selected_existing: function () {
+            var self = this;
             this.$('.existing-attachment-cell.media_selected').removeClass("media_selected");
             var $select = this.$('.existing-attachment-cell img').filter(function () {
-                return $(this).attr("src") == link;
-            }).first();
+                var $img = $(this);
+                var url = $img.attr("src");
+                return !!_.select(self.images, function (v) {
+                    if (v.url === url) {
+                        if (!v.id) {
+                            v.id = $img.data('id');
+                            v.alt = $img.attr('alt');
+                        }
+                        return true;
+                    }
+                }).length;
+            });
             $select.parent().addClass("media_selected");
             return $select;
         },
@@ -2570,36 +2058,27 @@
         },
     });
 
-    website.editor.RTEImageDialog = website.editor.ImageDialog.extend({
-        init: function (parent, editor, media) {
-            this._super(parent, editor, media);
-            this.on('start', this, this.proxy('started'));
-            this.on('save', this, this.proxy('saved'));
-        },
-        started: function (holder) {
-            if (!this.media) { this.media = document.getElementsByClassName('insert-media')[0] }
-            var el = this.media;
-            if (!el) { return; }
-            holder.url = el.getAttribute('src');
-        },
-        saved: function (data) {
-            var element = document.getElementsByClassName('insert-media')[0];
-            $('p').removeClass('insert-media');
-            if (!(element = this.media)) {
-                element = document.createElement('img');
-                element.addClass('img');
-                element.addClass('img-responsive');
-                setTimeout(function () {
-                    editor.insertElement(element);
-                }, 0);
+    function getCssSelectors(filter) {
+        var classes = [];
+        var sheets = document.styleSheets;
+        for(var i = 0; i < sheets.length; i++) {
+            var rules = sheets[i].rules || sheets[i].cssRules;
+            for(var r = 0; r < rules.length; r++) {
+                var selectorText = rules[r].selectorText;
+                if (selectorText) {
+                    var match = selectorText.match(filter);
+                    if (match) classes.push(match[1].slice(1, match[1].length));
+                }
             }
-            var style = data.style;
-            element.setAttribute('src', data.url);
-            if (style) { element.addClass(style); }
-        },
-    });
+        }
+        return classes;
+    }
 
-    website.editor.FontIconsDialog = website.editor.Media.extend({
+    /**
+     * FontIconsDialog widget. Lets users change a font awsome, suport all
+     * font awsome loaded in the css files.
+     */
+    website.editor.FontIconsDialog = openerp.Widget.extend({
         template: 'website.editor.dialog.font-icons',
         events : _.extend({}, website.editor.Dialog.prototype.events, {
             change: 'update_preview',
@@ -2618,18 +2097,18 @@
                 this.update_preview();
             },
         }),
-        // List of FontAwesome icons in 4.0.3, extracted from the cheatsheet.
-        // Each icon provides the unicode codepoint as ``text`` and the class
-        // name as ``id`` so the whole thing can be fed directly to select2
-        // without post-processing and do the right thing (except for the part
-        // where we still need to implement ``initSelection``)
-        // TODO: add id/name to the text in order to allow FAYT selection of icons?
-        icons: [{"text": "\uf000", "id": "fa-glass"}, {"text": "\uf001", "id": "fa-music"}, {"text": "\uf002", "id": "fa-search"}, {"text": "\uf003", "id": "fa-envelope-o"}, {"text": "\uf004", "id": "fa-heart"}, {"text": "\uf005", "id": "fa-star"}, {"text": "\uf006", "id": "fa-star-o"}, {"text": "\uf007", "id": "fa-user"}, {"text": "\uf008", "id": "fa-film"}, {"text": "\uf009", "id": "fa-th-large"}, {"text": "\uf00a", "id": "fa-th"}, {"text": "\uf00b", "id": "fa-th-list"}, {"text": "\uf00c", "id": "fa-check"}, {"text": "\uf00d", "id": "fa-times"}, {"text": "\uf00e", "id": "fa-search-plus"}, {"text": "\uf010", "id": "fa-search-minus"}, {"text": "\uf011", "id": "fa-power-off"}, {"text": "\uf012", "id": "fa-signal"}, {"text": "\uf013", "id": "fa-cog"}, {"text": "\uf014", "id": "fa-trash-o"}, {"text": "\uf015", "id": "fa-home"}, {"text": "\uf016", "id": "fa-file-o"}, {"text": "\uf017", "id": "fa-clock-o"}, {"text": "\uf018", "id": "fa-road"}, {"text": "\uf019", "id": "fa-download"}, {"text": "\uf01a", "id": "fa-arrow-circle-o-down"}, {"text": "\uf01b", "id": "fa-arrow-circle-o-up"}, {"text": "\uf01c", "id": "fa-inbox"}, {"text": "\uf01d", "id": "fa-play-circle-o"}, {"text": "\uf01e", "id": "fa-repeat"}, {"text": "\uf021", "id": "fa-refresh"}, {"text": "\uf022", "id": "fa-list-alt"}, {"text": "\uf023", "id": "fa-lock"}, {"text": "\uf024", "id": "fa-flag"}, {"text": "\uf025", "id": "fa-headphones"}, {"text": "\uf026", "id": "fa-volume-off"}, {"text": "\uf027", "id": "fa-volume-down"}, {"text": "\uf028", "id": "fa-volume-up"}, {"text": "\uf029", "id": "fa-qrcode"}, {"text": "\uf02a", "id": "fa-barcode"}, {"text": "\uf02b", "id": "fa-tag"}, {"text": "\uf02c", "id": "fa-tags"}, {"text": "\uf02d", "id": "fa-book"}, {"text": "\uf02e", "id": "fa-bookmark"}, {"text": "\uf02f", "id": "fa-print"}, {"text": "\uf030", "id": "fa-camera"}, {"text": "\uf031", "id": "fa-font"}, {"text": "\uf032", "id": "fa-bold"}, {"text": "\uf033", "id": "fa-italic"}, {"text": "\uf034", "id": "fa-text-height"}, {"text": "\uf035", "id": "fa-text-width"}, {"text": "\uf036", "id": "fa-align-left"}, {"text": "\uf037", "id": "fa-align-center"}, {"text": "\uf038", "id": "fa-align-right"}, {"text": "\uf039", "id": "fa-align-justify"}, {"text": "\uf03a", "id": "fa-list"}, {"text": "\uf03b", "id": "fa-outdent"}, {"text": "\uf03c", "id": "fa-indent"}, {"text": "\uf03d", "id": "fa-video-camera"}, {"text": "\uf03e", "id": "fa-picture-o"}, {"text": "\uf040", "id": "fa-pencil"}, {"text": "\uf041", "id": "fa-map-marker"}, {"text": "\uf042", "id": "fa-adjust"}, {"text": "\uf043", "id": "fa-tint"}, {"text": "\uf044", "id": "fa-pencil-square-o"}, {"text": "\uf045", "id": "fa-share-square-o"}, {"text": "\uf046", "id": "fa-check-square-o"}, {"text": "\uf047", "id": "fa-arrows"}, {"text": "\uf048", "id": "fa-step-backward"}, {"text": "\uf049", "id": "fa-fast-backward"}, {"text": "\uf04a", "id": "fa-backward"}, {"text": "\uf04b", "id": "fa-play"}, {"text": "\uf04c", "id": "fa-pause"}, {"text": "\uf04d", "id": "fa-stop"}, {"text": "\uf04e", "id": "fa-forward"}, {"text": "\uf050", "id": "fa-fast-forward"}, {"text": "\uf051", "id": "fa-step-forward"}, {"text": "\uf052", "id": "fa-eject"}, {"text": "\uf053", "id": "fa-chevron-left"}, {"text": "\uf054", "id": "fa-chevron-right"}, {"text": "\uf055", "id": "fa-plus-circle"}, {"text": "\uf056", "id": "fa-minus-circle"}, {"text": "\uf057", "id": "fa-times-circle"}, {"text": "\uf058", "id": "fa-check-circle"}, {"text": "\uf059", "id": "fa-question-circle"}, {"text": "\uf05a", "id": "fa-info-circle"}, {"text": "\uf05b", "id": "fa-crosshairs"}, {"text": "\uf05c", "id": "fa-times-circle-o"}, {"text": "\uf05d", "id": "fa-check-circle-o"}, {"text": "\uf05e", "id": "fa-ban"}, {"text": "\uf060", "id": "fa-arrow-left"}, {"text": "\uf061", "id": "fa-arrow-right"}, {"text": "\uf062", "id": "fa-arrow-up"}, {"text": "\uf063", "id": "fa-arrow-down"}, {"text": "\uf064", "id": "fa-share"}, {"text": "\uf065", "id": "fa-expand"}, {"text": "\uf066", "id": "fa-compress"}, {"text": "\uf067", "id": "fa-plus"}, {"text": "\uf068", "id": "fa-minus"}, {"text": "\uf069", "id": "fa-asterisk"}, {"text": "\uf06a", "id": "fa-exclamation-circle"}, {"text": "\uf06b", "id": "fa-gift"}, {"text": "\uf06c", "id": "fa-leaf"}, {"text": "\uf06d", "id": "fa-fire"}, {"text": "\uf06e", "id": "fa-eye"}, {"text": "\uf070", "id": "fa-eye-slash"}, {"text": "\uf071", "id": "fa-exclamation-triangle"}, {"text": "\uf072", "id": "fa-plane"}, {"text": "\uf073", "id": "fa-calendar"}, {"text": "\uf074", "id": "fa-random"}, {"text": "\uf075", "id": "fa-comment"}, {"text": "\uf076", "id": "fa-magnet"}, {"text": "\uf077", "id": "fa-chevron-up"}, {"text": "\uf078", "id": "fa-chevron-down"}, {"text": "\uf079", "id": "fa-retweet"}, {"text": "\uf07a", "id": "fa-shopping-cart"}, {"text": "\uf07b", "id": "fa-folder"}, {"text": "\uf07c", "id": "fa-folder-open"}, {"text": "\uf07d", "id": "fa-arrows-v"}, {"text": "\uf07e", "id": "fa-arrows-h"}, {"text": "\uf080", "id": "fa-bar-chart-o"}, {"text": "\uf081", "id": "fa-twitter-square"}, {"text": "\uf082", "id": "fa-facebook-square"}, {"text": "\uf083", "id": "fa-camera-retro"}, {"text": "\uf084", "id": "fa-key"}, {"text": "\uf085", "id": "fa-cogs"}, {"text": "\uf086", "id": "fa-comments"}, {"text": "\uf087", "id": "fa-thumbs-o-up"}, {"text": "\uf088", "id": "fa-thumbs-o-down"}, {"text": "\uf089", "id": "fa-star-half"}, {"text": "\uf08a", "id": "fa-heart-o"}, {"text": "\uf08b", "id": "fa-sign-out"}, {"text": "\uf08c", "id": "fa-linkedin-square"}, {"text": "\uf08d", "id": "fa-thumb-tack"}, {"text": "\uf08e", "id": "fa-external-link"}, {"text": "\uf090", "id": "fa-sign-in"}, {"text": "\uf091", "id": "fa-trophy"}, {"text": "\uf092", "id": "fa-github-square"}, {"text": "\uf093", "id": "fa-upload"}, {"text": "\uf094", "id": "fa-lemon-o"}, {"text": "\uf095", "id": "fa-phone"}, {"text": "\uf096", "id": "fa-square-o"}, {"text": "\uf097", "id": "fa-bookmark-o"}, {"text": "\uf098", "id": "fa-phone-square"}, {"text": "\uf099", "id": "fa-twitter"}, {"text": "\uf09a", "id": "fa-facebook"}, {"text": "\uf09b", "id": "fa-github"}, {"text": "\uf09c", "id": "fa-unlock"}, {"text": "\uf09d", "id": "fa-credit-card"}, {"text": "\uf09e", "id": "fa-rss"}, {"text": "\uf0a0", "id": "fa-hdd-o"}, {"text": "\uf0a1", "id": "fa-bullhorn"}, {"text": "\uf0f3", "id": "fa-bell"}, {"text": "\uf0a3", "id": "fa-certificate"}, {"text": "\uf0a4", "id": "fa-hand-o-right"}, {"text": "\uf0a5", "id": "fa-hand-o-left"}, {"text": "\uf0a6", "id": "fa-hand-o-up"}, {"text": "\uf0a7", "id": "fa-hand-o-down"}, {"text": "\uf0a8", "id": "fa-arrow-circle-left"}, {"text": "\uf0a9", "id": "fa-arrow-circle-right"}, {"text": "\uf0aa", "id": "fa-arrow-circle-up"}, {"text": "\uf0ab", "id": "fa-arrow-circle-down"}, {"text": "\uf0ac", "id": "fa-globe"}, {"text": "\uf0ad", "id": "fa-wrench"}, {"text": "\uf0ae", "id": "fa-tasks"}, {"text": "\uf0b0", "id": "fa-filter"}, {"text": "\uf0b1", "id": "fa-briefcase"}, {"text": "\uf0b2", "id": "fa-arrows-alt"}, {"text": "\uf0c0", "id": "fa-users"}, {"text": "\uf0c1", "id": "fa-link"}, {"text": "\uf0c2", "id": "fa-cloud"}, {"text": "\uf0c3", "id": "fa-flask"}, {"text": "\uf0c4", "id": "fa-scissors"}, {"text": "\uf0c5", "id": "fa-files-o"}, {"text": "\uf0c6", "id": "fa-paperclip"}, {"text": "\uf0c7", "id": "fa-floppy-o"}, {"text": "\uf0c8", "id": "fa-square"}, {"text": "\uf0c9", "id": "fa-bars"}, {"text": "\uf0ca", "id": "fa-list-ul"}, {"text": "\uf0cb", "id": "fa-list-ol"}, {"text": "\uf0cc", "id": "fa-strikethrough"}, {"text": "\uf0cd", "id": "fa-underline"}, {"text": "\uf0ce", "id": "fa-table"}, {"text": "\uf0d0", "id": "fa-magic"}, {"text": "\uf0d1", "id": "fa-truck"}, {"text": "\uf0d2", "id": "fa-pinterest"}, {"text": "\uf0d3", "id": "fa-pinterest-square"}, {"text": "\uf0d4", "id": "fa-google-plus-square"}, {"text": "\uf0d5", "id": "fa-google-plus"}, {"text": "\uf0d6", "id": "fa-money"}, {"text": "\uf0d7", "id": "fa-caret-down"}, {"text": "\uf0d8", "id": "fa-caret-up"}, {"text": "\uf0d9", "id": "fa-caret-left"}, {"text": "\uf0da", "id": "fa-caret-right"}, {"text": "\uf0db", "id": "fa-columns"}, {"text": "\uf0dc", "id": "fa-sort"}, {"text": "\uf0dd", "id": "fa-sort-asc"}, {"text": "\uf0de", "id": "fa-sort-desc"}, {"text": "\uf0e0", "id": "fa-envelope"}, {"text": "\uf0e1", "id": "fa-linkedin"}, {"text": "\uf0e2", "id": "fa-undo"}, {"text": "\uf0e3", "id": "fa-gavel"}, {"text": "\uf0e4", "id": "fa-tachometer"}, {"text": "\uf0e5", "id": "fa-comment-o"}, {"text": "\uf0e6", "id": "fa-comments-o"}, {"text": "\uf0e7", "id": "fa-bolt"}, {"text": "\uf0e8", "id": "fa-sitemap"}, {"text": "\uf0e9", "id": "fa-umbrella"}, {"text": "\uf0ea", "id": "fa-clipboard"}, {"text": "\uf0eb", "id": "fa-lightbulb-o"}, {"text": "\uf0ec", "id": "fa-exchange"}, {"text": "\uf0ed", "id": "fa-cloud-download"}, {"text": "\uf0ee", "id": "fa-cloud-upload"}, {"text": "\uf0f0", "id": "fa-user-md"}, {"text": "\uf0f1", "id": "fa-stethoscope"}, {"text": "\uf0f2", "id": "fa-suitcase"}, {"text": "\uf0a2", "id": "fa-bell-o"}, {"text": "\uf0f4", "id": "fa-coffee"}, {"text": "\uf0f5", "id": "fa-cutlery"}, {"text": "\uf0f6", "id": "fa-file-text-o"}, {"text": "\uf0f7", "id": "fa-building-o"}, {"text": "\uf0f8", "id": "fa-hospital-o"}, {"text": "\uf0f9", "id": "fa-ambulance"}, {"text": "\uf0fa", "id": "fa-medkit"}, {"text": "\uf0fb", "id": "fa-fighter-jet"}, {"text": "\uf0fc", "id": "fa-beer"}, {"text": "\uf0fd", "id": "fa-h-square"}, {"text": "\uf0fe", "id": "fa-plus-square"}, {"text": "\uf100", "id": "fa-angle-double-left"}, {"text": "\uf101", "id": "fa-angle-double-right"}, {"text": "\uf102", "id": "fa-angle-double-up"}, {"text": "\uf103", "id": "fa-angle-double-down"}, {"text": "\uf104", "id": "fa-angle-left"}, {"text": "\uf105", "id": "fa-angle-right"}, {"text": "\uf106", "id": "fa-angle-up"}, {"text": "\uf107", "id": "fa-angle-down"}, {"text": "\uf108", "id": "fa-desktop"}, {"text": "\uf109", "id": "fa-laptop"}, {"text": "\uf10a", "id": "fa-tablet"}, {"text": "\uf10b", "id": "fa-mobile"}, {"text": "\uf10c", "id": "fa-circle-o"}, {"text": "\uf10d", "id": "fa-quote-left"}, {"text": "\uf10e", "id": "fa-quote-right"}, {"text": "\uf110", "id": "fa-spinner"}, {"text": "\uf111", "id": "fa-circle"}, {"text": "\uf112", "id": "fa-reply"}, {"text": "\uf113", "id": "fa-github-alt"}, {"text": "\uf114", "id": "fa-folder-o"}, {"text": "\uf115", "id": "fa-folder-open-o"}, {"text": "\uf118", "id": "fa-smile-o"}, {"text": "\uf119", "id": "fa-frown-o"}, {"text": "\uf11a", "id": "fa-meh-o"}, {"text": "\uf11b", "id": "fa-gamepad"}, {"text": "\uf11c", "id": "fa-keyboard-o"}, {"text": "\uf11d", "id": "fa-flag-o"}, {"text": "\uf11e", "id": "fa-flag-checkered"}, {"text": "\uf120", "id": "fa-terminal"}, {"text": "\uf121", "id": "fa-code"}, {"text": "\uf122", "id": "fa-reply-all"}, {"text": "\uf122", "id": "fa-mail-reply-all"}, {"text": "\uf123", "id": "fa-star-half-o"}, {"text": "\uf124", "id": "fa-location-arrow"}, {"text": "\uf125", "id": "fa-crop"}, {"text": "\uf126", "id": "fa-code-fork"}, {"text": "\uf127", "id": "fa-chain-broken"}, {"text": "\uf128", "id": "fa-question"}, {"text": "\uf129", "id": "fa-info"}, {"text": "\uf12a", "id": "fa-exclamation"}, {"text": "\uf12b", "id": "fa-superscript"}, {"text": "\uf12c", "id": "fa-subscript"}, {"text": "\uf12d", "id": "fa-eraser"}, {"text": "\uf12e", "id": "fa-puzzle-piece"}, {"text": "\uf130", "id": "fa-microphone"}, {"text": "\uf131", "id": "fa-microphone-slash"}, {"text": "\uf132", "id": "fa-shield"}, {"text": "\uf133", "id": "fa-calendar-o"}, {"text": "\uf134", "id": "fa-fire-extinguisher"}, {"text": "\uf135", "id": "fa-rocket"}, {"text": "\uf136", "id": "fa-maxcdn"}, {"text": "\uf137", "id": "fa-chevron-circle-left"}, {"text": "\uf138", "id": "fa-chevron-circle-right"}, {"text": "\uf139", "id": "fa-chevron-circle-up"}, {"text": "\uf13a", "id": "fa-chevron-circle-down"}, {"text": "\uf13b", "id": "fa-html5"}, {"text": "\uf13c", "id": "fa-css3"}, {"text": "\uf13d", "id": "fa-anchor"}, {"text": "\uf13e", "id": "fa-unlock-alt"}, {"text": "\uf140", "id": "fa-bullseye"}, {"text": "\uf141", "id": "fa-ellipsis-h"}, {"text": "\uf142", "id": "fa-ellipsis-v"}, {"text": "\uf143", "id": "fa-rss-square"}, {"text": "\uf144", "id": "fa-play-circle"}, {"text": "\uf145", "id": "fa-ticket"}, {"text": "\uf146", "id": "fa-minus-square"}, {"text": "\uf147", "id": "fa-minus-square-o"}, {"text": "\uf148", "id": "fa-level-up"}, {"text": "\uf149", "id": "fa-level-down"}, {"text": "\uf14a", "id": "fa-check-square"}, {"text": "\uf14b", "id": "fa-pencil-square"}, {"text": "\uf14c", "id": "fa-external-link-square"}, {"text": "\uf14d", "id": "fa-share-square"}, {"text": "\uf14e", "id": "fa-compass"}, {"text": "\uf150", "id": "fa-caret-square-o-down"}, {"text": "\uf151", "id": "fa-caret-square-o-up"}, {"text": "\uf152", "id": "fa-caret-square-o-right"}, {"text": "\uf153", "id": "fa-eur"}, {"text": "\uf154", "id": "fa-gbp"}, {"text": "\uf155", "id": "fa-usd"}, {"text": "\uf156", "id": "fa-inr"}, {"text": "\uf157", "id": "fa-jpy"}, {"text": "\uf158", "id": "fa-rub"}, {"text": "\uf159", "id": "fa-krw"}, {"text": "\uf15a", "id": "fa-btc"}, {"text": "\uf15b", "id": "fa-file"}, {"text": "\uf15c", "id": "fa-file-text"}, {"text": "\uf15d", "id": "fa-sort-alpha-asc"}, {"text": "\uf15e", "id": "fa-sort-alpha-desc"}, {"text": "\uf160", "id": "fa-sort-amount-asc"}, {"text": "\uf161", "id": "fa-sort-amount-desc"}, {"text": "\uf162", "id": "fa-sort-numeric-asc"}, {"text": "\uf163", "id": "fa-sort-numeric-desc"}, {"text": "\uf164", "id": "fa-thumbs-up"}, {"text": "\uf165", "id": "fa-thumbs-down"}, {"text": "\uf166", "id": "fa-youtube-square"}, {"text": "\uf167", "id": "fa-youtube"}, {"text": "\uf168", "id": "fa-xing"}, {"text": "\uf169", "id": "fa-xing-square"}, {"text": "\uf16a", "id": "fa-youtube-play"}, {"text": "\uf16b", "id": "fa-dropbox"}, {"text": "\uf16c", "id": "fa-stack-overflow"}, {"text": "\uf16d", "id": "fa-instagram"}, {"text": "\uf16e", "id": "fa-flickr"}, {"text": "\uf170", "id": "fa-adn"}, {"text": "\uf171", "id": "fa-bitbucket"}, {"text": "\uf172", "id": "fa-bitbucket-square"}, {"text": "\uf173", "id": "fa-tumblr"}, {"text": "\uf174", "id": "fa-tumblr-square"}, {"text": "\uf175", "id": "fa-long-arrow-down"}, {"text": "\uf176", "id": "fa-long-arrow-up"}, {"text": "\uf177", "id": "fa-long-arrow-left"}, {"text": "\uf178", "id": "fa-long-arrow-right"}, {"text": "\uf179", "id": "fa-apple"}, {"text": "\uf17a", "id": "fa-windows"}, {"text": "\uf17b", "id": "fa-android"}, {"text": "\uf17c", "id": "fa-linux"}, {"text": "\uf17d", "id": "fa-dribbble"}, {"text": "\uf17e", "id": "fa-skype"}, {"text": "\uf180", "id": "fa-foursquare"}, {"text": "\uf181", "id": "fa-trello"}, {"text": "\uf182", "id": "fa-female"}, {"text": "\uf183", "id": "fa-male"}, {"text": "\uf184", "id": "fa-gittip"}, {"text": "\uf185", "id": "fa-sun-o"}, {"text": "\uf186", "id": "fa-moon-o"}, {"text": "\uf187", "id": "fa-archive"}, {"text": "\uf188", "id": "fa-bug"}, {"text": "\uf189", "id": "fa-vk"}, {"text": "\uf18a", "id": "fa-weibo"}, {"text": "\uf18b", "id": "fa-renren"}, {"text": "\uf18c", "id": "fa-pagelines"}, {"text": "\uf18d", "id": "fa-stack-exchange"}, {"text": "\uf18e", "id": "fa-arrow-circle-o-right"}, {"text": "\uf190", "id": "fa-arrow-circle-o-left"}, {"text": "\uf191", "id": "fa-caret-square-o-left"}, {"text": "\uf192", "id": "fa-dot-circle-o"}, {"text": "\uf193", "id": "fa-wheelchair"}, {"text": "\uf194", "id": "fa-vimeo-square"}, {"text": "\uf195", "id": "fa-try"}, {"text": "\uf196", "id": "fa-plus-square-o"}],
-        /*
-         * Initializes select2: in Chrome and Safari, <select> font apparently
-         * isn't customizable (?) and the fontawesome glyphs fail to appear.
-         */
+        // extract list of FontAwesome from the cheatsheet.
+        icons: _.map(getCssSelectors(/(?=^|\s)(\.fa-[0-9a-z_-]+::?before)/i), function (css) {
+            return css.replace(/::?before$/, '');
+        }),
+
+        init: function (parent, media) {
+            this._super();
+            this.parent = parent;
+            this.media = media;
+        },
         start: function () {
+            this.$preview = this.$('.preview-container').detach();
             return this._super().then(this.proxy('load_data'));
         },
         search: function (needle) {
@@ -2649,31 +2128,19 @@
          * all the new ones if necessary.
          */
         save: function () {
-            if (! this.media){
-                var $image = this.$el.find('.font-icons-selected');
-                var rng = range.create()
-                if($('.insert-media').length){
-                    rng = document.createRange();
-                    rng.selectNodeContents(document.getElementsByClassName('insert-media')[0])
-                    $('p').removeClass('insert-media');
-                }
-                rng.insertNode($image[0]);
-                $('.popover').hide();
-            } else {
-                var style = this.media.attributes.style ? this.media.attributes.style.textContent : '';
-                var classes = (this.media.className||"").split(/\s+/);
-                var non_fa_classes = _.reject(classes, function (cls) {
-                    return cls === 'fa' || /^fa-/.test(cls);
-                });
-                var final_classes = non_fa_classes.concat(this.get_fa_classes());
-                if (this.media.tagName !== "SPAN") {
-                    var media = document.createElement('span');
-                    $(this.media).replaceWith(media);
-                    this.media = media;
-                }
-                $(this.media).attr("class", final_classes.join(' ')).attr("style", style);
+            this.parent.trigger("save", this.media);
+            var style = this.media.attributes.style ? this.media.attributes.style.textContent : '';
+            var classes = (this.media.className||"").split(/\s+/);
+            var non_fa_classes = _.reject(classes, function (cls) {
+                return cls === 'fa' || /^fa-/.test(cls);
+            });
+            var final_classes = non_fa_classes.concat(this.get_fa_classes());
+            if (this.media.tagName !== "SPAN") {
+                var media = document.createElement('span');
+                $(this.media).replaceWith(media);
+                this.media = media;
             }
-            this._super();
+            $(this.media).attr("class", final_classes.join(' ')).attr("style", style);
         },
         /**
          * Looks up the various FontAwesome classes on the bound element and
@@ -2687,23 +2154,23 @@
             for (var i = 0; i < classes.length; i++) {
                 var cls = classes[i];
                 switch(cls) {
-                case 'fa-2x':case 'fa-3x':case 'fa-4x':case 'fa-5x':
-                    // size classes
-                    this.$('#fa-size').val(cls);
-                    continue;
-                case 'fa-spin':
-                case 'fa-rotate-90':case 'fa-rotate-180':case 'fa-rotate-270':
-                case 'fa-flip-horizontal':case 'fa-rotate-vertical':
-                    this.$('#fa-rotation').val(cls);
-                    continue;
-                case 'fa-fw':
-                    continue;
-                case 'fa-border':
-                    this.$('#fa-border').prop('checked', true);
-                    continue;
-                default:
-                    if (!/^fa-/.test(cls)) { continue; }
-                    this.$('#fa-icon').val(cls);
+                    case 'fa-1x':case 'fa-2x':case 'fa-3x':case 'fa-4x':case 'fa-5x':
+                        // size classes
+                        this.$('#fa-size').val(cls);
+                        continue;
+                    case 'fa-spin':
+                    case 'fa-rotate-90':case 'fa-rotate-180':case 'fa-rotate-270':
+                    case 'fa-flip-horizontal':case 'fa-rotate-vertical':
+                        this.$('#fa-rotation').val(cls);
+                        continue;
+                    case 'fa-fw':
+                        continue;
+                    case 'fa-border':
+                        this.$('#fa-border').prop('checked', true);
+                        continue;
+                    default:
+                        if (!/^fa-/.test(cls)) { continue; }
+                        this.$('#fa-icon').val(cls);
                 }
             }
             this.update_preview();
@@ -2725,7 +2192,7 @@
             this.$preview.empty();
             var $preview = this.$('#fa-preview').empty();
 
-            var sizes = ['', 'fa-2x', 'fa-3x', 'fa-4x', 'fa-5x'];
+            var sizes = ['fa-1x', 'fa-2x', 'fa-3x', 'fa-4x', 'fa-5x'];
             var classes = this.get_fa_classes();
             var no_sizes = _.difference(classes, sizes).join(' ');
             var selected = false;
@@ -2751,7 +2218,11 @@
         },
     });
 
-    website.editor.VideoDialog = website.editor.Media.extend({
+    /**
+     * VideoDialog widget. Lets users change a video, support all summernote
+     * video, and embled iframe
+     */
+    website.editor.VideoDialog = openerp.Widget.extend({
         template: 'website.editor.dialog.video',
         events : _.extend({}, website.editor.Dialog.prototype.events, {
             'click input#urlvideo ~ button': 'get_video',
@@ -2761,7 +2232,13 @@
             'change input#embedvideo': 'change_input',
             'keyup input#embedvideo': 'change_input'
         }),
+        init: function (parent, media) {
+            this._super();
+            this.parent = parent;
+            this.media = media;
+        },
         start: function () {
+            this.$preview = this.$('.preview-container').detach();
             this.$iframe = this.$("iframe");
             var $media = $(this.media);
             if ($media.hasClass("media_iframe_video")) {
@@ -2781,20 +2258,6 @@
                 $button.removeClass("btn-default").addClass("btn-primary");
             }
         },
-        get_url: function () {
-            var video_id = this.$("#video_id").val();
-            var video_type = this.$("#video_type").val();
-            switch (video_type) {
-                case "youtube":
-                    return "//www.youtube.com/embed/" + video_id + "?autoplay=" + (this.$("#autoplay").is(":checked") ? 1 : 0);
-                case "vimeo":
-                    return "//player.vimeo.com/video/" + video_id + "?autoplay=" + (this.$("#autoplay").is(":checked") ? 1 : 0);
-                case "dailymotion":
-                    return "//www.dailymotion.com/embed/video/" + video_id + "?autoplay=" + (this.$("#autoplay").is(":checked") ? 1 : 0);
-                default:
-                    return video_id;
-            }
-        },
         get_embed_video: function (event) {
             event.preventDefault();
             var embedvideo = this.$("input#embedvideo").val().match(/src=["']?([^"']+)["' ]?/);
@@ -2806,34 +2269,12 @@
         },
         get_video: function (event) {
             if (event) event.preventDefault();
-            var needle = this.$("input#urlvideo").val();
-            var video_id;
-            var video_type;
-
-            if (needle.indexOf(".youtube.") != -1) {
-                video_type = "youtube";
-                video_id = needle.match(/\.youtube\.[a-z]+\/(embed\/|watch\?v=)?([^\/?&]+)/i)[2];
-            } else if (needle.indexOf("//youtu.") != -1) {
-                video_type = "youtube";
-                video_id = needle.match(/youtube\.[a-z]+\/([^\/?&]+)/i)[1];
-            } else if (needle.indexOf("player.vimeo.") != -1 || needle.indexOf("//vimeo.") != -1) {
-                video_type = "vimeo";
-                video_id = needle.match(/vimeo\.[a-z]+\/(video\/)?([^?&]+)/i)[2];
-            } else if (needle.indexOf(".dailymotion.") != -1) {
-                video_type = "dailymotion";
-                video_id = needle.match(/dailymotion\.[a-z]+\/(embed\/)?(video\/)?([^\/?&]+)/i)[3];
-            } else {
-                video_type = "";
-                video_id = needle;
-            }
-
-            this.$("#video_id").val(video_id);
-            this.$("#video_type").val(video_type);
-
-            this.$iframe.attr("src", this.get_url());
+            var $video = eventHandler.editor.insertVideo(null, this.$("input#urlvideo").val(), true);
+            this.$iframe.attr("src", $video ? $video.attr("src") : "");
             return false;
         },
         save: function () {
+            this.parent.trigger("save", this.media);
             var video_id = this.$("#video_id").val();
             if (!video_id) {
                 this.$("button.btn-primary").click();
@@ -2841,14 +2282,14 @@
             }
             var video_type = this.$("#video_type").val();
             var $iframe = $(
-                '<div class="media_iframe_video" data-src="'+this.get_url()+'">'+
-                    '<div class="css_editable_mode_display">&nbsp;</div>'+
-                    '<iframe src="'+this.get_url()+'" frameborder="0" allowfullscreen="allowfullscreen"></iframe>'+
+                '<div class="media_iframe_video" data-src="'+this.$iframe.attr("src")+'">'+
+                    '<div class="css_editable_mode_display" contentEditable="false">&nbsp;</div>'+
+                    '<div class="media_iframe_video_size" contentEditable="false">&nbsp;</div>'+
+                    '<iframe src="'+this.$iframe.attr("src")+'" frameborder="0" allowfullscreen="allowfullscreen" contentEditable="false"></iframe>'+
                 '</div>');
             $('.insert-media').replaceWith($iframe);
             $(this.media).replaceWith($iframe);
             this.media = $iframe[0];
-            this._super();
         },
         clear: function () {
             delete this.media.dataset.src;

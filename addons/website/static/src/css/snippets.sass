@@ -123,6 +123,12 @@
         float: left
         position: relative
         margin: 0px -24px !important
+    &.oe_vertical_text
+        width: 48px
+        float: none
+        display: inline-block
+        position: relative
+        margin: 0px -24px !important
     &.oe_overlay
         +border-radius(3px)
         //@include background-image( repeating-linear-gradient(45deg, rgba(255,255,255,.1) ,rgba(255,255,255,.1) 35px, rgba(0,0,0,.1) 35px, rgba(0,0,0,.1) 75px))
@@ -307,13 +313,13 @@
         content: "\F061" !important
     &.block-w-right .w:before
         content: "\F060" !important
-    &.block-w-left.block-w-right .w
+    &.block-w-left.block-w-right .w:before
         display: none !important
     &.block-e-left .e:before
         content: "\F061" !important
     &.block-e-right .e:before
         content: "\F060" !important
-    &.block-e-left.block-e-right .e
+    &.block-e-left.block-e-right .e:before
         display: none !important
 
     &.block-s-top .s:before
@@ -603,10 +609,12 @@ table.table_desc tr td
         background-image: url('/website/static/src/img/blocks/block_quote.png')
     &.o_block_panel .oe_snippet_thumbnail_img
         background-image: url('/website/static/src/img/blocks/block_panel.png')
+    &.o_block_image_float .oe_snippet_thumbnail_img
+        background-image: url('/website/static/src/img/blocks/block_text_image.png')
+    &.o_block_image_floating .oe_snippet_thumbnail_img
+        background-image: url('/website/static/src/img/blocks/block_text_image.png')
     &.o_block_separator .oe_snippet_thumbnail_img
         background-image: url('/website/static/src/img/blocks/block_separator.png')
-    &.o_block_table .oe_snippet_thumbnail_img
-        background-image: url('/website/static/src/img/blocks/block_table.png')        
     &.o_block_button .oe_snippet_thumbnail_img
         background-image: url('/website/static/src/img/blocks/block_button.png')
 

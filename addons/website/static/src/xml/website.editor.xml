@@ -40,6 +40,16 @@
         <t t-call="website.editor.dialog">
             <t t-set="title">Link to</t>
             <form>
+                <div class="list-group">
+                    <div class="form-group list-group-item active">
+                        <h3 class="list-group-item-heading">
+                            <label for="link-new" class="control-label">
+                                Link Label
+                            </label>
+                        </h3>
+                        <input type="text" class="form-control" id="link-text" required="required"/>
+                    </div>
+                </div>
                 <ul class="list-group">
                     <li class="list-group-item form-group active">
                         <h4 class="list-group-item-heading">
@@ -66,16 +76,6 @@
                                id="link-external" placeholder="http://openerp.com"/>
                     </li>
                 </ul>
-                <div class="form-horizontal">
-                    <div class="form-group">
-                        <label for="link-text" class="col-sm-2 control-label">
-                            Link text
-                        </label>
-                        <div class="col-sm-10">
-                            <input type="text" class="form-control" id="link-text"/>
-                        </div>
-                    </div>
-                </div>
                 <div class="form-horizontal link-style">
                     <div class="form-group">
                         <label class="col-sm-2 control-label">
@@ -136,7 +136,9 @@
                             Preview
                         </label>
                         <div class="col-sm-10" style="line-height: 2em;">
-                            <a id="link-preview" href="#"></a>
+                            <div style="overflow: auto; max-width: 100%; max-height: 200px;">
+                                <a id="link-preview" href="#"></a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -257,7 +259,7 @@
                 <div class="col-sm-2 existing-attachment-cell"
                      t-foreach="row" t-as="attachment">
                     <i class="fa fa-times existing-attachment-remove" t-att-data-id="attachment.id"/>
-                    <img t-att-src="attachment.website_url" t-att-alt="attachment.name" t-att-title="attachment.name" class="img img-responsive"/>
+                    <img t-att-src="attachment.website_url" t-att-alt="attachment.name" t-att-title="attachment.name" t-att-data-id="attachment.id" class="img img-responsive"/>
                 </div>
             </div>
         </div>
@@ -336,10 +338,26 @@
         </div>
     </t>
 
+    <t t-name="website.editor.dialog.alt">
+        <t t-call="website.editor.dialog">
+            <t t-set="title">Change media Alt and Title</t>
+            <form action="#" class="form-horizontal">
+                <div class="form-group">
+                    <label for="alt" class="col-sm-2 control-label">Alt:</label>
+                    <div class="col-sm-9"><input id="alt" type="text" class="form-control" required="required" t-att-value="widget.alt"/></div>
+                </div>
+                <div class="form-group">
+                    <label for="title" class="col-sm-2 control-label">Title:</label>
+                    <div class="col-sm-9"><input id="title" type="text" class="form-control" required="required" t-att-value="widget.title"/></div>
+                </div>
+            </form>
+        </t>
+    </t>
+
     <t t-name="website.editor.dialog.font-icons">
         <form action="#">
             <input type="hidden" id="fa-icon"/>
-            <input type="hidden" id="fa-size"/>
+            <input type="hidden" id="fa-size" value="fa-1x"/>
             <div class="font-icons-icons">
                 <t t-call="website.editor.dialog.font-icons.icons">
                     <t t-set="icons" t-value="widget.icons"/>
@@ -352,10 +370,8 @@
     </t>
     <t t-name="website.editor.dialog.font-icons.icons">
         <span t-foreach="icons" t-as="icon"
-              class="fa font-icons-icon"
-              t-att-data-id="icon.id">
-            <t t-esc="icon.text"/>
-        </span>
+              t-attf-class="fa font-icons-icon #{icon}"
+              t-att-data-id="icon"/>
     </t>
 
     <t t-name="website.editor.dialog.video">
@@ -388,15 +404,13 @@
             
             <div id="video-preview" style="width: 450px; margin: 0 auto;">
                 <div class="media_iframe_video">
+                    <div class="media_iframe_video_size"></div>
                     <iframe
                         src=""
                         frameborder="0"
                         allowfullscreen="allowfullscreen"></iframe>
                 </div>
             </div>
-
-            <input type="hidden" id="video_id" value=""/>
-            <input type="hidden" id="video_type" value=""/>
 
             <div class="text-center mt32">
                 <div class="checkbox">

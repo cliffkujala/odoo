@@ -156,7 +156,10 @@ var Tour = {
             Tour.$element.removeData("tour");
             Tour.$element.removeData("tour-step");
             $(".tour-backdrop").remove();
-            $(".popover.tour").remove();
+            if (Tour.$popover.data('bs.popover')) {
+                Tour.$popover.data('bs.popover').$element.popover('destroy');
+            }
+            Tour.$popover.remove();
             Tour.$element = null;
         }
     },
@@ -201,6 +204,9 @@ var Tour = {
 
 
         var $tip = $element.data("bs.popover").tip();
+
+
+        Tour.$popover = $tip.add($element.data("bs.popover").arrow());
 
 
         // add popover style (orphan, static, backdrop)
@@ -555,6 +561,30 @@ var Tour = {
 
                 Tour.autoDragAndDropSnippet($element);
             
+            } else if (step.keydown) {
+                
+                if (!(step.keydown instanceof Array)) {
+                    step.keydown = [step.keydown];
+                }
+                var keydown = function (list) {
+                    var keyCode = list.shift();
+                    if (keyCode) {
+                        setTimeout(function () {
+                            $element.trigger({ type: 'keydown', keyCode: keyCode });
+                            if ((keyCode > 47 && keyCode < 58)   || // number keys
+                                keyCode == 32  || // spacebar
+                                (keyCode > 64 && keyCode < 91)   || // letter keys
+                                (keyCode > 95 && keyCode < 112)  || // numpad keys
+                                (keyCode > 185 && keyCode < 193) || // ;=,-./` (in order)
+                                (keyCode > 218 && keyCode < 223)) {   // [\]' (in order))
+                                document.execCommand('insertText', 0, String.fromCharCode(keyCode));
+                            }
+                        },0);
+                        keydown(list);
+                    }
+                };
+                keydown(step.keydown.slice());
+
             } else if ($element.is(":visible")) {
 
                 var click_event = function(type) {
@@ -565,30 +595,30 @@ var Tour = {
 
                 click_event("mouseover");
                 click_event("mousedown");
+                click_event("mouseup");
                 click_event("click");
 
                 // trigger after for step like: mouseenter, next step click on button display with mouseenter
                 setTimeout(function () {
                     if (!Tour.getState()) return;
-                    click_event("mouseup");
                     click_event("mouseout");
                 }, self.defaultDelay<<1);
             }
             if (step.sampleText) {
             
-                $element.trigger($.Event("keydown", { srcElement: $element }));
+                $element.trigger($.Event("keydown", { srcElement: $element[0] }));
                 if ($element.is("input") ) {
                     $element.val(step.sampleText);
                 } if ($element.is("select")) {
                     $element.find("[value='"+step.sampleText+"'], option:contains('"+step.sampleText+"')").attr("selected", true);
                     $element.val(step.sampleText);
                 } else {
-                    $element.html(step.sampleText);
+                    $element.text(step.sampleText);
                 }
                 setTimeout(function () {
                     if (!Tour.getState()) return;
-                    $element.trigger($.Event("keyup", { srcElement: $element }));
-                    $element.trigger($.Event("change", { srcElement: $element }));
+                    $element.trigger($.Event("keyup", { srcElement: $element[0] }));
+                    $element.trigger($.Event("change", { srcElement: $element[0] }));
                 }, self.defaultDelay<<1);
             
             }
