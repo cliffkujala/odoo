@@ -105,7 +105,7 @@
 
             this.$snippet = $("#oe_snippets");
 
-            this.$editable.on('click', function () {
+            $('body').on('click', '.o_editable', function () {
                 self.$el.addClass("hidden");
             });
 
@@ -316,7 +316,7 @@
         bind_snippet_click_editor: function () {
             var self = this;
             var snipped_event_flag;
-            this.$editable.on('click', function (event) {
+            $(document).on('click', '.o_editable', function (event) {
                 var srcElement = event.srcElement || (event.originalEvent && (event.originalEvent.originalTarget || event.originalEvent.target));
                 if (snipped_event_flag || !srcElement) {
                     return;
@@ -1585,7 +1585,7 @@
 
             website.snippet.start_animation(true, this.$target);
 
-            $(document.body).on("media-saved", self, function (event, prev , item) {
+            $(this.$target).on("saved", self, function (event, prev , item) {
                 self.editor.on_blur();
                 self.BuildingBlock.make_active(false);
                 if (self.$target.parent().data("oe-field") !== "image") {
@@ -1599,7 +1599,9 @@
         },
         on_focus : function () {
             var self = this;
-            if (this.$target.parent().data("oe-field") === "image") {
+            var $parent = this.$target.parent();
+
+            if ($parent.data("oe-field") === "image" && $parent.hasClass('o_editable')) {
                 this.$overlay.addClass("hidden");
                 new website.editor.MediaDialog(self.$target.closest('.o_editable'), self.$target[0]).appendTo(document.body);
                 self.BuildingBlock.make_active(false);

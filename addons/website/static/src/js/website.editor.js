@@ -1056,21 +1056,27 @@
 
         //////////////// history Undo & Redo
 
-        var $prevnext = $('<div class="o_undo btn-group"/>');
-        var $prev = $(renderer.tplIconButton('fa fa-undo', {
-                title: _t('Undo'),
-                event: 'undo',
-            }))
-            .appendTo($prevnext);
-        var $next = $(renderer.tplIconButton('fa fa-repeat', {
-                title: _t('Redo'),
-                event: 'redo',
-            }))
-            .appendTo($prevnext);
+        if (!$('#note-undo-popover').size()) {
+            var $undoPopover = $('<div class="note-popover"><div id="note-undo-popover" class="note-undo-popover popover" style="display: block; top: 1px !important; right: 20px !important;"><div class="popover-content"></div></div>');
 
-        $imagePopover.find('.popover-content').append($prevnext);
-        $linkPopover.find('.popover-content').append($prevnext.clone());
-        $airPopover.find('.popover-content').append($prevnext.clone());
+            var $prevnext = $('<div class="o_undo btn-group"/>');
+            var $prev = $(renderer.tplIconButton('fa fa-undo', {
+                    title: _t('Undo'),
+                    event: 'undo',
+                }))
+                .appendTo($prevnext);
+            var $next = $(renderer.tplIconButton('fa fa-repeat', {
+                    title: _t('Redo'),
+                    event: 'redo',
+                }))
+                .appendTo($prevnext);
+
+            $undoPopover.find('.popover-content').append($prevnext);
+            $undoPopover.on('click', '[data-event]', function () {
+                eventHandler.editor[$(this).data('event')]($(this));
+            });
+            $undoPopover.appendTo(document.body);
+        }
 
         //////////////// tooltip
 
@@ -1107,8 +1113,6 @@
         var $imagePopover = $popover.find('.note-image-popover');
         var $linkPopover = $popover.find('.note-link-popover');
         var $airPopover = $popover.find('.note-air-popover');
-
-        $popover.children().css('z-index', 1040);
 
         fn_popover_update.call(this, $popover, oStyle, isAirMode);
 
@@ -1332,8 +1336,8 @@
         }
     }
     function summernote_click (event) {
-        if (!$(event.srcElement).closest('.o_undo, .note-editable, .note-popover, .note-link-dialog, .note-image-dialog, .note-air-dialog').length) {
-            $(".note-popover > *").hide();
+        if (!$(event.srcElement).closest('.note-editable, .note-popover, .note-link-dialog, .note-image-dialog, .note-air-dialog').length) {
+            $(".note-popover > *:not(#note-undo-popover)").hide();
         }
     }
     var fn_attach = eventHandler.attach;
@@ -1344,7 +1348,7 @@
         $(document).on('mousedown', summernote_mousedown);
         $(document).on('mouseup', summernote_mouseup);
         $(document).on('click', summernote_click);
-        oLayoutInfo.editor.on('dblclick', '.media_iframe_video, span.fa, i.fa, span.fa', function (event) {
+        oLayoutInfo.editor.on('dblclick', 'img, .media_iframe_video, span.fa, i.fa, span.fa', function (event) {
             new website.editor.MediaDialog(oLayoutInfo.editor, event.target).appendTo(document.body);
         });
     };
@@ -2518,7 +2522,7 @@
             this.on('save', this, this.proxy('saved'));
         },
         started: function (holder) {
-            if (!this.media) { this.media = document.getElementsByClassName('insert-media')[0] }
+            if (!this.media) { this.media = document.getElementsByClassName('insert-media')[0]; }
             var el = this.media;
             if (!el) { return; }
             holder.url = el.getAttribute('src');

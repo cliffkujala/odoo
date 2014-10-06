@@ -1096,12 +1096,12 @@
     </div>
 
     <div data-js='media'
-        data-selector=".media_iframe_video, span.fa, i.fa, .glyphicon">
+        data-selector="img, .media_iframe_video, span.fa, i.fa, .glyphicon">
         <li data-edition="edition"><a>Change...</a></li>
     </div>
 
     <div data-js='transform'
-        data-selector="img:not(.cke_iframe), .media_iframe_video, span.fa, i.fa">
+        data-selector=":not([data-oe-field='image']) > img, .media_iframe_video, span.fa, i.fa">
         <li class="dropdown-submenu">
             <a tabindex="-1" href="#">Style</a>
             <ul class="dropdown-menu" name="parallax-scroll">
