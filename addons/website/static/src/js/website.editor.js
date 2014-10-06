@@ -1368,9 +1368,9 @@
 
     var History = function History () {
         function re_enable_snippet (r) {
-            $("#wrapwrap").trigger("click");
+            $(document).trigger("click");
             $(".oe_overlay").remove();
-            $("#wrapwrap *").filter(function () {
+            $(".o_editable *").filter(function () {
                 var $el = $(this);
                 if($el.data('snippet-editor')) {
                     $el.removeData();
@@ -1378,7 +1378,10 @@
             });
 
             setTimeout(function () {
-                $(r.sc.tagName ? r.sc : r.sc.parentNode).trigger("click");
+                var target = r.sc.tagName ? r.sc : r.sc.parentNode;
+                var evt = document.createEvent("MouseEvents");
+                evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, target);
+                target.dispatchEvent(evt);
             },0);
         }
 
@@ -1408,6 +1411,7 @@
             if (!pos) { return; }
             last = null;
             if (!aUndo[pos]) aUndo[pos] = this.makeSnap($editable || $('.o_editable.note-editable:first'));
+            if (aUndo[pos-1].jump) pos--;
             this.applySnap(aUndo[--pos]);
         };
         this.hasUndo = function ($editable) {
@@ -1416,6 +1420,7 @@
 
         this.redo = function () {
             if (aUndo.length <= pos+1) { return; }
+            if (aUndo[pos].jump) pos++;
             this.applySnap(aUndo[++pos]);
         };
         this.hasRedo = function () {
@@ -1429,9 +1434,22 @@
         var last;
         this.recordUndo = function ($editable, event) {
             if (event) {
-                if (event === last) return;
-                else last = event;
+                if (last && aUndo[pos-1] && aUndo[pos-1].editable !== $editable[0]) {
+                    // => make a snap when the user change editable zone (because: don't make snap for each keydown)
+                    aUndo.splice(pos, aUndo.length);
+                    var prev = aUndo[pos-1];
+                    aUndo[pos] = {
+                        editable: prev.editable,
+                        contents: $(prev.editable).html(),
+                        bookmark: prev.bookmark,
+                        scrollTop: prev.scrollTop,
+                        jump: true
+                    };
+                    pos++;
+                }
+                else if (event === last) return;
             }
+            last = event;
             aUndo.splice(pos, aUndo.length);
             aUndo[pos] = this.makeSnap($editable);
             pos++;
