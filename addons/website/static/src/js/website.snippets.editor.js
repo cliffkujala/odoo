@@ -739,8 +739,6 @@
             this.set_active();
             this.$target.on('snippet-option-reset', _.bind(this.set_active, this));
             this._bind_li_menu();
-
-            this.start();
         },
 
         _bind_li_menu: function () {
@@ -1067,7 +1065,7 @@
             this._super();
             this.$target.find(".item").removeClass("next prev left right active")
                 .first().addClass("active");
-            this.$indicators.find('li').removeClass('active')
+            this.$target.find('.carousel-indicators').find('li').removeClass('active')
                 .first().addClass("active");
         },
         start : function () {
@@ -1738,6 +1736,7 @@
                 var Editor = website.snippet.options[option] || website.snippet.Option;
                 var editor = self.styles[option] = new Editor(self.BuildingBlock, self, self.$target, option_id);
                 $ul.append(editor.$el.addClass("snippet-option-" + option));
+                editor.start();
             });
 
             if (!this.selector_siblings.length && !this.selector_children.length) {
