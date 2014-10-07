@@ -544,7 +544,7 @@
         }
 
         var td = dom.ancestor(r.sc, dom.isCell);
-        if ((r.sc === td || r.sc === td.lastChild || (td.lastChild.tagName === "BR" && r.sc === td.lastChild.previousSibling)) && r.so === r.sc.textContent.length && r.isOnCell() && !td.nextElementSibling) {
+        if (td && (r.sc === td || r.sc === td.lastChild || (td.lastChild.tagName === "BR" && r.sc === td.lastChild.previousSibling)) && r.so === r.sc.textContent.length && r.isOnCell() && !td.nextElementSibling) {
             var $node = $(td.parentNode);
             var $clone = $node.clone();
             $clone.children().html('<br/>');
@@ -1150,6 +1150,83 @@
         $container.find('button[data-event="floatMe"][data-value="center"]').toggleClass("active", $(oStyle.image).hasClass("center-block"));
         $container.find('button[data-event="floatMe"][data-value="right"]').toggleClass("active", $(oStyle.image).hasClass("pull-right"));
     };
+    function summernote_table_update (oStyle) {
+        if (!range.create().isOnCell()) {
+            $('.o_table_handler').remove();
+            return;
+        }
+        var table = dom.ancestor(oStyle.range.sc, dom.isTable);
+
+        $('.o_table_handler').remove();
+
+        var $dels = $();
+        var $adds = $();
+        var $tds = $('tr:first', table).children();
+        $tds.each(function () {
+            var $td = $(this);
+            var pos = $td.offset();
+
+            var $del = $('<span class="o_table_handler fa fa-minus-square"/>').appendTo('body');
+            $del.data('td', this);
+            $dels = $dels.add($del);
+            $del.css({
+                left: ((pos.left + $td.outerWidth()/2)-6) + "px",
+                top: (pos.top-6) + "px"
+            });
+
+            var $add = $('<span class="o_table_handler fa fa-plus-square"/>').appendTo('body');
+            $add.data('td', this);
+            $adds = $adds.add($add);
+            $add.css({
+                left: (pos.left-6) + "px",
+                top: (pos.top-6) + "px"
+            });
+        });
+
+        var $last = $tds.last();
+        var pos = $last.offset();
+        var $add = $('<span class="o_table_handler fa fa-plus-square"/>').appendTo('body');
+        $adds = $adds.add($add);
+        $add.css({
+            left: (pos.left+$last.outerWidth()-6) + "px",
+            top: (pos.top-6) + "px"
+        });
+
+        var $table = $(table);
+        $dels.on('click', function (event) {
+            var td = $(this).data('td');
+            var newTd;
+            var eq = $(td).index();
+            $table.find('tr').each(function () {
+                $('td:eq('+eq+')', this).remove();
+            });
+            newTd = $table.find('tr:first td:eq('+eq+'), tr:first td:last').first();
+
+            $('.o_table_handler').remove();
+            range.create(newTd[0], 0, newTd[0], 0).select();
+            newTd.trigger('mouseup');
+        });
+        $adds.on('click', function (event) {
+            var td = $(this).data('td');
+            var newTd;
+            if (td) {
+                var eq = $(td).index();
+                $table.find('tr').each(function () {
+                    $('td:eq('+eq+')', this).before('<td><br/></td>');
+                });
+                newTd = $table.find('tr:first td:eq('+eq+')');
+            } else {
+                $table.find('tr').each(function () {
+                    $(this).append('<td><br/></td>');
+                });
+                newTd = $table.find('tr:first td:last');
+            }
+
+            $('.o_table_handler').remove();
+            range.create(newTd[0], 0, newTd[0], 0).select();
+            newTd.trigger('mouseup');
+        });
+    }
     var fn_popover_update = eventHandler.popover.update;
     eventHandler.popover.update = function ($popover, oStyle, isAirMode) {
         var $imagePopover = $popover.find('.note-image-popover');
@@ -1188,6 +1265,8 @@
         } else {
             $airPopover.show();
         }
+
+        summernote_table_update(oStyle);
     };
 
     $(document).on('click keyup', function () {
