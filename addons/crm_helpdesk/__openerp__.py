@@ -42,6 +42,7 @@ and categorize your interventions with a channel and a priority level.
         'security/ir.model.access.csv',
         'report/crm_helpdesk_report_view.xml',
         'crm_helpdesk_data.xml',
+        'res_partner_view.xml',
     ],
     'demo': ['crm_helpdesk_demo.xml'],
     'test': ['test/process/help-desk.yml'],
