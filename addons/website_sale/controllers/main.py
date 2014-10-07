@@ -3,6 +3,7 @@ import werkzeug
 
 from openerp import SUPERUSER_ID
 from openerp import http
+from openerp import tools
 from openerp.http import request
 from openerp.tools.translate import _
 from openerp.addons.website.models.website import slug
@@ -482,7 +483,12 @@ class website_sale(http.Controller):
         error = dict()
         for field_name in self.mandatory_billing_fields:
             if not data.get(field_name):
-                error[field_name] = 'missing'
+                error[field_name] = True
+
+        if data.get('email') and not tools.single_email_re.match(data.get('email')):
+            error.update({
+                'email' : _('Invalid Email! Please enter a valid email address.'),
+            })
 
         if data.get("vat") and hasattr(registry["res.partner"], "check_vat"):
             if request.website.company_id.vat_check_vies:
@@ -493,13 +499,15 @@ class website_sale(http.Controller):
                 check_func = registry["res.partner"].simple_vat_check
             vat_country, vat_number = registry["res.partner"]._split_vat(data.get("vat"))
             if not check_func(cr, uid, vat_country, vat_number, context=None): # simple_vat_check
-                error["vat"] = 'error'
+                error.update({
+                    'vat' : _('Incorrect VAT number: The VAT number should be a combination of the country code plus some digits and should contain from 2 to 12 characters.')
+                })
 
         if data.get("shipping_id") == -1:
             for field_name in self.mandatory_shipping_fields:
                 field_name = 'shipping_' + field_name
                 if not data.get(field_name):
-                    error[field_name] = 'missing'
+                    error[field_name] = True
 
         return error
 
@@ -587,6 +595,7 @@ class website_sale(http.Controller):
 
         values["error"] = self.checkout_form_validate(values["checkout"])
         if values["error"]:
+            values["error_message"] = [err for err in values["error"].values() if isinstance(err, unicode)]
             return request.website.render("website_sale.checkout", values)
 
         self.checkout_form_save(values["checkout"])
