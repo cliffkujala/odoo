@@ -499,7 +499,7 @@
                 var td = dom.ancestor(r.sc, dom.isCell);
                 if (!outdent && !td.nextElementSibling && !td.parentNode.nextElementSibling) {
                     eventHandler.editor.enter($editable, options);
-                } else if (outdent && !td.previousElementSibling && !$(td.parentNode).text().replace(/\S/)) {
+                } else if (outdent && !td.previousElementSibling && !$(td.parentNode).text().match(/\S/)) {
                     eventHandler.editor.backspace($editable, options);
                 } else {
                     this.table.tab(r, outdent);
@@ -542,18 +542,18 @@
             return false;
         }
 
-        if (!r.sc.tagName) return true;
-
         var td;
         if (r.isOnCell() && !(td = dom.ancestor(r.sc, dom.isCell)).nextElementSibling) {
             var $node = $(td.parentNode);
             var $clone = $node.clone();
             $clone.children().html('<br/>');
             $node.after($clone);
-            var node = $clone[0].firstChild || $clone[0];
+            var node = $clone[0].firstElementChild || $clone[0];
             range.create(node, 0, node, 0).select();
             return false;
         }
+
+        if (!r.sc.tagName) return true;
 
         if (mergeAndSplit.indexOf(r.sc.tagName.toLowerCase()) === -1) return false;
 
@@ -615,7 +615,7 @@
         // normal feature if same tag and not the end
         else if (r.sc===r.ec && r.eo<content.length && content.match(/\S/)) return true;
         // merge with the next text node
-        else if (r.ec.nextSibling && !r.ec.nextSibling.tagName) return true;
+        else if (r.ec.nextSibling && (!r.sc.nextSibling.tagName || r.sc.nextSibling.tagName === "BR")) return true;
         // jump to next node for delete
         else if (r.sc.nextSibling) {
             node = r.sc.nextSibling;
@@ -677,26 +677,36 @@
         while (!node.nextSibling && !node.previousSibling) {node = node.parentNode;}
 
         // empty tag
-        if (r.sc===r.ec && !r.sc.textContent.replace(/\s+$/, '').length && node.previousSibling && deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
+        if (r.sc===r.ec && !r.sc.textContent.match(/\S/) && node.previousSibling && deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
             var next = node.previousSibling;
             while (next.tagName && next.lastChild) {next = next.lastChild;}
             node.parentNode.removeChild(node);
             range.create(next, next.textContent.length, next, next.textContent.length).select();
         }
         // table tr td
-        else if (r.sc===r.ec && r.isOnCell() && !(temp = dom.ancestor(r.sc, dom.isCell)).previousElementSibling && !$(temp.parentNode).text().replace(/\S/)) {
+        else if (r.sc===r.ec && r.isOnCell() && !(temp = dom.ancestor(r.sc, dom.isCell)).previousElementSibling) {
             var tr = temp.parentNode;
             var prevTr = tr.previousElementSibling;
-            if (prevTr) {
-                tr.parentNode.removeChild(tr);
-                node = prevTr.lastChild.lastChild || prevTr.lastChild;
+            if (!$(temp.parentNode).text().match(/\S/)) {
+                if (prevTr) {
+                    tr.parentNode.removeChild(tr);
+                    node = prevTr.lastElementChild.lastChild || prevTr.lastElementChild;
+                    range.create(node, node.textContent.length, node, node.textContent.length).select();
+                }
+            } else {
+                node = prevTr.lastElementChild.lastChild || prevTr.lastElementChild;
                 range.create(node, node.textContent.length, node, node.textContent.length).select();
             }
+        }
+        else if (r.sc===r.ec && r.isOnCell() && !r.so && temp.previousElementSibling && r.sc === temp.firstChild) {
+            var td = temp.previousElementSibling;
+            node = td.lastChild || td;
+            range.create(node, node.textContent.length, node, node.textContent.length).select();
         }
         // normal feature if same tag and not the begin
         else if (r.sc===r.ec && r.so || r.eo) return true;
         // merge with the previous text node
-        else if (r.sc.previousSibling && !r.sc.previousSibling.tagName) return true;
+        else if (r.sc.previousSibling && (!r.sc.previousSibling.tagName || r.sc.previousSibling.tagName === "BR")) return true;
         // jump to previous node for delete
         else if (r.sc.previousSibling) {
             node = r.sc.previousSibling;
