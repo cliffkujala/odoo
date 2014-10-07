@@ -2098,8 +2098,8 @@
       var foreColor = oColor.foreColor, backColor = oColor.backColor;
 
       recordUndo($editable);
-      if (foreColor) { document.execCommand('foreColor', false, foreColor); }
-      if (backColor) { document.execCommand('backColor', false, backColor); }
+      if (backColor) { this.backColor($editable, backColor); } // fix odoo
+      if (foreColor) { this.foreColor($editable, foreColor); } // fix odoo
     };
 
     this.insertTable = function ($editable, sDim) {

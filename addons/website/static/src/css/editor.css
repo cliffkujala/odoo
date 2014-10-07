@@ -37,6 +37,16 @@
 .note-popover .popover-content .note-ul .dropdown-menu .note-li {
   margin-right: 5px;
 }
+.note-popover .popover-content .colorpicker {
+  margin: 0;
+}
+.note-popover .popover-content .colorpicker td > * {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid white;
+}
 .note-popover .popover .popover-content .dropdown-menu a {
   display: block;
 }

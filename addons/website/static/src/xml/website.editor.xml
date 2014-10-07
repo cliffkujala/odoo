@@ -352,10 +352,8 @@
     </t>
     <t t-name="website.editor.dialog.font-icons.icons">
         <span t-foreach="icons" t-as="icon"
-              class="fa font-icons-icon"
-              t-att-data-id="icon.id">
-            <t t-esc="icon.text"/>
-        </span>
+              t-attf-class="fa font-icons-icon #{icon}"
+              t-att-data-id="icon"/>
     </t>
 
     <t t-name="website.editor.dialog.video">
