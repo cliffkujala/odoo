@@ -486,7 +486,8 @@
         },0);
     }
     
-    var mergeOnDelete = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li a ul ol".split(" ");
+    var mergeAndSplit = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li a ul ol font".split(" ");
+    var deleteEmpty = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li a ul ol font span".split(" ");
     var forbiddenWrite = ".fa img".split(" ");
 
     eventHandler.editor.tab = function ($editable, options, outdent) {
@@ -495,7 +496,14 @@
 
         if (r.isCollapsed()) {
             if (r.isOnCell()) {
-                this.table.tab(r, outdent);
+                var td = dom.ancestor(r.sc, dom.isCell);
+                if (!outdent && !td.nextElementSibling && !td.parentNode.nextElementSibling) {
+                    eventHandler.editor.enter($editable, options);
+                } else if (outdent && !td.previousElementSibling && !$(td.parentNode).text().replace(/\S/)) {
+                    eventHandler.editor.backspace($editable, options);
+                } else {
+                    this.table.tab(r, outdent);
+                }
                 return false;
             }
             if (r.so) {
@@ -524,25 +532,36 @@
         }
     };
     eventHandler.editor.untab = function ($editable, options) {
-        var r = range.create();
-        if (r.isCollapsed() && r.isOnCell()) {
-            this.table.tab(r, true);
-        }
         this.tab($editable, options, true);
     };
     eventHandler.editor.enter = function ($editable, options) {
-        $editable.data('NoteHistory').recordUndo($editable, "visible");
-        
+        $editable.data('NoteHistory').recordUndo($editable, 'enter');
+
         var r = range.create();
         if (!r.isCollapsed()) {
             return false;
         }
 
         if (!r.sc.tagName) return true;
+
+        var td;
+        if (r.isOnCell() && !(td = dom.ancestor(r.sc, dom.isCell)).nextElementSibling) {
+            var $node = $(td.parentNode);
+            var $clone = $node.clone();
+            $clone.children().html('<br/>');
+            $node.after($clone);
+            var node = $clone[0].firstChild || $clone[0];
+            range.create(node, 0, node, 0).select();
+            return false;
+        }
+
+        if (mergeAndSplit.indexOf(r.sc.tagName.toLowerCase()) === -1) return false;
+
         var $node = $(r.sc);
         var clone = $node.clone()[0];
         $node.after(clone);
-        range.createFromNode(clone).select();
+        var node = clone.firstChild || clone;
+        range.create(node, 0, node, 0).select();
     };
     eventHandler.editor.visible = function ($editable, options) {
         $editable.data('NoteHistory').recordUndo($editable, "visible");
@@ -587,7 +606,7 @@
         var content = r.ec.textContent.replace(/\s+$/, '');
 
         // empty tag
-        if (r.sc===r.ec && !content.length && node.nextSibling) {
+        if (r.sc===r.ec && !content.length && node.nextSibling && node.nextSibling && deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
             var next = node.nextSibling;
             while (next.tagName && next.firstChild) {next = next.firstChild;}
             node.parentNode.removeChild(node);
@@ -608,7 +627,7 @@
             return this.delete($editable, options);
         }
         //merge with the next block
-        else if (r.isCollapsed() && r.eo>=content.length && mergeOnDelete.indexOf(r.ec.parentNode.tagName.toLowerCase()) !== -1) {
+        else if (r.isCollapsed() && r.eo>=content.length && mergeAndSplit.indexOf(r.ec.parentNode.tagName.toLowerCase()) !== -1) {
 
             summernote_keydown_clean("ec");
             var next = r.ec.parentNode.nextElementSibling;
@@ -633,7 +652,7 @@
                         }
                         break;
                     }
-                }  while (node && mergeOnDelete.indexOf(node.tagName.toLowerCase()) !== -1);
+                }  while (node && mergeAndSplit.indexOf(node.tagName.toLowerCase()) !== -1);
 
                 while (nodes.length) {
                     node = nodes.pop();
@@ -649,20 +668,30 @@
     };
     eventHandler.editor.backspace = function ($editable, options) {
         $editable.data('NoteHistory').recordUndo($editable, "backspace");
-
+        var temp;
         var r = range.create();
-        if (!r || !r.isCollapsed()) {
+        if (!r || (!r.isCollapsed() && (r.sc !== r.ec || r.so || r.eo !== 1 || !r.sc.tagName))) {
             return true;
         }
         var node = r.sc;
         while (!node.nextSibling && !node.previousSibling) {node = node.parentNode;}
-        
+
         // empty tag
-        if (r.sc===r.ec && !r.sc.textContent.replace(/\s+$/, '').length && node.previousSibling) {
+        if (r.sc===r.ec && !r.sc.textContent.replace(/\s+$/, '').length && node.previousSibling && deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
             var next = node.previousSibling;
             while (next.tagName && next.lastChild) {next = next.lastChild;}
             node.parentNode.removeChild(node);
             range.create(next, next.textContent.length, next, next.textContent.length).select();
+        }
+        // table tr td
+        else if (r.sc===r.ec && r.isOnCell() && !(temp = dom.ancestor(r.sc, dom.isCell)).previousElementSibling && !$(temp.parentNode).text().replace(/\S/)) {
+            var tr = temp.parentNode;
+            var prevTr = tr.previousElementSibling;
+            if (prevTr) {
+                tr.parentNode.removeChild(tr);
+                node = prevTr.lastChild.lastChild || prevTr.lastChild;
+                range.create(node, node.textContent.length, node, node.textContent.length).select();
+            }
         }
         // normal feature if same tag and not the begin
         else if (r.sc===r.ec && r.so || r.eo) return true;
@@ -679,7 +708,7 @@
             return this.backspace($editable, options);
         }
         //merge with the previous block
-        else if (r.isCollapsed() && !r.eo && mergeOnDelete.indexOf(r.sc.parentNode.tagName.toLowerCase()) !== -1) {
+        else if (r.isCollapsed() && !r.eo && mergeAndSplit.indexOf(r.sc.parentNode.tagName.toLowerCase()) !== -1) {
 
             summernote_keydown_clean("sc");
             var prev = r.sc.parentNode.previousElementSibling;
@@ -704,7 +733,7 @@
                         }
                         break;
                     }
-                }  while (node && mergeOnDelete.indexOf(node.tagName.toLowerCase()) !== -1);
+                }  while (node && mergeAndSplit.indexOf(node.tagName.toLowerCase()) !== -1);
 
                 while (nodes.length) {
                     node = nodes.pop();
