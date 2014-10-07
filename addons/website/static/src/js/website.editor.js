@@ -498,6 +498,7 @@
             if (r.isOnCell()) {
                 var td = dom.ancestor(r.sc, dom.isCell);
                 if (!outdent && !td.nextElementSibling && !td.parentNode.nextElementSibling) {
+                    range.create(td.lastChild, td.lastChild.textContent.length, td.lastChild, td.lastChild.textContent.length).select();
                     eventHandler.editor.enter($editable, options);
                 } else if (outdent && !td.previousElementSibling && !$(td.parentNode).text().match(/\S/)) {
                     eventHandler.editor.backspace($editable, options);
@@ -542,8 +543,8 @@
             return false;
         }
 
-        var td;
-        if (r.isOnCell() && !(td = dom.ancestor(r.sc, dom.isCell)).nextElementSibling) {
+        var td = dom.ancestor(r.sc, dom.isCell);
+        if ((r.sc === td || r.sc === td.lastChild || (td.lastChild.tagName === "BR" && r.sc === td.lastChild.previousSibling)) && r.so === r.sc.textContent.length && r.isOnCell() && !td.nextElementSibling) {
             var $node = $(td.parentNode);
             var $clone = $node.clone();
             $clone.children().html('<br/>');
@@ -677,31 +678,33 @@
         while (!node.nextSibling && !node.previousSibling) {node = node.parentNode;}
 
         // empty tag
-        if (r.sc===r.ec && !r.sc.textContent.match(/\S/) && node.previousSibling && deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
+        if (r.sc===r.ec && !r.sc.textContent.match(/\S/) && node.previousSibling && r.sc.tagName && deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
             var next = node.previousSibling;
             while (next.tagName && next.lastChild) {next = next.lastChild;}
             node.parentNode.removeChild(node);
             range.create(next, next.textContent.length, next, next.textContent.length).select();
         }
         // table tr td
-        else if (r.sc===r.ec && r.isOnCell() && !(temp = dom.ancestor(r.sc, dom.isCell)).previousElementSibling) {
-            var tr = temp.parentNode;
-            var prevTr = tr.previousElementSibling;
-            if (!$(temp.parentNode).text().match(/\S/)) {
-                if (prevTr) {
-                    tr.parentNode.removeChild(tr);
+        else if (r.sc===r.ec && r.isOnCell() && !r.so && (r.sc === (temp = dom.ancestor(r.sc, dom.isCell)) || r.sc === temp.firstChild)) {
+            if (temp.previousElementSibling) {
+                var td = temp.previousElementSibling;
+                node = td.lastChild || td;
+                range.create(node, node.textContent.length, node, node.textContent.length).select();
+            } else {
+                var tr = temp.parentNode;
+                var prevTr = tr.previousElementSibling;
+                if (!$(temp.parentNode).text().match(/\S/)) {
+                    if (prevTr) {
+                        tr.parentNode.removeChild(tr);
+                        node = (prevTr.lastElementChild.lastChild && prevTr.lastElementChild.lastChild.tagName ? prevTr.lastElementChild.lastChild.previousSibling : prevTr.lastElementChild.lastChild) || prevTr.lastElementChild;
+                        range.create(node, node.textContent.length, node, node.textContent.length).select();
+                    }
+                } else {
                     node = prevTr.lastElementChild.lastChild || prevTr.lastElementChild;
+                console.log(node);
                     range.create(node, node.textContent.length, node, node.textContent.length).select();
                 }
-            } else {
-                node = prevTr.lastElementChild.lastChild || prevTr.lastElementChild;
-                range.create(node, node.textContent.length, node, node.textContent.length).select();
             }
-        }
-        else if (r.sc===r.ec && r.isOnCell() && !r.so && temp.previousElementSibling && r.sc === temp.firstChild) {
-            var td = temp.previousElementSibling;
-            node = td.lastChild || td;
-            range.create(node, node.textContent.length, node, node.textContent.length).select();
         }
         // normal feature if same tag and not the begin
         else if (r.sc===r.ec && r.so || r.eo) return true;
