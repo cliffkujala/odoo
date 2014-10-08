@@ -2963,7 +2963,7 @@
       // delay for range after mouseup
       setTimeout(function () {
         var oLayoutInfo = makeLayoutInfo(event.srcElement || event.target); // fix odoo
-        var oStyle = editor.currentStyle(event.target);
+        var oStyle = editor.currentStyle(range.create().sc); // fix odoo
         if (!oStyle) { return; }
 
         var isAirMode = oLayoutInfo.editor().data('options').airMode;

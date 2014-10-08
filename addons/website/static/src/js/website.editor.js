@@ -1308,7 +1308,7 @@
             range.create(oStyle.image,0,oStyle.image,0).select();
         }
 
-        if (oStyle.anchor && ($airPopover.is(':visible') || (oStyle.image && !$(oStyle.image).closest('a').length))) {
+        if (oStyle.anchor && (!oStyle.range.isCollapsed() || (oStyle.range.sc.tagName && !dom.isAnchor(oStyle.range.sc)) || (oStyle.image && !$(oStyle.image).closest('a').length))) {
             $linkPopover.hide();
             oStyle.anchor = false;
         }
