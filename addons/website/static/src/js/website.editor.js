@@ -1032,15 +1032,34 @@
         }
         return node;
     }
+    var color = {
+        foreColor: function (node, sObjColor) {
+            node.className = (node.className || '').replace(/\s*text-[^\s]+/, '');
+            node.removeAttribute('color');
+            node.style.color = '';
+            if (!sObjColor.indexOf('text-')) {
+                node.className = (node.className || '').replace(/\s*text-[^\s]+\s*/, '') + ' ' + sObjColor;
+            } else {
+                node.setAttribute('color', sObjColor);
+            }
+        },
+        backColor: function (node, sObjColor) {
+            node.className = (node.className || '').replace(/\s*bg-[^\s]+/, '');
+            node.style.backgroundColor = "";
+            if (!sObjColor.indexOf('bg-')) {
+                node.className = (node.className || '').replace(/\s*bg-[^\s]+\s*/, '') + ' ' + sObjColor;
+            } else {
+                node.style.backgroundColor = sObjColor;
+            }
+        }
+    };
     eventHandler.editor.foreColor = function ($editable, sObjColor) {
         var node = createFontNode();
-        node.className = (node.className || '').replace(/\s*text-[^\s]+/, '');
-        node.setAttribute('color', sObjColor);
+        color.foreColor(node, sObjColor);
     };
     eventHandler.editor.backColor = function ($editable, sObjColor) {
         var node = createFontNode();
-        node.className = (node.className || '').replace(/\s*bg-[^\s]+/, '');
-        node.style.backgroundColor = sObjColor;
+        color.backColor(node, sObjColor);
     };
     eventHandler.editor.removeFormat = function ($editable) {
         var node = range.create().sc.parentNode;
@@ -1050,15 +1069,10 @@
         r = dom.merge(node, r.sc, r.so, r.ec, r.eo, null, true);
         range.create(r.sc, r.so, r.ec, r.eo).select();
     };
-    eventHandler.editor.foreColorClass = function ($editable, sObjColor) {
-        var node = createFontNode();
-        node.removeAttribute('color');
-        node.className = (node.className || '').replace(/\s*text-[^\s]+\s*/, '') + ' ' + sObjColor;
-    };
-    eventHandler.editor.backColorClass = function ($editable, sObjColor) {
-        var node = createFontNode();
-        node.style.backgroundColor = "";
-        node.className = (node.className || '').replace(/\s*bg-[^\s]+\s*/, '') + ' ' + sObjColor;
+    var fn_boutton_updateRecentColor = eventHandler.toolbar.button.updateRecentColor;
+    eventHandler.toolbar.button.updateRecentColor = function (elBtn, sEvent, sValue) {
+        fn_boutton_updateRecentColor.call(this, elBtn, sEvent, sValue);
+        color[sEvent]($(elBtn).closest('.note-color').find('.note-recent-color i')[0], sValue);
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1131,8 +1145,8 @@
         var $bg = $color.find('.colorpicker:first button');
         var $fore = $color.find('.colorpicker:last button');
 
-        $bg.each(function () { $(this).attr('data-event', 'backColorClass').attr('data-value', $(this).attr('class')); });
-        $fore.each(function () { $(this).attr('data-event', 'foreColorClass').attr('data-value', $(this).attr('class').replace(/bg-/, 'text-')); });
+        $bg.each(function () { $(this).attr('data-event', 'backColor').attr('data-value', $(this).attr('class')); });
+        $fore.each(function () { $(this).attr('data-event', 'foreColor').attr('data-value', $(this).attr('class').replace(/bg-/, 'text-')); });
 
         //// highlight the text format
 
