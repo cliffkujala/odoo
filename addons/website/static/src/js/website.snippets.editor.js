@@ -565,7 +565,8 @@
                 $selector_children.each(function (){
                     var $zone = $(this);
                     var vertical;
-                    var float = window.getComputedStyle(this).float;
+                    var css = window.getComputedStyle(this);
+                    var float = css.float || css.cssFloat;
                     if (float === "left" || float === "right") {
                         vertical = $zone.parent().outerHeight()+'px';
                     }
@@ -582,7 +583,8 @@
                 $selector_siblings.each(function (){
                     var $zone = $(this);
                     var $drop, vertical;
-                    var float = window.getComputedStyle(this).float;
+                    var css = window.getComputedStyle(this);
+                    var float = css.float || css.cssFloat;
                     if (float === "left" || float === "right") {
                         vertical = $zone.parent().outerHeight()+'px';
                     }
