@@ -36,7 +36,7 @@
             if (this.block) return;
             modes.forEach(function(mode) {
                 if (classes.indexOf(mode) != -1) {
-                    self.mode("reapply", mode);
+                    self.mode("reapply", mode.slice(2, Infinity));
                     return;
                 }
             });
