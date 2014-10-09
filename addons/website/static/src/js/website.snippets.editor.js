@@ -564,42 +564,39 @@
             if ($selector_children) {
                 $selector_children.each(function (){
                     var $zone = $(this);
-                    var vertical;
                     var css = window.getComputedStyle(this);
                     var float = css.float || css.cssFloat;
-                    if (float === "left" || float === "right") {
-                        vertical = $zone.parent().outerHeight()+'px';
-                    }
                     var $drop = zone_template.clone();
-                    if (vertical) {
-                        $drop.addClass("oe_vertical").css('height', vertical);
+                    $zone.append($drop);
+                    if (float === "left" || float === "right") {
+                        $drop.addClass("oe_vertical").css('height', Math.max(Math.min($zone.outerHeight(), $zone.children().last().outerHeight()), 30));
                     }
-                    $zone.find('> *:not(.oe_drop_zone):visible').after($drop);
-                    $zone.prepend($drop.clone());
+                    $drop = $drop.clone();
+                    $zone.prepend($drop);
+                    if (float === "left" || float === "right") {
+                        $drop.addClass("oe_vertical").css('height', Math.max(Math.min($zone.outerHeight(), $zone.children().first().outerHeight()), 30));
+                    }
                 });
             }
 
             if ($selector_siblings) {
                 $selector_siblings.each(function (){
                     var $zone = $(this);
-                    var $drop, vertical;
+                    var $drop;
                     var css = window.getComputedStyle(this);
                     var float = css.float || css.cssFloat;
-                    if (float === "left" || float === "right") {
-                        vertical = $zone.parent().outerHeight()+'px';
-                    }
 
                     if($zone.prev('.oe_drop_zone:visible').length === 0){
                         $drop = zone_template.clone();
-                        if (vertical) {
-                            $drop.addClass("oe_vertical").css('height', vertical);
+                        if (float === "left" || float === "right") {
+                            $drop.addClass("oe_vertical").css('height', Math.max(Math.min($zone.outerHeight(), $zone.prev().outerHeight() || Infinity), 30));
                         }
                         $zone.before($drop);
                     }
                     if($zone.next('.oe_drop_zone:visible').length === 0){
                         $drop = zone_template.clone();
-                        if (vertical) {
-                            $drop.addClass("oe_vertical").css('height', vertical);
+                        if (float === "left" || float === "right") {
+                            $drop.addClass("oe_vertical").css('height', Math.max(Math.min($zone.outerHeight(), $zone.next().outerHeight() || Infinity), 30));
                         }
                         $zone.after($drop);
                     }
@@ -609,11 +606,11 @@
             var count;
             do {
                 count = 0;
-                // var $zones = $('.oe_drop_zone + .oe_drop_zone');    // no two consecutive zones
-                // count += $zones.length;
-                // $zones.remove();
+                var $zones = $('.oe_drop_zone + .oe_drop_clone + .oe_drop_zone'); // no drop zone on left and right of the drop clone
+                count += $zones.length;
+                $zones.remove();
 
-                $zones = self.$editable.find('.oe_drop_zone > .oe_drop_zone:not(.oe_vertical)').remove();   // no recursive zones
+                $zones = self.$editable.find('.oe_drop_zone > .oe_drop_zone').remove();   // no recursive zones
                 count += $zones.length;
                 $zones.remove();
             } while (count > 0);
