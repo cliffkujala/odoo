@@ -2102,10 +2102,23 @@
       if (foreColor) { this.foreColor($editable, foreColor); } // fix odoo
     };
 
-    this.insertTable = function ($editable, sDim) {
+    this.insertTable = function ($editable, sDim) { // fixed by odoo because if you create a table in <p>, chrome split the table when you undo => thow error
       recordUndo($editable);
       var aDim = sDim.split('x');
-      range.create().insertNode(table.createTable(aDim[0], aDim[1]));
+      var tab = table.createTable(aDim[0], aDim[1]);
+      range.create().insertNode(tab);
+
+      var forbidden = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small font span".split(" ");
+      var node = tab.parentNode;
+      var last = node;
+      while (forbidden.indexOf(node.tagName.toLowerCase()) !== -1) {
+        last = node;
+        node = node.parentNode;
+      }
+      if (node !== last) {
+        var p = dom.splitTree(last, tab, 0);
+        p.parentNode.insertBefore(tab, p);
+      }
     };
 
     /**
@@ -2963,7 +2976,7 @@
       // delay for range after mouseup
       setTimeout(function () {
         var oLayoutInfo = makeLayoutInfo(event.srcElement || event.target); // fix odoo
-        var oStyle = editor.currentStyle(range.create().sc); // fix odoo
+        var oStyle = editor.currentStyle(event.srcElement || event.target || range.create().sc); // fix odoo
         if (!oStyle) { return; }
 
         var isAirMode = oLayoutInfo.editor().data('options').airMode;

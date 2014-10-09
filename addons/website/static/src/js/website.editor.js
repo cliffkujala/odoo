@@ -488,7 +488,7 @@
     
     var mergeAndSplit = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li a ul ol font".split(" ");
     var deleteEmpty = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li a ul ol font span".split(" ");
-    var forbiddenWrite = ".fa img".split(" ");
+    var forbiddenWrite = ".media_iframe_video .fa img".split(" ");
 
     eventHandler.editor.tab = function ($editable, options, outdent) {
         var r = range.create();
@@ -503,6 +503,7 @@
                 } else if (outdent && !td.previousElementSibling && !$(td.parentNode).text().match(/\S/)) {
                     eventHandler.editor.backspace($editable, options);
                 } else {
+                    history.splitNext(); // for odoo
                     this.table.tab(r, outdent);
                 }
                 return false;
@@ -543,6 +544,7 @@
             return false;
         }
 
+        // table: add a tr
         var td = dom.ancestor(r.sc, dom.isCell);
         if (td && (r.sc === td || r.sc === td.lastChild || (td.lastChild.tagName === "BR" && r.sc === td.lastChild.previousSibling)) && r.so === r.sc.textContent.length && r.isOnCell() && !td.nextElementSibling) {
             var $node = $(td.parentNode);
@@ -554,19 +556,29 @@
             return false;
         }
 
-        if (!r.sc.tagName) return true;
+        var node = !r.sc.tagName ? r.sc.parentNode : r.sc;
+        var last = node;
+        while (mergeAndSplit.indexOf(node.tagName.toLowerCase()) !== -1) {
+            last = node;
+            node = node.parentNode;
+        }
 
-        if (mergeAndSplit.indexOf(r.sc.tagName.toLowerCase()) === -1) return false;
+        if (last === node) {
+            node = r.insertNode($('<br/>')[0]).nextSibling;
+        } else if (last === r.sc) {
+            var $node = $(last);
+            var $clone = $node.clone().text("");
+            $node.after($clone);
+            node = $clone[0].firstElementChild || $clone[0];
+        } else {
+            node = dom.splitTree(last, r.sc, r.so);
+        }
 
-        var $node = $(r.sc);
-        var clone = $node.clone()[0];
-        $node.after(clone);
-        var node = clone.firstChild || clone;
-        range.create(node, 0, node, 0).select();
+        range.create(node,0,node,0).select();
     };
     eventHandler.editor.visible = function ($editable, options) {
         $editable.data('NoteHistory').recordUndo($editable, "visible");
-        
+
         var r = range.create();
         var node = r.sc;
         var needChange = false;
@@ -607,7 +619,7 @@
         var content = r.ec.textContent.replace(/\s+$/, '');
 
         // empty tag
-        if (r.sc===r.ec && !content.length && node.nextSibling && node.nextSibling && deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
+        if (r.sc===r.ec && !content.length && node.nextSibling && node.nextSibling && deleteEmpty.indexOf(r.sc.tagName && r.sc.tagName.toLowerCase()) !== -1) {
             var next = node.nextSibling;
             while (next.tagName && next.firstChild) {next = next.firstChild;}
             node.parentNode.removeChild(node);
@@ -701,7 +713,6 @@
                     }
                 } else {
                     node = prevTr.lastElementChild.lastChild || prevTr.lastElementChild;
-                console.log(node);
                     range.create(node, node.textContent.length, node, node.textContent.length).select();
                 }
             }
@@ -1223,6 +1234,7 @@
             return;
         }
         var table = dom.ancestor(oStyle.range.sc, dom.isTable);
+        var $editable = $(table).closest('.o_editable');
 
         $('.o_table_handler').remove();
 
@@ -1260,21 +1272,36 @@
         });
 
         var $table = $(table);
-        $dels.on('click', function (event) {
+        $dels.on('mousedown', function (event) {
             var td = $(this).data('td');
+            $editable.data('NoteHistory').recordUndo($editable);
+
             var newTd;
-            var eq = $(td).index();
-            $table.find('tr').each(function () {
-                $('td:eq('+eq+')', this).remove();
-            });
-            newTd = $table.find('tr:first td:eq('+eq+'), tr:first td:last').first();
+            if ($(td).siblings().length) {
+                var eq = $(td).index();
+                $table.find('tr').each(function () {
+                    $('td:eq('+eq+')', this).remove();
+                });
+                newTd = $table.find('tr:first td:eq('+eq+'), tr:first td:last').first();
+            } else {
+                var r = range.create($table[0], 0, $table[0], 1);
+                r.select();
+                r.deleteContents();
+                $('.o_table_handler').remove();
+                r = range.create();
+                range.create(r.sc, r.so, r.sc, r.so).select();
+                $(r.sc).trigger('mouseup');
+                return;
+            }
 
             $('.o_table_handler').remove();
             range.create(newTd[0], 0, newTd[0], 0).select();
             newTd.trigger('mouseup');
         });
-        $adds.on('click', function (event) {
+        $adds.on('mousedown', function (event) {
             var td = $(this).data('td');
+            $editable.data('NoteHistory').recordUndo($editable);
+
             var newTd;
             if (td) {
                 var eq = $(td).index();
@@ -1504,6 +1531,8 @@
         }
     }
     function summernote_mousedown (event) {
+        history.splitNext();
+
         cursor_mousedown = event;
         var $btn = $(event.target).closest('.note-popover, .o_undo');
         if ($btn.length) {
@@ -1590,7 +1619,7 @@
         this.applySnap = function (oSnap) {
             var $editable = $(oSnap.editable);
             $editable.html(oSnap.contents).scrollTop(oSnap.scrollTop);
-            var r = range.createFromBookmark($editable[0], oSnap.bookmark);
+            var r = range.createFromBookmark(oSnap.editable, oSnap.bookmark);
             re_enable_snippet(r);
             r.select();
         };
@@ -1641,6 +1670,10 @@
             aUndo.splice(pos, aUndo.length);
             aUndo[pos] = this.makeSnap($editable);
             pos++;
+        };
+
+        this.splitNext = function () {
+            last = false;
         };
     };
     var history = new History();
@@ -2455,7 +2488,7 @@
                 this.media = document.createElement("img");
                 this.range.insertNode(this.media);
                 this.active.media = this.media;
-                this.media.className = "img-responsive pull-right";
+                this.media.className = "img-responsive pull-left";
             }
             var $el = $(self.active.media);
             this.active.save();

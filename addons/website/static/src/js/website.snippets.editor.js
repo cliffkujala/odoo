@@ -400,20 +400,6 @@
             this.cover_target($snippet.data('overlay'), $snippet);
         },
 
-        historyRecordUndoDrop: function ($toInsert) {
-            if ($toInsert.prev().length) {
-                var $prev = $toInsert.prev();
-                $toInsert.detach();
-                this.parent.rte.historyRecordUndo($prev);
-                $toInsert.insertAfter($prev);
-            } else {
-                var $parent = $toInsert.parent();
-                $toInsert.detach();
-                this.parent.rte.historyRecordUndo($parent);
-                $parent.prepend($toInsert);
-            }
-        },
-
         // activate drag and drop for the snippets in the snippet toolbar
         make_snippet_draggable: function($snippets){
             var self = this;
@@ -494,7 +480,24 @@
                     
                     if (dropped) {
 
-                        self.historyRecordUndoDrop($toInsert);
+                        var prev = $toInsert.first()[0].previousSibling;
+                        var next = $toInsert.last()[0].nextSibling;
+                        var rte = self.parent.rte;
+
+                        if (prev) {
+                            $toInsert.detach();
+                            rte.historyRecordUndo($(prev));
+                            $toInsert.insertAfter(prev);
+                        } else if (next) {
+                            $toInsert.detach();
+                            rte.historyRecordUndo($(next));
+                            $toInsert.insertBefore(next);
+                        } else {
+                            var $parent = $toInsert.parent();
+                            $toInsert.detach();
+                            rte.historyRecordUndo($parent);
+                            $parent.prepend($toInsert);
+                        }
 
                         var $target = false;
                         $target = $toInsert;
@@ -503,22 +506,6 @@
                             self.$snippet.trigger('snippet-dropped', $target);
 
                             website.snippet.start_animation(true, $target);
-
-                            // // reset snippet for rte
-                            // $target.removeData("snippet-editor");
-                            // if ($target.data("overlay")) {
-                            //     $target.data("overlay").remove();
-                            //     $target.removeData("overlay");
-                            // }
-                            // website.snippet.globalSelector.all($target).each(function () {
-                            //     var $snippet = $(this);
-                            //     $snippet.removeData("snippet-editor");
-                            //     if ($snippet.data("overlay")) {
-                            //         $snippet.data("overlay").remove();
-                            //         $snippet.removeData("overlay");
-                            //     }
-                            // });
-                            // // end
 
                             // drop_and_build_snippet
                             self.create_overlay($target);
@@ -567,20 +554,45 @@
                     var css = window.getComputedStyle(this);
                     var float = css.float || css.cssFloat;
                     var $drop = zone_template.clone();
+
                     $zone.append($drop);
-                    if (float === "left" || float === "right") {
+                    var node = $drop[0].previousSibling;
+                    var test = !!(node && ((!node.tagName && node.textContent.match(/\S/)) ||  node.tagName === "BR"));
+                    if (test) {
+                        $drop.addClass("oe_vertical oe_vertical_text").css({
+                                'height': parseInt(window.getComputedStyle($zone[0]).lineHeight),
+                                'float': 'none',
+                                'display': 'inline-block'
+                            });
+                    } else if (float === "left" || float === "right") {
                         $drop.addClass("oe_vertical").css('height', Math.max(Math.min($zone.outerHeight(), $zone.children().last().outerHeight()), 30));
                     }
+
                     $drop = $drop.clone();
+
                     $zone.prepend($drop);
-                    if (float === "left" || float === "right") {
+                    var node = $drop[0].nextSibling;
+                    var test = !!(node && ((!node.tagName && node.textContent.match(/\S/)) ||  node.tagName === "BR"));
+                    if (test) {
+                        $drop.addClass("oe_vertical oe_vertical_text").css({
+                                'height': parseInt(window.getComputedStyle($zone[0]).lineHeight),
+                                'float': 'none',
+                                'display': 'inline-block'
+                            });
+                    } else if (float === "left" || float === "right") {
                         $drop.addClass("oe_vertical").css('height', Math.max(Math.min($zone.outerHeight(), $zone.children().first().outerHeight()), 30));
                     }
+                    if (test) {
+                        $drop.css({'float': 'none', 'display': 'inline-block'});
+                    }
                 });
+
+                // add children near drop zone
+                $selector_siblings = $(_.uniq(($selector_siblings || $()).add($selector_children.children()).get()));
             }
 
             if ($selector_siblings) {
-                $selector_siblings.each(function (){
+                $selector_siblings.filter(':not(.oe_drop_zone):not(.oe_drop_clone)').each(function (){
                     var $zone = $(this);
                     var $drop;
                     var css = window.getComputedStyle(this);
@@ -606,10 +618,6 @@
             var count;
             do {
                 count = 0;
-                var $zones = $('.oe_drop_zone + .oe_drop_clone + .oe_drop_zone'); // no drop zone on left and right of the drop clone
-                count += $zones.length;
-                $zones.remove();
-
                 $zones = self.$editable.find('.oe_drop_zone > .oe_drop_zone').remove();   // no recursive zones
                 count += $zones.length;
                 $zones.remove();
@@ -622,7 +630,7 @@
                 var prev = zone.prev();
                 var next = zone.next();
                 // remove consecutive zone
-                if (!zone.hasClass('.oe_vertical') && (prev.is('.oe_drop_zone:not(.oe_vertical)') || next.is('.oe_drop_zone:not(.oe_vertical)'))) {
+                if (prev.is('.oe_drop_zone') || next.is('.oe_drop_zone')) {
                     zone.remove();
                     return;
                 }
@@ -1691,7 +1699,9 @@
         },
         _drag_and_drop_stop: function (){
             var self = this;
-            var $prev = this.$target.prev().prev();
+            var $dropzone = this.$target.prev();
+            var prev = $dropzone.length && $dropzone[0].previousSibling;
+            var next = this.$target.last()[0].nextSibling;
             var $parent = this.$target.parent();
 
             $(".oe_drop_clone").after(this.$target);
@@ -1704,8 +1714,10 @@
             if (this.dropped) {
                 this.BuildingBlock.parent.rte.historyRecordUndo(this.$target);
 
-                if ($prev.length) {
-                    this.$target.insertAfter($prev);
+                if (prev) {
+                    this.$target.insertAfter(prev);
+                } else if (next) {
+                    this.$target.insertBefore(next);
                 } else {
                     $parent.prepend(this.$target);
                 }

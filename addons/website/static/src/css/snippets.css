@@ -164,6 +164,13 @@
   position: relative;
   margin: 0px -24px !important;
 }
+.oe_drop_zone.oe_insert.oe_vertical_text {
+  width: 48px;
+  float: none;
+  display: inline-block;
+  position: relative;
+  margin: 0px -24px !important;
+}
 .oe_drop_zone.oe_insert.oe_overlay {
   -webkit-border-radius: 3px;
   -moz-border-radius: 3px;
