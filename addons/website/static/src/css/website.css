@@ -175,6 +175,10 @@ ol.indent5 {
   list-style-type: lower-greek;
 }
 
+li > p {
+  margin: 0;
+}
+
 /* Extra Styles */
 img.shadow {
   -moz-border-radius: 3px;

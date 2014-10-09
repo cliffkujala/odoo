@@ -508,7 +508,8 @@
                 }
                 return false;
             }
-            if (r.so) {
+
+            if (r.so && r.sc.textContent.slice(0, r.so).match(/\S/)) {
                 if (!outdent){
                     var next = r.sc.splitText(r.so);
                     this.insertTab($editable, r, options.tabsize);
@@ -628,15 +629,14 @@
         // normal feature if same tag and not the end
         else if (r.sc===r.ec && r.eo<content.length && content.match(/\S/)) return true;
         // merge with the next text node
-        else if (r.ec.nextSibling && (!r.sc.nextSibling.tagName || r.sc.nextSibling.tagName === "BR")) return true;
+        else if (!r.ec.tagName && r.ec.nextSibling && (!r.sc.nextSibling.tagName || r.sc.nextSibling.tagName === "BR")) return true;
         // jump to next node for delete
         else if (r.sc.nextSibling) {
             node = r.sc.nextSibling;
             while (node.firstChild) {
                 node = node.firstChild;
             }
-            r = range.create(node, node.textContent.length, node, node.textContent.length);
-            r.select();
+            r = range.create(node, 0, node, 0).select();
             return this.delete($editable, options);
         }
         //merge with the next block
@@ -646,7 +646,7 @@
             var next = r.ec.parentNode.nextElementSibling;
             var style = window.getComputedStyle(next);
 
-            if (next && (r.sc.parentNode.tagName === next.tagName || style.display !== "block" || !parseInt(style.height))) {
+            if (next && (r.sc.parentNode.tagName === next.tagName || (style.display !== "block" && style.display !== "table") || !parseInt(style.height))) {
 
                 dom.doMerge(r.sc.parentNode, next);
                 range.create(r.sc, r.so, r.sc, r.so).select();
@@ -667,13 +667,23 @@
                     }
                 }  while (node && mergeAndSplit.indexOf(node.tagName.toLowerCase()) !== -1);
 
+                var merge = false;
                 while (nodes.length) {
                     node = nodes.pop();
                     if (node && node.nextElementSibling && node.nextElementSibling.tagName === node.tagName) {
                         dom.doMerge(node, node.nextElementSibling);
+                        merge = true;
                     }
                 }
                 range.create(r.ec, r.ec.textContent.length, r.ec, r.ec.textContent.length).select();
+
+                if (!merge) {
+                    var next = node.tagName ? node.nextElementSibling : node.parentNode.nextElementSibling;
+                    while (next.firstElementChild) {
+                        next = next.firstElementChild;
+                    }
+                    range.create(next.firstChild || next, 0, next.firstChild || next, 0).select();
+                }
             }
         }
         clean_dom_onkeydown();
