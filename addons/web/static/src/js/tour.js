@@ -576,19 +576,19 @@ var Tour = {
             }
             if (step.sampleText) {
             
-                $element.trigger($.Event("keydown", { srcElement: $element }));
+                $element.trigger($.Event("keydown", { srcElement: $element[0] }));
                 if ($element.is("input") ) {
                     $element.val(step.sampleText);
                 } if ($element.is("select")) {
                     $element.find("[value='"+step.sampleText+"'], option:contains('"+step.sampleText+"')").attr("selected", true);
                     $element.val(step.sampleText);
                 } else {
-                    $element.html(step.sampleText);
+                    $element.text(step.sampleText);
                 }
                 setTimeout(function () {
                     if (!Tour.getState()) return;
-                    $element.trigger($.Event("keyup", { srcElement: $element }));
-                    $element.trigger($.Event("change", { srcElement: $element }));
+                    $element.trigger($.Event("keyup", { srcElement: $element[0] }));
+                    $element.trigger($.Event("change", { srcElement: $element[0] }));
                 }, self.defaultDelay<<1);
             
             }
