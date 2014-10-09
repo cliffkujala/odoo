@@ -2976,7 +2976,8 @@
       // delay for range after mouseup
       setTimeout(function () {
         var oLayoutInfo = makeLayoutInfo(event.srcElement || event.target); // fix odoo
-        var node = event.srcElement || event.target || range.create().sc;
+        var node = range.create().sc || event.srcElement || event.target;
+
         var oStyle = editor.currentStyle(node.firstChild || node); // fix odoo
         if (!oStyle) { return; }
 
