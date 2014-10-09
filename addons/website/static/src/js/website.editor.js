@@ -1042,45 +1042,46 @@
     
     function createFontNode() {
         var r = range.create();
-        var node;
-        if (r.sc === r.ec && !r.so && r.eo === r.sc.textContent.length) {
-            node = r.ec.tagName ? r.ec : r.ec.parentNode;
-        } else {
+        if (r.sc !== r.ec || r.so || r.eo !== r.sc.textContent.length) {
             document.execCommand('foreColor', false, "red");
             r = range.create();
-            node = r.ec.tagName ? r.ec : r.ec.parentNode;
-            node.removeAttribute('color');
         }
-        return node;
+        return $(dom.listBetween(r.sc, r.ec)).add(r.sc.tagName ? r.sc : r.sc.parentNode).add(r.sc.tagName ? r.sc : r.sc.parentNode).filter('font').removeAttr("color").get();
     }
     var color = {
-        foreColor: function (node, sObjColor) {
-            node.className = (node.className || '').replace(/\s*text-[^\s]+/, '');
-            node.removeAttribute('color');
-            node.style.color = '';
-            if (!sObjColor.indexOf('text-')) {
-                node.className = (node.className || '').replace(/\s*text-[^\s]+\s*/, '') + ' ' + sObjColor;
-            } else {
-                node.setAttribute('color', sObjColor);
+        foreColor: function (nodes, sObjColor) {
+            for (var i=0; i<nodes.length; i++) {
+                var node = nodes[i];
+                node.className = (node.className || '').replace(/\s*text-[^\s]+/, '');
+                node.removeAttribute('color');
+                node.style.color = '';
+                if (!sObjColor.indexOf('text-')) {
+                    node.className = (node.className || '').replace(/\s*text-[^\s]+\s*/, '') + ' ' + sObjColor;
+                } else {
+                    node.setAttribute('color', sObjColor);
+                }
             }
         },
-        backColor: function (node, sObjColor) {
-            node.className = (node.className || '').replace(/\s*bg-[^\s]+/, '');
-            node.style.backgroundColor = "";
-            if (!sObjColor.indexOf('bg-')) {
-                node.className = (node.className || '').replace(/\s*bg-[^\s]+\s*/, '') + ' ' + sObjColor;
-            } else {
-                node.style.backgroundColor = sObjColor;
+        backColor: function (nodes, sObjColor) {
+            for (var i=0; i<nodes.length; i++) {
+                var node = nodes[i];
+                node.className = (node.className || '').replace(/\s*bg-[^\s]+/, '');
+                node.style.backgroundColor = "";
+                if (!sObjColor.indexOf('bg-')) {
+                    node.className = (node.className || '').replace(/\s*bg-[^\s]+\s*/, '') + ' ' + sObjColor;
+                } else {
+                    node.style.backgroundColor = sObjColor;
+                }
             }
         }
     };
     eventHandler.editor.foreColor = function ($editable, sObjColor) {
-        var node = createFontNode();
-        color.foreColor(node, sObjColor);
+        var nodes = createFontNode();
+        color.foreColor(nodes, sObjColor);
     };
     eventHandler.editor.backColor = function ($editable, sObjColor) {
-        var node = createFontNode();
-        color.backColor(node, sObjColor);
+        var nodes = createFontNode();
+        color.backColor(nodes, sObjColor);
     };
     eventHandler.editor.removeFormat = function ($editable) {
         var node = range.create().sc.parentNode;
