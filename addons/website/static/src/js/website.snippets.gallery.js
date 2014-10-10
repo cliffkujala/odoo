@@ -19,6 +19,9 @@
         start  : function() {
             this._super();
             this.bind_change();
+            this.$target.find("img").each(function (index) {
+                $(this).attr('data-index', index).data('index', index);
+            });
         },
         styling  : function(type, value) {
             var classes = this.$el.find('li[data-styling]').map(function () {
@@ -52,12 +55,14 @@
                 });
         },
         get_imgs: function () {
-            return this.$target.find("img").addClass("img img-thumbnail img-responsive mb8 mt8").detach();
+            var imgs = this.$target.find("img").addClass("img img-thumbnail img-responsive mb8 mt8").detach().get();
+            imgs.sort(function (a,b) { return $(a).data('index')-$(b).data('index'); });
+            return imgs;
         },
         mode: function (type, value) {
             if (this.block) return;
             if (!value) value = 'nomode';
-            this[value]();
+            this[value](type);
             this.$target.removeClass('o_nomode o_masonry o_grid o_slideshow').addClass("o_"+value);
             this.bind_change();
         },
@@ -66,29 +71,34 @@
             $container.empty().append($content);
             return $container;
         },
-        nomode : function() {
+        nomode : function(type) {
+            if (type !== "reapply" && !this.$target.attr('class').match(/o_grid|o_masonry|o_slideshow/)) return;
+
             var self = this,
                 $row     = $('<div class="row"></div>'),
-                $imgs = this.get_imgs().wrap('<div>').parent();
+                $imgs = $(this.get_imgs());
 
             this.replace($row);
 
             $imgs.each(function () {
-                var img = this.childNodes[0];
+                var $wrap = $(this).wrap('<div>').parent();
+                var img = this;
                 if (img.width >= img.height * 2) {
-                    $(this).addClass("col-md-6");
+                    $wrap.addClass("col-md-6");
                 } else if (img.width > 600) {
-                    $(this).addClass("col-md-6");
+                    $wrap.addClass("col-md-6");
                 } else {
-                    $(this).addClass("col-md-3");
+                    $wrap.addClass("col-md-3");
                 }
+                $row.append($wrap);
             });
-            $row.append($imgs);
             this.$target.css("height", "");
         },
-        masonry : function() {
+        masonry : function(type) {
+            if (type !== "reapply" && this.$target.hasClass('o_masonry')) return;
+
             var self     = this,
-                $imgs    = this.get_imgs(),
+                imgs    = this.get_imgs(),
                 columns  = this.get_columns(),
                 colClass = undefined,
                 $cols    = [];
@@ -112,7 +122,6 @@
 
             this.block = true;
             $cols = $($cols);
-            var imgs = $imgs.get();
             function add() {
                 self.lowest($cols).append(imgs.pop());
                 if (imgs.length) setTimeout(add, 0);
@@ -121,18 +130,20 @@
             if (imgs.length) add();
             this.$target.css("height", "");
         },
-        grid : function() {
+        grid : function(type) {
+            if (type !== "reapply" && this.$target.hasClass('o_grid')) return;
+
             var self     = this,
-                $cols    = this.get_imgs().wrap('<div>').parent(),
+                $imgs    = $(this.get_imgs()),
                 $col, $img,
                 $row     = $('<div class="row"></div>'),
                 columns  = this.get_columns() || 3,
                 colClass = "col-md-"+(12/columns),
                 $container = this.replace($row);
 
-            $cols.each(function(index) { // 0 based index
-                $col = $(this);
-                $img = $col.find('img');
+            $imgs.each(function(index) { // 0 based index
+                $img = $(this);
+                $col = $img.wrap('<div>').parent();
                 self.img_preserve_styles($img);
                 self.img_responsive($img);
                 $col.addClass(colClass);
@@ -144,9 +155,11 @@
             });
             this.$target.css("height", "");
         },
-        slideshow :function () {
-            var self = this;
-            var $imgs = this.$target.find("img").detach(),
+        slideshow :function (type) {
+            if (type !== "reapply" && this.$target.hasClass('o_slideshow')) return;
+
+            var self = this,
+                $imgs    = $(this.get_imgs()),
                 urls = $imgs.map(function() { return $(this).attr("src"); } ).get(),
                 params = {
                         srcs : urls,
@@ -157,12 +170,15 @@
                 },
                 $slideshow = $(openerp.qweb.render('website.gallery.slideshow', params));
             this.replace($slideshow);
+            this.$target.find(".item img").each(function (index) {
+                $(this).attr('data-index', index).data('index', index);
+            });
             this.$target.css("height", Math.round(window.innerHeight*0.7));
         },
         columns : function(type, value) {
             if (this.block) return;
             this.$target.attr("data-columns", value);
-            this.reapply();
+            if (type === "over") this.reapply();
         },
         albumimages : function(type, value) {
             if(type === "click") this[value]();
@@ -221,12 +237,18 @@
 
                     } else { /* success */
 
+                        var imgs = self.get_imgs();
+
                         $upload_form.find(".alert-success").show();
                         for (var i = 0 ; i < attachments.length; i++) {
-                            $('<img class="img img-thumbnail img-responsive mb8 mt8"/>')
-                                .attr("src", attachments[i].website_url)
-                                .appendTo($container);
+                            var img = $('<img class="img img-thumbnail img-responsive mb8 mt8"/>')
+                                .attr("src", attachments[i].website_url)[0];
+                            imgs.push(img);
                         }
+
+                        $(imgs).each(function (index) {
+                            $(this).attr('data-index', index).data('index', index).appendTo($container);
+                        });
                         $progress.addClass("hidden");
                         $upload_form.remove();
                         self.reapply(); // refresh the $target
@@ -278,11 +300,6 @@
             var classes = this.styles_to_preserve($img);
             $img.removeAttr("class");
             $img.addClass(classes);
-            return $img;
-        },
-        img_from_src : function(src) {
-            var self = this;
-            var $img = $("<img/>").attr("src", src);
             return $img;
         },
         img_responsive : function(img) {
