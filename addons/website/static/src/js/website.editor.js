@@ -45,6 +45,40 @@
     *  - change the selected range in function off the reRangeFilter to don't break the dom items
     */
 
+    dom.hasContentAfter = function (node) {
+        var next;
+        while (node.nextSibling) {
+            next = node.nextSibling;
+            if (next.tagName || next.textContent.match(/\S/)) return next;
+            node = next;
+        }
+    };
+    dom.hasContentBefore = function (node) {
+        var prev;
+        while (node.previousSibling) {
+            prev = node.previousSibling;
+            if (prev.tagName || prev.textContent.match(/\S/)) return prev;
+            node = prev;
+        }
+    };
+    dom.ancestorHaveNextSibling = function (node, pred) {
+        pred = pred || dom.hasContentAfter;
+        while (!node.nextSibling || !pred(node)) { node = node.parentNode; }
+        return node;
+    };
+    dom.ancestorHavePreviousSibling = function (node, pred) {
+        pred = pred || dom.hasContentBefore;
+        while (!node.nextSibling || !pred(node)) { node = node.parentNode; }
+        return node;
+    };
+    dom.lastChild = function (node) {
+        while (node.lastChild) { node = node.lastChild; }
+        return node;
+    };
+    dom.firstChild = function (node) {
+        while (node.firstChild) { node = node.firstChild; }
+        return node;
+    };
     dom.orderClass = function (node) {
         if (!node.className) return;
         var className = node.className.replace(/^\s+|\s+$/g, '').replace(/[\s\n\r]+/g, ' ').split(" ");
@@ -356,27 +390,44 @@
         // move caret
         range.create(data.sc, data.so, data.ec, data.eo).select();
     };
+    dom.removeBetween = function (sc, so, ec, eo) {
+        var ancestor = dom.commonAncestor(sc, ec);
 
-    var fn_rc = range.create;
-    range.create = function (sc, so, ec, eo) {
-        var wrappedRange = fn_rc.apply(this, arguments);
-        if (!wrappedRange) return;
-        wrappedRange.clean = function (mergeFilter) {
-            var node = this.sc === this.ec ? this.sc : this.commonAncestor();
-            if (node.childNodes.length <=1) {
-                return this;
+        if (ancestor.tagName) {
+
+            var ancestor_sc = sc;
+            var ancestor_ec = ec;
+            while (ancestor !== ancestor_sc.parentNode) { ancestor_sc = ancestor_sc.parentNode; }
+            while (ancestor !== ancestor_ec.parentNode) { ancestor_ec = ancestor_ec.parentNode; }
+
+            var begin = dom.splitTree(ancestor_sc, sc, so);
+            var last = dom.splitTree(ancestor_ec, ec, eo).previousSibling;
+            var nodes = dom.listBetween(begin, last);
+            sc = dom.lastChild(begin.previousSibling);
+            so = sc.textContent.length;
+            
+            for (var i=0; i<nodes.length; i++) {
+                nodes[i].parentNode.removeChild(nodes[i]);
             }
 
-            var merge = dom.merge(node, this.sc, this.so, this.ec, this.eo, mergeFilter);
-            var rem = dom.removeSpace(node, this.sc, merge.so, this.ec, merge.eo);
-
-            if (merge.merged || rem.removed) {
-                return range.create(rem.sc, rem.so, merge.ec, rem.eo);
+            var haveNextSibling = dom.ancestorHaveNextSibling(sc);
+            var next = dom.hasContentAfter(haveNextSibling);
+            if (next && haveNextSibling.tagName === next.tagName) {
+                dom.doMerge(haveNextSibling, next);
             }
-            return this;
+
+        } else {
+
+            var text = ancestor.textContent;
+            ancestor.textContent = text.slice(0, so) + text.slice(eo, Infinity);
+
+        }
+        return {
+            node: sc,
+            offset: so
         };
-        return wrappedRange;
     };
+
     range.reRangeFilter = function () { return true; };
     range.reRange = function (sc, so, ec, eo, keep_end) {
         // search the first snippet editable node
@@ -452,6 +503,22 @@
         }
 
         return range.create(sc, so, ec, eo);
+    };
+    range.WrappedRange.prototype.clean = function (mergeFilter) {
+        var node = this.sc === this.ec ? this.sc : this.commonAncestor();
+        if (node.childNodes.length <=1) {
+            return this;
+        }
+
+        var merge = dom.merge(node, this.sc, this.so, this.ec, this.eo, mergeFilter);
+        var rem = dom.removeSpace(node, this.sc, merge.so, this.ec, merge.eo);
+
+        if (merge.merged || rem.removed) {
+            return range.create(rem.sc, rem.so, merge.ec, rem.eo);
+        }
+        return this;
+    };
+    range.WrappedRange.prototype.remove = function (mergeFilter) {
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -542,7 +609,7 @@
 
         var r = range.create();
         if (!r.isCollapsed()) {
-            return false;
+            r = r.deleteContents().select();
         }
 
         // table: add a tr
@@ -571,8 +638,16 @@
             var $clone = $node.clone().text("");
             $node.after($clone);
             node = $clone[0].firstElementChild || $clone[0];
-        } else {
+        } else if (r.so) {
             node = dom.splitTree(last, r.sc, r.so);
+        } else {
+            var totalOffset = dom.makeOffsetPath(last, r.sc).reduce(function(pv, cv) { return pv + cv; }, 0);
+            node = dom.splitTree(last, r.sc, r.so);
+            if (!totalOffset) {
+                var prev = dom.hasContentBefore(dom.ancestorHavePreviousSibling(r.sc));
+                $(dom.lastChild(prev)).html('<br/>');
+
+            }
         }
 
         range.create(node,0,node,0).select();
@@ -581,6 +656,10 @@
         $editable.data('NoteHistory').recordUndo($editable, "visible");
 
         var r = range.create();
+        if (!r.isCollapsed()) {
+            r = r.deleteContents().select();
+        }
+
         var node = r.sc;
         var needChange = false;
         while (node.parentNode) {
@@ -611,16 +690,53 @@
         $editable.data('NoteHistory').recordUndo($editable, "delete");
         
         var r = range.create();
-        if (!r || !r.isCollapsed()) {
-            return true;
+        var isCollapsed = r.isCollapsed();
+        if (!isCollapsed) {
+            r = r.deleteContents().select();
+            return;
         }
+
         var node = r.ec;
         while (!node.nextSibling && !node.previousSibling) {node = node.parentNode;}
         
         var content = r.ec.textContent.replace(/\s+$/, '');
+        var temp;
 
+        // media
+        if (r.sc===r.ec && dom.isImg(node)) {
+            var parent;
+            var index;
+            while (dom.isImg(node)) {
+                parent = node.parentNode;
+                index = dom.makeOffsetPath(parent, node)[0];
+                if (index>0)
+                range.create(node.previousSibling,0,node.previousSibling,0).select();
+                parent.removeChild(node);
+                node = parent;
+            }
+
+            return
+            while (index && !node.childNodes[index].tagName && node.childNodes[index].textContent.match(/\S/)) {
+                index--;
+            }
+            if (index > -1) {
+                node = dom.lastChild(node.childNodes[index]);
+                range.create(node, node.textContent.length, node, node.textContent.length).select();
+                return;
+            }
+            while (index < node.childNodes.length-1 && !node.childNodes[index].tagName && node.childNodes[index].textContent.match(/\S/)) {
+                index++;
+            }
+            if (index < node.childNodes.length) {
+                node = dom.firstChild(node.childNodes[index]);
+                range.create(node, 0, node, 0).select();
+                return;
+            }
+            //range.create(node,0,node,0).select();
+
+        }
         // empty tag
-        if (r.sc===r.ec && !content.length && node.nextSibling && node.nextSibling && deleteEmpty.indexOf(r.sc.tagName && r.sc.tagName.toLowerCase()) !== -1) {
+        else if (r.sc===r.ec && !content.length && node.nextSibling && node.nextSibling && deleteEmpty.indexOf(r.sc.tagName && r.sc.tagName.toLowerCase()) !== -1) {
             var next = node.nextSibling;
             while (next.tagName && next.firstChild) {next = next.firstChild;}
             node.parentNode.removeChild(node);
@@ -631,12 +747,8 @@
         // merge with the next text node
         else if (!r.ec.tagName && r.ec.nextSibling && (!r.sc.nextSibling.tagName || r.sc.nextSibling.tagName === "BR")) return true;
         // jump to next node for delete
-        else if (r.sc.nextSibling) {
-            node = r.sc.nextSibling;
-            while (node.firstChild) {
-                node = node.firstChild;
-            }
-            r = range.create(node, 0, node, 0).select();
+        else if (r.sc.nextSibling || ((temp = dom.ancestorHaveNextSibling(r.sc) || {}).tagName !== ((temp = dom.hasContentAfter(temp)) || {}).tagName)) {
+            r = range.create(temp, 0, temp, 0).select();
             return this.delete($editable, options);
         }
         //merge with the next block
@@ -693,9 +805,11 @@
         $editable.data('NoteHistory').recordUndo($editable, "backspace");
         var temp;
         var r = range.create();
-        if (!r || (!r.isCollapsed() && (r.sc !== r.ec || r.so || r.eo !== 1 || !r.sc.tagName))) {
-            return true;
+        if (!r.isCollapsed()) {
+            r = r.deleteContents().select();
+            return;
         }
+
         var node = r.sc;
         while (!node.nextSibling && !node.previousSibling) {node = node.parentNode;}
 
@@ -1719,7 +1833,7 @@
             ev.preventDefault();
         });
 
-        $(document).on('submit', '.note-editable form', function (ev) {
+        $(document).on('submit', '.note-editable form .btn', function (ev) {
             // Disable form submition in editable mode
             ev.preventDefault();
         });

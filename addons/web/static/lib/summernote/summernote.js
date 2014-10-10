@@ -1409,6 +1409,7 @@
         } else {
           nativeRng.select();
         }
+        return this; // hack odoo
       };
 
       /**
@@ -1514,17 +1515,12 @@
        * delete contents on range
        * @return {WrappedRange}
        */
-      this.deleteContents = function () {
+      this.deleteContents = function () { // hack odoo
         if (this.isCollapsed()) {
           return this;
         }
 
-        var rng = this.splitText();
-        var prevBP = dom.prevBP(rng.getStartBP());
-
-        $.each(rng.nodes(), function (idx, node) {
-          dom.remove(node, !dom.isPara(node));
-        });
+        prevBP = dom.removeBetween(sc, so, ec, eo);
 
         return new WrappedRange(
           prevBP.node,
@@ -1602,6 +1598,7 @@
     };
   
     return {
+      WrappedRange: WrappedRange, //hack oddoo
       /**
        * create Range Object From arguments or Browser Selection
        *
@@ -2976,9 +2973,7 @@
       // delay for range after mouseup
       setTimeout(function () {
         var oLayoutInfo = makeLayoutInfo(event.srcElement || event.target); // fix odoo
-        var node = range.create().sc || event.srcElement || event.target;
-
-        var oStyle = editor.currentStyle(node.firstChild || node); // fix odoo
+        var oStyle = editor.currentStyle(event.srcElement || event.target);
         if (!oStyle) { return; }
 
         var isAirMode = oLayoutInfo.editor().data('options').airMode;

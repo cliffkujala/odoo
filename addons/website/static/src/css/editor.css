@@ -127,11 +127,11 @@
   display: none !important;
 }
 
-.note-editable .css_editable_mode_hidden {
+.o_editable .css_editable_mode_hidden {
   display: none;
 }
 
-.note-editable .css_editable_mode_display {
+.o_editable .css_editable_mode_display {
   display: block !important;
 }
 
