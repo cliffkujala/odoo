@@ -766,7 +766,6 @@
                 .on('mouseleave', "ul", _.bind(this.reset, this));
 
             this.reset_methods = [];
-            this.reset_time = null;
         },
 
         /**
@@ -850,7 +849,6 @@
                 $methods = [],
                 el = $li[0],
                 $el;
-            clearTimeout(this.reset_time);
 
             if (type==="click") {
                 this.reset();
@@ -1007,7 +1005,7 @@
             this.$el.find('li').append( openerp.qweb.render('website.colorpicker') );
 
             var classes = [];
-            this.$el.find("table.colorpicker td > *").map(function () {
+            this.$el.find(".colorpicker button").map(function () {
                 var $color = $(this);
                 var color = $color.attr("class");
                 if (self.$target.hasClass(color)) {
@@ -1023,7 +1021,7 @@
         },
         bind_events: function () {
             var self = this;
-            var $td = this.$el.find("table.colorpicker td");
+            var $td = this.$el.find(".colorpicker button");
             var $colors = $td.children();
             $colors
                 .mouseenter(function () {

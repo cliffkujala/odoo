@@ -22,6 +22,16 @@
             this.$target.find("img").each(function (index) {
                 $(this).attr('data-index', index).data('index', index);
             });
+            this.$target.attr("contentEditable", false);
+        },
+        drop_and_build_snippet: function() {
+            var uuid = 0;
+            $(".carousel").each(function () {
+                var id = parseInt(($(this).attr('id') || '0').replace(/[^0-9]/, ''));
+                if (id > uuid) uuid = id;
+            });
+            this.$target.find('.carousel').attr('id', 'slideshow_'+ (uuid+1));
+            this.$target.find('[data-target]').attr('data-target', '#slideshow_'+ (uuid+1));
         },
         styling  : function(type, value) {
             var classes = this.$el.find('li[data-styling]').map(function () {
@@ -36,7 +46,8 @@
             var self    = this,
                 modes   = [ 'o_nomode', 'o_grid', 'o_masonry', 'o_slideshow' ],
                 classes = this.$target.attr("class").split(/\s+/);
-            if (this.block) return;
+            this.cancel_masonry();
+
             modes.forEach(function(mode) {
                 if (classes.indexOf(mode) != -1) {
                     self.mode("reapply", mode.slice(2, Infinity));
@@ -60,7 +71,8 @@
             return imgs;
         },
         mode: function (type, value) {
-            if (this.block) return;
+            this.cancel_masonry();
+
             if (!value) value = 'nomode';
             this[value](type);
             this.$target.removeClass('o_nomode o_masonry o_grid o_slideshow').addClass("o_"+value);
@@ -94,9 +106,12 @@
             });
             this.$target.css("height", "");
         },
+        cancel_masonry: function () {
+            clearTimeout(this.timer);
+            $(this.masonry_imgs).appendTo(this.$target);
+            this.masonry_imgs = [];
+        },
         masonry : function(type) {
-            if (type !== "reapply" && this.$target.hasClass('o_masonry')) return;
-
             var self     = this,
                 imgs    = this.get_imgs(),
                 columns  = this.get_columns(),
@@ -120,13 +135,12 @@
                 $cols.push($col.get()[0]);
             }
 
-            this.block = true;
             $cols = $($cols);
             function add() {
                 self.lowest($cols).append(imgs.pop());
-                if (imgs.length) setTimeout(add, 0);
-                else self.block = false;
+                if (imgs.length) self.timer = setTimeout(add, 0);
             }
+            this.masonry_imgs = imgs;
             if (imgs.length) add();
             this.$target.css("height", "");
         },
@@ -161,12 +175,17 @@
             var self = this,
                 $imgs    = $(this.get_imgs()),
                 urls = $imgs.map(function() { return $(this).attr("src"); } ).get(),
-                params = {
+                uuid = 0;
+            $(".carousel").each(function () {
+                var id = parseInt(($(this).attr('id') || '0').replace(/[^0-9]/, ''));
+                if (id > uuid) uuid = id;
+            });
+            var params = {
                         srcs : urls,
                         index: 1,
                         title: "",
                         interval : this.$target.data("interval") || false,
-                        id: _.uniqueId("slideshow_")
+                        id: uuid+1
                 },
                 $slideshow = $(openerp.qweb.render('website.gallery.slideshow', params));
             this.replace($slideshow);
@@ -176,7 +195,6 @@
             this.$target.css("height", Math.round(window.innerHeight*0.7));
         },
         columns : function(type, value) {
-            if (this.block) return;
             this.$target.attr("data-columns", value);
             if (type === "over") this.reapply();
         },
@@ -361,5 +379,35 @@
             this.$el.find('[data-interval]:first').parent().parent().toggle(mode === "slideshow");
         },
     }); // website.snippet.Option.extend
+
+
+    website.snippet.options.gallery_img = website.snippet.Option.extend({
+        position: function (type, value) {
+            if (type !== "click") return;
+
+            var $parent = this.$target.closest("section");
+            this.BuildingBlock.create_overlay($parent);
+            var editor = $parent.data('snippet-editor').styles.gallery;
+            var imgs = $parent.find('img').get();
+            imgs.sort(function (a,b) { return $(a).data('index')-$(b).data('index'); });
+
+            var index = imgs.indexOf(this.$target[0]);
+
+            switch (value) {
+                case 'first': index = $(imgs.shift()).data('index')-1; break;
+                case 'prev': index = index <= 1  ? $(imgs.shift()).data('index')-1 : ($(imgs[index-2]).data('index') + $(imgs[index-1]).data('index'))/2; break;
+                case 'next': index = index >= imgs.length-2  ? $(imgs.pop()).data('index')+1 : ($(imgs[index+2]).data('index') + $(imgs[index+1]).data('index'))/2; break;
+                case 'last': index = $(imgs.pop()).data('index')+1; break;
+            }
+
+            this.$target.data('index',index);
+
+            this.BuildingBlock.make_active(false);
+            setTimeout(function () {
+                editor.reapply();
+            },0);
+        }
+    });
+
 
 })(); // anonymous function
