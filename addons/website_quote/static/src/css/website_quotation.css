@@ -60,4 +60,11 @@
     body {
         padding : 0 !important;
     }
+    div{
+        display:block;
+        page-break-inside: avoid;
+    }
+    a[href]:after {
+        content: "";
+    }
 }

@@ -173,7 +173,7 @@
         <body data-spy="scroll" data-target=".navspy" data-offset="50">
             <div class="container o_website_quote">
               <div class="row mt16">
-                  <div class="col-md-3">
+                  <div class="col-md-3 hidden-print">
                       <div class="bs-sidebar">
                           <div class="text-center hidden-print" t-if="quotation.state in ('draft', 'sent', 'waiting_date')" style="padding: 10px">
                               <a t-if="order_valid" class="btn btn-primary btn-block fa fa-check" data-toggle="modal" data-target="#modelaccept">
@@ -257,8 +257,9 @@
                           <span t-if="quotation.state not in ('draft','sent','cancel')">Your Order</span>
                           <em t-esc="quotation.name"/>
                           <small t-field="quotation.state"/>
-                          <div groups="base.group_website_publisher" t-ignore="true" class="pull-right css_editable_mode_hidden">
-                              <a class="btn btn-info hidden-print" t-att-href="'/web#return_label=Website&amp;model=%s&amp;id=%s&amp;action=%s&amp;view_type=form' % (quotation._name, quotation.id, action)">Update Quote</a>
+                          <div t-ignore="true" class="pull-right css_editable_mode_hidden hidden-print">
+                              <a class="btn btn-info hidden-print" target="_blank" t-att-href="'/quote/%s/%s' % (quotation.id,quotation.access_token)+'?pdf=True' ">Print</a>
+                              <a groups="base.group_website_publisher" class="btn btn-info hidden-print" t-att-href="'/web#return_label=Website&amp;model=%s&amp;id=%s&amp;action=%s&amp;view_type=form' % (quotation._name, quotation.id, action)">Update Quote</a>
                           </div>
                       </h1>
 
@@ -318,16 +319,16 @@
                       </div>
 
                       <div class="row mt32">
-                          <div class="col-md-6">
+                          <div class="col-md-6 col-xs-6">
                               <div class="row">
-                                  <label class="col-sm-4 text-right">Customer:</label>
-                                  <div class="col-sm-8">
+                                  <label class="col-sm-4 col-xs-4 text-right">Customer:</label>
+                                  <div class="col-sm-8 col-xs-8">
                                       <div t-field="quotation.partner_id"/>
                                   </div>
                               </div>
                               <div class="row">
-                                  <label class="col-sm-4 text-right">Bill To:</label>
-                                  <div class="col-sm-8">
+                                  <label class="col-sm-4 col-xs-4 text-right">Bill To:</label>
+                                  <div class="col-sm-8 col-xs-8">
                                       <div t-field="quotation.partner_invoice_id" t-field-options='{
                                           "widget": "contact",
                                           "fields": ["address", "name", "phone", "email"]
@@ -335,8 +336,8 @@
                                   </div>
                               </div>
                               <div t-if="quotation.partner_shipping_id.id != quotation.partner_invoice_id.id" class="row">
-                                  <label class="col-sm-4 text-right">Ship To:</label>
-                                  <div class="col-sm-8">
+                                  <label class="col-sm-4 col-xs-4 text-right">Ship To:</label>
+                                  <div class="col-sm-8 col-xs-8">
                                       <div t-field="quotation.partner_shipping_id" t-field-options='{
                                         "widget": "contact",
                                         "fields": ["address", "name", "phone"]
@@ -344,10 +345,10 @@
                                   </div>
                               </div>
                           </div>
-                          <div class="col-md-6">
+                          <div class="col-md-6 col-xs-6">
                               <div class="row">
-                                  <label class="col-sm-5 text-right">Your Contact:</label>
-                                  <div class="col-sm-7">
+                                  <label class="col-sm-5 col-xs-5 text-right">Your Contact:</label>
+                                  <div class="col-sm-7 col-xs-7">
                                       <div t-field="quotation.user_id" t-field-options='{
                                           "widget": "contact",
                                           "fields": ["name", "phone", "email"]
@@ -355,14 +356,14 @@
                                   </div>
                               </div>
                               <div class="row">
-                                  <label class="col-sm-5 text-right">Quote Date:</label>
-                                  <div class="col-sm-7">
+                                  <label class="col-sm-5 col-xs-5 text-right">Quote Date:</label>
+                                  <div class="col-sm-7 col-xs-7">
                                       <span t-field="quotation.date_order"/>
                                   </div>
                                   <div class="clearfix"/>
                                   <div t-if="quotation.client_order_ref">
-                                      <label class="col-sm-5 text-right">Your Reference:</label>
-                                      <div class="col-sm-7">
+                                      <label class="col-sm-5 col-xs-5 text-right">Your Reference:</label>
+                                      <div class="col-sm-7 col-xs-7">
                                           <span t-field="quotation.client_order_ref"/>
                                       </div>
                                   </div>
@@ -419,7 +420,7 @@
   </template>
 
   <template id="optional_products">
-    <div class="container mt32" t-if="option">
+    <div class="container mt32" t-if="quotation.options">
         <section>
             <h1 class="page-header">Options</h1>
         </section>

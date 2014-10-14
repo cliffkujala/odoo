@@ -259,6 +259,9 @@ class QWeb(orm.AbstractModel):
 
         for (attribute_name, attribute_value) in element.attrib.iteritems():
             attribute_name = str(attribute_name)
+            hidden_print = qwebcontext.get('hidden_print') 
+            if hidden_print and attribute_name == 'class' and 'hidden-print' in attribute_value:
+                return ''
             if attribute_name == "groups":
                 cr = qwebcontext.get('request') and qwebcontext['request'].cr or None
                 uid = qwebcontext.get('request') and qwebcontext['request'].uid or None

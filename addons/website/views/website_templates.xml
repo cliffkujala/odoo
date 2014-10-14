@@ -96,7 +96,7 @@
         <body>
             <div id="wrapwrap">
                 <header>
-                    <div class="navbar navbar-default navbar-static-top">
+                    <div class="navbar navbar-default navbar-static-top hidden-print">
                         <div class="container">
                             <div class="navbar-header">
                                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-top-collapse">
@@ -132,7 +132,7 @@
                 <main>
                     <t t-raw="0"/>
                 </main>
-                <footer>
+                <footer class="hidden-print">
                     <div id="footer_container">
                     </div>
                 </footer>
