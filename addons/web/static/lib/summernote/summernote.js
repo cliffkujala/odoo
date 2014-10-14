@@ -3246,8 +3246,16 @@
         if (keyName) { aKey.push(keyName); }
 
         var sEvent = keyMap[aKey.join('+')];
+        var keycode = event.keyCode;
 
-        if (!sEvent && ((event.keyCode !== 229 && event.keyCode >= 48) || event.keyCode === 32)) { // hack odoo
+        if (!sEvent && // hack odoo
+            !event.ctrlKey && !event.metaKey && ( // special code/command
+            (keycode > 47 && keycode < 58)   || // number keys
+            keycode == 32 || keycode == 13   || // spacebar & return
+            (keycode > 64 && keycode < 91)   || // letter keys
+            (keycode > 95 && keycode < 112)  || // numpad keys
+            (keycode > 185 && keycode < 193) || // ;=,-./` (in order)
+            (keycode > 218 && keycode < 223))) {   // [\]' (in order))
           sEvent = 'visible';
         }
 
