@@ -40,9 +40,13 @@
 <template id="header" name="Forum Index">
     <t t-call="website.layout">
         <t t-set="footer">
-            <script type="text/javascript" src="/web/static/lib/summernote/summernote.js"></script>
-            <script type="text/javascript" src="/website/static/src/js/summernote.js"></script>
-            <link rel="stylesheet" type="text/css" href="/web/static/lib/summernote/summernote.css"/>
+            <script type="text/javascript">
+                if (!$.summernote) {
+                    document.write('&lt;script type="text/javascript" src="/web/static/lib/summernote/summernote.js">'+'&lt;'+'/script>');
+                    document.write('&lt;script type="text/javascript" src="/website/static/src/js/summernote.js">'+'&lt;'+'/script>');
+                    document.write('&lt;link rel="stylesheet" type="text/css" href="/web/static/lib/summernote/summernote.css"/>');
+                }
+            </script>
             <script type="text/javascript">
                 var $textarea = $('textarea[name="content"]');
                 var $form = $textarea.closest('form');
