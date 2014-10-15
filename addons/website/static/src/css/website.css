@@ -115,6 +115,10 @@ div.media_iframe_video.padding-xl iframe {
   padding: 32px;
 }
 
+ul.indent0, ul.indent1, ul.indent2, ul.indent3, ul.indent4, ul.indent5, ul.indent6, ol.indent0, ol.indent1, ol.indent2, ol.indent3, ol.indent4, ol.indent5, ol.indent6 {
+  margin-top: -10px;
+}
+
 p.indent0, ul.indent0, ol.indent0, h1.indent0, h2.indent0, h3.indent0, h4.indent0, h5.indent0, h6.indent0 {
   margin-left: 0em;
 }

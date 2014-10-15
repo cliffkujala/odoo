@@ -3260,7 +3260,7 @@
         }
 
         if (sEvent) {
-          var res = false;
+          var res = null;
 
           if (editor[sEvent]) {
             res = editor[sEvent]($editable, $editor.data('options'));
@@ -3268,7 +3268,7 @@
             res = commands[sEvent].call(this, oLayoutInfo);
           }
 
-          if (!res) { // hack odoo
+          if (res === false) { // hack odoo
             event.preventDefault();
           }
 

@@ -164,6 +164,7 @@
     <xpath expr="//link[@id='bootstrap_css']" position="replace">
         <link rel="stylesheet" href='/website/static/src/less/import_bootstrap.less'/>
         <link rel="stylesheet" href='/website/static/src/less/colors.less' t-ignore="true"/>
+        <link rel="stylesheet" href="/web/static/lib/summernote/summernote.less"/>
     </xpath>
 </template>
 

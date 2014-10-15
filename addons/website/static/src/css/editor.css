@@ -54,18 +54,6 @@
   display: none;
 }
 
-.o_table_handler {
-  position: absolute;
-  cursor: pointer;
-  background-color: white;
-}
-.o_table_handler.fa-minus-square {
-  color: red;
-}
-.o_table_handler.fa-plus-square {
-  color: lime;
-}
-
 /* ---- OpenERP Style ---- {{{ */
 .oe_website_editorbar {
   position: fixed;
