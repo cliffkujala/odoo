@@ -44,7 +44,9 @@
             <script type="text/javascript" src="/website/static/src/js/summernote.js"></script>
             <link rel="stylesheet" type="text/css" href="/web/static/lib/summernote/summernote.css"/>
             <script type="text/javascript">
-                $('textarea[name="content"]').summernote({
+                var $textarea = $('textarea[name="content"]');
+                var $form = $textarea.closest('form');
+                $textarea.summernote({
                         height: 150,
                         toolbar: [
                             ['font', ['bold', 'italic', 'underline', 'clear']],
@@ -53,6 +55,9 @@
                             ['insert', ['link', 'picture']]
                         ]
                     });
+                $form.on('click', 'button, .a-submit', function () {
+                    $textarea.html($form.find('.note-editable').code());
+                });
             </script>
             <t t-raw="footer or ''"/>
         </t>
