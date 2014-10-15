@@ -1,0 +1,683 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+<template id="airmail_snippets">
+
+<div class="scroll" t-ignore="1">
+    <ul class="nav navbar-nav nav-tabs">
+        <li class="active"><a href="#snippet_email_headers" data-toggle="tab">Headers</a></li>
+        <li><a href="#snippet_email_structure" data-toggle="tab">Body</a></li>
+        <li><a href="#snippet_email_footers" data-toggle="tab">Footers</a></li>
+        <li><a href="#snippet_email_extra" data-toggle="tab">Extra</a></li>
+    </ul>
+    <div class="tab-content">
+
+        <div id="snippet_email_headers" class="tab-pane active">
+
+            <div name="Center Logo" class="o_mail_block_header_center_logo">
+                <div class="snippet_row" style="padding:0px;width:600px;margin:auto;background-color:#f9f8f8">
+                    <div t-att-style="' width:600px; background-image: url(' + base_url + '/website_mail/static/src/img/theme_imgs/airmail.png); background-repeat: repeat-x; background-size: contain; height: 7px'"/>
+                    <table width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse">
+                        <tbody>
+                          <tr>
+                              <td width="100%" valign="top" style="text-align:center">
+                                  <a t-att-href="(website.company_id.website) or '#'" style="text-decoration:none">
+                                      <img src="/logo.png" style="padding:10px;height:auto;max-width:600px;width:200px" alt="Your Logo" />
+                                  </a>
+                              </td>
+                          </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Center Text" class="o_mail_block_header_center_text">
+                <div class="snippet_row" style="padding:0px;width:600px;margin:auto;background-color:#f9f8f8;color: #464646">
+                    <div t-att-style="' width:600px; background-image: url(' + base_url + '/website_mail/static/src/img/theme_imgs/airmail.png); background-repeat: repeat-x; background-size: contain; height: 7px'"/>
+                    <table width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse">
+                        <tbody>
+                            <tr>
+                                <td width="100%" valign="top" style="text-align:center;font-size: 30px">
+                                    <a t-att-href="(website.company_id.website) or '#'" style="text-decoration:none;color:#464646">
+                                        <strong>Your Company</strong>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Logo - Social" class="o_mail_block_header_social">
+                <div class="snippet_row pictogram_colorpicker" style="padding:0px;width:600px;margin:auto;background-color:#f9f8f8;color: rgb(70,70,70)">
+                    <div t-att-style="' width:600px; background-image: url(' + base_url + '/website_mail/static/src/img/theme_imgs/airmail.png); background-repeat: repeat-x; background-size: contain; height: 7px'"/>
+                    <table width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse">
+                        <tr>
+                            <td width="100%" valign="top" style="font-size: 30px;padding-left:15px">
+                                <a t-att-href="(website.company_id.website) or '#'" style="text-decoration:none">
+                                     <img src="/logo.png" style="padding:10px;height:auto;max-width:600px;width:200px" alt="Your Logo" />
+                                </a>
+                            </td>
+                            <td valign="center" width="270" style="padding:10px 15px 10px 10px;vertical-align:middle">
+                                <table border="0" cellpadding="0" cellspacing="0" align="right" style="border-collapse:collapse">
+                                    <tr>
+                                        <td align="right">
+                                            <a t-att-href="(website.social_facebook) or '#'">
+                                                <img src="/fa_to_img/%EF%82%82/rgb(70,70,70)/40" alt="social icon" style="width: 33px;height:auto;max-width:70px"/>
+                                            </a>
+                                        </td>
+                                        <td align="right" style="padding-left:5px">
+                                            <a t-att-href="(website.social_googleplus) or '#'">
+                                              <img src="/fa_to_img/%EF%83%94/rgb(70,70,70)/40" alt="social icon" style="width: 33px;height:auto;max-width:70px"/>
+                                            </a>
+                                        </td>
+                                        <td align="right" style="padding-left:5px">
+                                            <a t-att-href="(website.social_linkedin) or '#'">
+                                                <img src="/fa_to_img/%EF%82%8C/rgb(70,70,70)/40" alt="social icon" style="width: 33px;height:auto;max-width:70px"/>
+                                            </a>
+                                        </td>
+                                        <td align="right" style="padding-left:5px">
+                                            <a t-att-href="(website.social_twitter) or '#'">
+                                                <img src="/fa_to_img/%EF%82%81/rgb(70,70,70)/40" alt="social icon" style="width: 33px;height:auto;max-width:70px"/>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Text - Social" class="o_mail_block_header_text_social">
+                <div class="snippet_row pictogram_colorpicker" style="padding:0px;width:600px;margin:auto;background-color:#f9f8f8;color:#464646">
+                    <div t-att-style="' width:600px; background-image: url(' + base_url + '/website_mail/static/src/img/theme_imgs/airmail.png); background-repeat: repeat-x; background-size: contain; height: 7px;color: rgb(70,70,70) '"/>
+                    <table width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse">
+                        <tr>
+                            <td width="100%" valign="top" style="vertical-align: middle;padding-left:15px;font-size: 30px">
+                                <a t-att-href="(website.company_id.website) or '#'" style="text-decoration:none;color:#464646">
+                                    <strong>Your Company</strong>
+                                </a>
+                            </td>
+                            <td valign="center" width="270" style="padding:10px 15px 10px 10px;vertical-align:middle">
+                                <table border="0" cellpadding="0" cellspacing="0" align="right" style="border-collapse:collapse">
+                                    <tr>
+                                        <td align="right">
+                                            <a t-att-href="(website.social_facebook) or '#'">
+                                                <img src="/fa_to_img/%EF%82%82/rgb(70,70,70)/40" alt="social icon" style="width: 33px;height:auto;max-width:70px"/>
+                                            </a>
+                                        </td>
+                                        <td align="right" style="padding-left:5px">
+                                            <a t-att-href="(website.social_googleplus) or '#'">
+                                                <img src="/fa_to_img/%EF%83%94/rgb(70,70,70)/40" alt="social icon" style="width: 33px;height:auto;max-width:70px"/>
+                                            </a>
+                                        </td>
+                                        <td align="right" style="padding-left:5px">
+                                            <a t-att-href="(website.social_linkedin) or '#'">
+                                                <img src="/fa_to_img/%EF%82%8C/rgb(70,70,70)/40" alt="social icon" style="width: 33px;height:auto;max-width:70px"/>
+                                            </a>
+                                        </td>
+                                        <td align="right" style="padding-left:5px">
+                                            <a t-att-href="(website.social_twitter) or '#'">
+                                                <img src="/fa_to_img/%EF%82%81/rgb(70,70,70)/40" alt="social icon" style="width: 33px;height:auto;max-width:70px"/>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="snippet_email_structure" class="tab-pane">
+
+            <div name="Title Content" class="o_mail_block_title_text">
+                <div class="snippet_row" style="padding:0px;width:600px;margin:auto;background-color:#FFFFFF">
+                    <div style="padding:10px 30px">
+                        <span style="font-size:30px;margin-top:20px;margin-bottom:10px;color:#464646">Your order has been shipped!</span>
+                        <div style="text-align:left;color:#464646">
+                            Hello Bob,<br/>
+                            We would like you to know that your order has shipped! To view your order or make any changes please click the "my order" button below.
+                            <div style="padding-top:20px">
+                                <a href="#" style="-webkit-user-select: none; cursor: pointer; padding: 6px 12px; font-size: 13.63636302948px; line-height: 17.7095623016357px; border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; color: rgb(255,255,255); border: 0.909090876579285px solid rgb(212,63,58); text-decoration: none; display: inline-block; margin-bottom: 0px; font-weight: 400; text-align: center; vertical-align: middle; white-space: nowrap; background-image: none; background-color: #E56054">Track shipping</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div name="Title - Subtitle" class="o_mail_block_title_sub">
+                <div class="snippet_row" style="padding:0px;width:600px;margin:auto;color:#464646;background-color:#FFFFFF">
+                    <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;color:inherit">
+                        <tbody>
+                            <tr>
+                                <td style="text-align:center;padding-top:10px">
+                                    <span style="font-size:36px">Check this out!</span>
+                                    <br/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:20px; text-align:center; padding: 0 5px">
+                                    Apps That Help You Grow Your Business!
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Discount Coupon" class="o_mail_block_discount2">
+                <div class="snippet_row" style="padding:0;width:600px;margin:auto;background-color:#fff;color:#464646">
+                    <div style="padding:10px 70px">
+                        <div style="text-align:center;font-size:30px;margin-top:20px;margin-bottom:30px">
+                            Upgrade to Premium Account!
+                        </div>
+                        <div style="text-align:center;margin-bottom:20px">
+                            <span style="padding:15px;border:1px solid #b3b3b3;background-color:rgb(217,237,247)" class="bg_color_picker"> Coupon Code: <strong>45A9E77DGW8455</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div name="Discount Offer" class="o_mail_block_discount1">
+                <div class="snippet_row" style="padding:0px;width:600px;margin:auto;color:#464646;background-color:#FFFFFF">
+                    <table cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse">
+                        <tbody>
+                            <tr>
+                                <td style="font-size: 45px; font-weight: 900; text-align:center;padding-top:35px;color:#464646">20% off!</td>
+                            </tr>
+                            <tr>
+                                <td style="font-size: 30px; font-weight: 600; line-height:30px; text-align:center;color:#464646">Hurry Up</td>
+                            </tr>
+                            <tr>
+                                <td class="pictogram_colorpicker" style="text-align:center;padding:20px 0">
+                                    <img src="/fa_to_img/%EF%81%AB/rgb(70,70,70)/200" style="height: auto; max-width: 600px; width: 145"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:0 75px;text-align:justify;color:#464646"><br/>
+                                    We are continuing to grow and we miss seeing you be a part of it! We've increased store hours and have lot's of new brands available. To welcome you back please accept this 20% discount on you next purchase by clicking the button below.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:center; margin:0 auto;padding-bottom:35px;padding-top:25px">
+                                    <a href="#" style="-webkit-user-select: none; cursor: pointer; padding: 6px 12px; font-size: 13.63636302948px; line-height: 17.7095623016357px; border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; color: rgb(255,255,255); border: 0.909090876579285px solid rgb(212,63,58); text-decoration: none; display: inline-block; margin-bottom: 0px; font-weight: 400; text-align: center; vertical-align: middle; white-space: nowrap; background-image: none; background-color: #E56054">Redeem Discount!</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Event" class="o_mail_block_event">
+                <div style="padding:0px;width:600px;margin:auto;text-align:center;color:#fff">
+                    <table style="width:100%;border-collapse:collapse;background:inherit">
+                        <tr>
+                            <td class="col_mv bg_color_picker" style="width: 150px;height: 150px;padding: 0;margin: 0;background-color: rgb(77,107,187);text-align:center;vertical-align:middle;color:#FFFFFF">
+                                <time datetime="2014-07-20"> <span style="display: block;font-size: 50px;line-height: 1;padding-top: 10px">21</span> <span style="display: block;font-size: 30px;line-height: 1">Jul</span> <span style="display: none" >2014</span> <span style="display: block;font-size: 16px;line-height: 1;color: #fff;font-weight: 600">ALL DAY</span> </time>
+                            </td>
+                            <td style="width: 150px;height: 150px;padding: 0px;margin: 0px;text-align: center;background-color: rgb(229,96,84)" class="col_mv color_picker">
+                                <div style="margin:27px auto">
+                                    <img src="/fa_to_img/%EF%81%B3/rgb(255,255,255)/90" style="width:95px;height:auto;max-width:600px" alt="event icon"/>
+                                </div>
+                            </td>
+                            <td style="position: relative;text-align: left;background-color:#f5f5f5;color:#464646;vertical-align:top;width:298px;height:150px;min-width:255px" class="col_mv color_picker">
+                                <table style="width:100%;border-collapse:collapse;background:inherit;color:inherit">
+                                    <tr>
+                                        <td style="padding-top:20px;padding-left:20px;float:left" width="90%">
+                                            <div style="min-height:100px">
+                                                <span style="font-size:18px">Your Event Name</span>
+                                                <p>Description</p>
+                                            </div>
+                                            <ul style="padding-left:0">
+                                                <li style="display: table-cell;cursor: pointer;color: #1e1e1e;font-size: 11px;font-weight: 300;padding: 3px 30px;text-align: center"><a href="#" style="color:#1e1e1e">Link </a></li>
+                                                <li style="display: table-cell;cursor: pointer;color: #1e1e1e;font-size: 11px;font-weight: 300;padding: 3px 30px;text-align: center"><a href="#" style="color:#1e1e1e">Info</a></li>
+                                            </ul>
+                                        </td>
+                                        <td style="width: 60px;vertical-align:middle;display: table-cell">
+                                            <ul style="border-left:1px solid #e6e6e6;list-style-type:none;padding-left:16px">
+                                                <li style="width:33%;margin-left:0">
+                                                    <a t-att-href="(website.social_facebook) or '#'">
+                                                        <img src="/fa_to_img/%EF%82%82/rgb(75,110,168)/30" style="width:30px;height:auto;max-width:70px" alt="social icon"/>
+                                                    </a>
+                                                </li>
+                                                <li style="width:34%;margin-left:0">
+                                                    <a t-att-href="(website.social_twitter) or '#'">
+                                                        <img src="/fa_to_img/%EF%82%81/rgb(79,213,248)/30" style="width:30px;height:auto;max-width:70px" alt="social icon"/>
+                                                    </a>
+                                                </li>
+                                                <li style="width:33%;margin-left:0">
+                                                    <a t-att-href="(website.social_googleplus) or '#'">
+                                                        <img src="/fa_to_img/%EF%83%94/rgb(221,75,57)/30" style="width:30px;height:auto;max-width:70px" alt="social icon"/>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div name="User Profile" class="o_mail_block_profile">
+                <div class="snippet_row" style="padding:0px;width:600px;margin:auto;background-color:#fff;color:#464646">
+                    <table style="padding:30px 15px;border-collapse:collapse;color:inherit">
+                        <tr>
+                            <td style="float:left;padding: 0 30px 0 20px;text-align: center" class="pictogram_colorpicker col_mv">
+                                <img src="/fa_to_img/%EF%80%87/rgb(55,48,45)/100" style="width:100px;height:auto;max-width:600px" alt="user photo"/><br/>
+                                User: John Doe
+                            </td>
+                            <td style="vertical-align:middle" class="col_mv">
+                                Hey Bob,
+                                <br/>
+                                I set up an Odoo profile where I can do tons of really awesome stuff. I want you to follow me so we can keep in touch!<br/>
+                                See you soon!
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="padding:12px 30px">
+                                Because I've invited you, you can also use the below coupon code to receive a 50% discount on you first months subscription!
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Content Table" class="o_mail_block_table_content">
+                <div class="snippet_row" style="padding:0px;width:600px;margin:auto;background-color:#FFFFFF;color:#464646">
+                    <table cellspacing="0" cellpadding="0" style="margin: 0 auto;width:100%;border-collapse:collapse;color:inherit">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <center>
+                                        <table cellspacing="0" cellpadding="0" style="margin:20px auto;width:80%;border-collapse:collapse;background:inherit;color:inherit">
+                                            <tbody>
+                                                <tr>
+                                                    <td style="text-align:left;border-left:none">
+                                                        <strong>Bob Erlicious</strong><br/>
+                                                        123 Flower Drive<br/>
+                                                        Victoria, BC<br/>
+                                                        V9P 2E8<br/>
+                                                        1(250)222-2232
+                                                    </td>
+                                                    <td style="text-align:right; vertical-align:top;border-left:none">
+                                                        <strong>Invoice: 00234</strong>
+                                                        <br/>
+                                                        April 3, 2014
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <table cellspacing="0" cellpadding="0" style="margin:20px auto;width:80%;border-collapse:collapse">
+                                            <tbody>
+                                                <tr>
+                                                    <td>
+                                                        <table cellspacing="0" cellpadding="0" style="width:100%;padding-top:30px;text-indent:10px;border-collapse:collapse;background:inherit" data-max-width="500px">
+                                                            <thead>
+                                                                <tr style="color: #ffffff;background: #464646" class="row col bg_color_picker">
+                                                                    <th style="padding: 10px 0px;width:166px;border-left:none;text-align:left" class="mv">Plan</th>
+                                                                    <th style="padding: 10px 0px;width:166px;border-left:none;text-align:left" class="mv">Period</th>
+                                                                    <th style="padding: 10px 0px;width:166px;border-left:none;text-align:left" class="mv">Amount</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr class="row bg_color_picker" style="color:#464646">
+                                                                    <td style="padding:10px 0px">Silver Plan</td>
+                                                                    <td style="padding:10px 0px">August</td>
+                                                                    <td style="padding:10px 0px">$50.00</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <table cellspacing="0" cellpadding="0" style="margin: 20px auto;width:80%;padding-top:30px;padding-bottom:30px;border-collapse:collapse;color:inherit">
+                                            <tbody>
+                                                <tr>
+                                                    <td>
+                                                        <div style="text-align:left">
+                                                            The amount of $50.00 CAD has been charged on the credit card ending with 0123.
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </center>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Two Columns" class="o_mail_block_two_cols">
+                <div style="padding:0px;width:600px;margin:auto;background-color:#fff;color:#464646">
+                    <table cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse;background:inherit;color:inherit">
+                        <tbody>
+                            <tr>
+                                <td style="padding:30px 10px 30px 30px;width:45%;text-align:center" class="col_mv color_picker">
+                                    <img style="width:85px;height:auto;max-width:600px;padding:20px 0 20px 0" alt="column1 image" src="/fa_to_img/%EF%81%9D/rgb(70,70,70)/200"/><br/>
+                                    <span style="font-size:24px">Step 1</span><br/>
+                                    <div style="text-align:justify">
+                                        We need you to update your account information. If there is ever a problem with your account, this information will make it easier for you to log back in.
+                                    </div>
+                                </td>
+                                <td style="vertical-align:top; padding: 30px 30px 10px 30px; width:45%;text-align:center" class="col_mv color_picker">
+                                    <img style="width:85px;height:auto;max-width:600px;padding:20px 0 20px 0" alt="column2 image" src="/fa_to_img/%EF%83%AB/rgb(70,70,70)/200"/>
+                                    <br/>
+                                    <span style="font-size:24px">Step 2</span><br/>
+                                    <div style="text-align:justify">
+                                        We need you to update your account information. If there is ever a problem with your account, this information will make it easier for you to log back in.
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Image - Text" class="o_mail_block_image_text">
+                <div class="mv" style="padding:0px;width:600px;margin:auto;background-color:#fff;color:#464646">
+                    <table cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse;background:inherit">
+                        <tbody>
+                            <tr>
+                                <td style="width:45%;text-align:center;vertical-align:middle" class="col_mv color_picker">
+                                    <img style="width:200px;height:auto;max-width:600px;padding:20px 0 20px 0" alt="image" src="/fa_to_img/%EF%80%BE/rgb(70,70,70)/200"/><br/>
+                                </td>
+                                <td style="vertical-align:middle; padding: 30px 30px 10px 30px; width:45%;text-align:justify;font-size:16px;color:#464646" class="col_mv bg_color_picker">
+                                    We need you to update your account information. If there is ever a problem with your account, this information will make it easier for you to log back in.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Image" class="o_mail_block_image">
+                <div class="snippet_row color_picker" style="width:600px;margin:auto;background-color:#FFFFFF">
+                    <table cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse">
+                        <tbody>
+                            <tr>
+                                <td width="100%" align="center" class="pictogram_colorpicker" style="text-align:center">
+                                    <img src="/fa_to_img/%EF%80%B0/rgb(70,70,70)/200" style="width:200px;height:auto;max-width:600px"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td width="100%" style="text-align:center;padding:10px 30px;font-size:16px;color:#464646">
+                                    <strong>We need you to update your account information. If there is ever a problem with your account, this information will make it easier for you to log back in.</strong>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Button" class="o_mail_block_button">
+                <div class="snippet_row" style="padding:0;width:600px;max-width:600px;margin:0 auto;background-color:#fff">
+                    <table style="width:90%;text-align:center;margin:0 auto;border-collapse:collapse">
+                        <tr>
+                            <td class="row" style="padding:10px 0;text-align:center">
+                                <a href="#" data-cke-saved-href="#" style="-webkit-user-select: none; padding: 6px 12px; font-size: 14px; line-height: 20px; color: rgb(255,255,255); border: none; text-decoration: none; display: inline-block; margin-bottom: 0px; font-weight: 400; text-align: center; vertical-align: middle; cursor: pointer; white-space: nowrap; background-image: none; background-color: #E56054;border-radius:4px">My Account</a>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Text Block" class="o_mail_block_simple_text">
+                <div class="snippet_row" style="padding:0;width:600px;max-width:600px;margin:0 auto;background-color:#fff;color:#464646">
+                    <table style="width:100%;text-align:justify;margin:0 auto;border-collapse:collapse;color:inherit">
+                        <tr>
+                            <td style="padding:10px 0">
+                                Dear John
+                                <br/><br/>
+                                Great stories have personality. Consider telling a great story that provides personality. Writing a story with personality for potential clients will asist with making a relationship connection. This shows up in small quirks like word choices or phrases. Write from your point of view, not from someone else's experience.<br/>
+                                <br/>
+                                Great stories are for everyone even when only written for just one person. If you try to write with a wide general audience in mind, your story will ring false and be bland. No one will be interested. Write for one person. If it’s genuine for the one, it’s genuine for the rest.
+                                <br/><br/>
+                                Kind Regards,
+                                <br/><br/>
+                                Michael Fletcher
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Text With Background Image" class="o_mail_block_text_on_img">
+                <div class="snippet_row bg_color_picker" t-att-style="'padding:0px;width:600px;margin:auto;background-image:url(' + base_url + '/website_mail/static/src/img/theme_imgs/skyline_bg.gif);background-repeat:no-repeat;background-size:cover;color:#fff'">
+                    <table cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse;color:inherit">
+                        <tbody>
+                            <tr>
+                                <td style="padding:30px 30px 0 50px;text-align: left;vertical-align:middle">
+                                    <div style="padding-bottom:5px;font-size:34px">
+                                        YOUR ORDER HAS SHIPPED
+                                    </div>
+                                    <div style="font-size:24px">
+                                        To track your order or make any changes please click the button below.
+                                    </div>
+                                    <div style="margin-bottom:35px;margin-top:30px">
+                                        <a href="#" data-cke-saved-href="#" style="-webkit-user-select: none; padding: 12px 30px; font-size: 14px; line-height: 20px; color: rgb(255, 255, 255); border: none; text-decoration: none; display: inline-block; margin-bottom: 0px; font-weight: 400; text-align: center; vertical-align: middle; cursor: pointer; white-space: nowrap; background-image: none; background-color: #E56054">My Account</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Steps" class="o_mail_block_steps">
+                <div style="padding:0;width:600px;max-width:600px;margin:0 auto">
+                    <table style="width:100%;text-align:justify;margin:0 auto;max-width:600px;border-collapse:collapse;background:inherit">
+                        <tr>
+                            <td style="padding:10px 0;background-color:#4D6BBB;color:#fff" class="col_mv color_picker">
+                                <table style="border-collapse:collapse;background:inherit">
+                                    <tr>
+                                        <td rowspan="2" style="padding-left:10px">
+                                            <img src="/fa_to_img/%EF%80%8C/rgb(255,255,255)/50" alt="icon" style="max-width:600px;width:50px"/>
+                                        </td>
+                                        <td style="padding-left:10px;color:#fff">
+                                            <div style="font-weight:bold;font-size:18px">Step 1:</div>
+                                            Place Order
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td style="padding:10px 0;background-color:#F9F8F8;color:#808080" class="col_mv color_picker">
+                                <table style="border-collapse:collapse;background:inherit">
+                                    <tr>
+                                        <td rowspan="2" style="padding-left:10px">
+                                            <img src="/fa_to_img/%EF%83%91/rgb(128,128,128)/50" alt="icon" style="max-width:600px;width:50px"/>
+                                        </td>
+                                        <td style="padding-left:10px;color:#808080">
+                                            <div style="font-weight:bold;font-size:18px">Step 2:</div>
+                                            Shipping
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td style="padding:10px 0;background-color:#F9F8F8;color:#808080" class="col_mv color_picker">
+                                <table style="border-collapse:collapse;background:inherit">
+                                    <tr>
+                                        <td rowspan="2" style="padding-left:10px">
+                                            <img src="/fa_to_img/%EF%85%95/rgb(128,128,128)/50" alt="icon" style="max-width:600px;width:50px"/>
+                                        </td>
+                                        <td style="padding-left:10px;color:#808080">
+                                            <div style="font-weight:bold;font-size:18px">Step 3:</div>
+                                            Payment
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="snippet_email_footers" class="tab-pane">
+
+            <div name="Social + Text" class="o_mail_block_footer_social">
+                <div class="snippet_row pictogram_colorpicker" style="padding:0px;width:600px;margin:auto;background-color:#E5E5E5;color:#464646">
+                    <div style="padding:10px">
+                        <table cellspacing="0" cellpadding="0" style="margin: 0 auto;width:100%;border-collapse:collapse;color:inherit">
+                            <tbody>
+                                <tr>
+                                    <td style="text-align:center">
+                                        <a t-att-href="(website.social_facebook) or '#'">
+                                            <img src="/fa_to_img/%EF%82%82/rgb(70,70,70)/40" alt="social icon" style="width:33px;height:auto;max-width:70px"/>
+                                        </a>
+                                        <a t-att-href="(website.social_googleplus) or '#'">
+                                            <img src="/fa_to_img/%EF%83%94/rgb(70,70,70)/40" alt="social icon" style="width:33px;height:auto;max-width:70px"/>
+                                        </a>
+                                        <a t-att-href="(website.social_linkedin) or '#'">
+                                            <img src="/fa_to_img/%EF%82%8C/rgb(70,70,70)/40" alt="social icon" style="width:33px;height:auto;max-width:70px"/>
+                                        </a>
+                                        <a t-att-href="(website.social_twitter) or '#'">
+                                            <img src="/fa_to_img/%EF%82%81/rgb(70,70,70)/40" alt="social icon" style="width:33px;height:auto;max-width:70px"/>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-size:12px;text-align:center;padding:10px">
+                                        <a href="#" style="color:#464646">View in browser</a> | <a href="#" style="color:#464646">Unsubscribe</a> | <a href="#" style="color:#464646">Contact</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div name="Text + Copyright" class="o_mail_block_footer_copyright">
+                <div class="snippet_row bg_color_picker" style="padding:0px;width:600px;margin:auto;background-color:#E5E5E5">
+                    <table cellspacing="0" cellpadding="0" style="margin: 0 auto;width:100%;border-collapse:collapse;color:inherit">
+                        <tbody>
+                            <tr>
+                                <td style="font-size:12px;text-align:center;padding:10px;color:#464646">
+                                    <a href="#" style="color:#464646">View in browser</a> | <a href="#" style="color:#464646">Unsubscribe</a> | <a href="#" style="color:#464646">Contact</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:12px;text-align:center;padding-bottom:10px;color:#464646">
+                                    © 2014 All Rights Reserved
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Text Only" class="o_mail_block_footer_text">
+                <div class="snippet_row bg_color_picker" style="padding:0px;width:600px;margin:auto;background-color:#E5E5E5;color:#464646">
+                    <center>
+                        <table width="600" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;width:100%;border-collapse:collapse;color:inherit">
+                            <tbody>
+                                <tr>
+                                    <td valign="middle" align="right" style="font-size:12px;padding:10px;text-align:center">
+                                        <a href="#" style="padding-right:3px;color:#464646">Contact Us</a> | <a t-att-href="(website.social_facebook) or '#'" style="padding-right:3px;color:#464646">Facebook</a> | <a t-att-href="(website.social_twitter) or '#'" style="padding-right:3px;color:#464646">Twitter</a> | <a href="#" style="color:#464646">Support</a> | <a href="#" style="color:#464646">Unsubscribe</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </center>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="snippet_email_extra" class="tab-pane">
+
+            <div name="Separator" class="o_mail_block_footer_seprator">
+                <div class="row" style="padding:0px; margin:auto;max-width:600px;background-color:#FFFFFF">
+                    <table cellspacing="0" cellpadding="0" style="margin:15px auto;vertical-align:top;padding:0px;font-family:arial;font-size:12px;color:rgb(51,51,51);border-collapse:collapse;background:inherit">
+                        <tbody>
+                            <tr>
+                                <td valign="top" style="width:600px">
+                                    <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0;margin:0"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div name="Tag Line" class="o_mail_block_footer_tag_line">
+                <div class="bg_color_picker" style="padding:0px; margin:auto;background:#4D6BBB;color:#FFFFFF;max-width:600px">
+                    <table style="margin: 0 auto;border-collapse:collapse;background:inherit;color:inherit" cellpadding="0" cellspacing="0">
+                        <tbody>
+                            <tr>
+                                <td valign="center" style="text-align:center;padding:5px">
+                                    <h4 style="margin:0px">Apps That Help You Grow Your Business</h4>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="snippet_options" class="hidden">
+            <t t-call="website_mail.snippet_options">
+                <div data-js='inline_bg_colorpicker'
+                    data-selector="div.snippet_row, .color_picker, .bg_color_picker ">
+                    <li class="dropdown-submenu">
+                        <a tabindex="-1" href="#">Background Color</a>
+                        <ul class="dropdown-menu">
+                        <li>
+                            <t t-call="website_mail.airmail_theme_colors"></t>
+                        </li>
+                        </ul>
+                    </li>
+                </div>
+                <div data-js='inline_pictogram_colorpicker'
+                    data-selector=".color_picker, .pictogram_colorpicker">
+                    <li class="dropdown-submenu">
+                        <a tabindex="-1" href="#">Pictogram Color</a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <t t-call="website_mail.airmail_theme_colors"></t>
+                            </li>
+                        </ul>
+                    </li>
+                </div>
+            </t>
+        </div>
+
+    </div>
+
+</div>
+</template>
+
+<template id="airmail_theme_colors">
+    <div class='text-center colpick_label'>Mail Theme Colors</div>
+    <table class="colorpicker" style="margin:0px">
+        <tr>
+            <td><button class="no_color" title="Remove Color"/></td>
+            <td><button style="background:#FFFFFF" title="Mail Color"/></td>
+            <td><button style="background:#E56054" title="Mail Color"/></td>
+            <td><button style="background:#4D6BBB" title="Mail Color"/></td>
+            <td><button style="background:#f9f8f8" title="Mail Color"/></td>
+            <td><button style="background:#E5E5E5" title="Mail Color"/></td>
+            <td><button style="background:#808080" title="Mail Color"/></td>
+            <td><button style="background:#464646" title="Mail Color"/></td>
+        </tr>
+        <tr>
+            <td><button style="background:#1F1F1F" title="Mail Color"/></td>
+            <td><button style="background:#41C534" title="Mail Color"/></td>
+            <td><button style="background:#FFFEEA" title="Mail Color"/></td>
+        </tr>
+        <tr><td colspan="8"><hr style="width: 100%; height: 1px"/></td></tr>
+    </table>
+    <div class='text-center colpick_label'>Website Theme Colors</div>
+</template>
+
+</data>
+</openerp>
