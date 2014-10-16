@@ -430,6 +430,30 @@
             offset: so
         };
     };
+    dom.indent = function (node) {
+        if (node.className.length) {
+            node.className = node.className.replace(/(?=^|\s+)indent([0-9])(?=\s+|$)/, function (a,b,c) {
+                    return 'indent' + (+b >= 5 ? 6 : (+b+1));
+                });
+        } else {
+            node.className += ' indent1';
+        }
+        return true;
+    };
+    dom.outdent = function (node) {
+        var res = false;
+        if (node.className.length) {
+            node.className = node.className.replace(/(?=^|\s+)indent([0-9])(?=\s+|$)/, function (a,b,c) {
+                res = true;
+                if (+b <= 1) return '';
+                return ' indent' + (+b-1);
+            });
+        }
+        if (!node.className.length) {
+            node.removeAttribute("class");
+        }
+        return res;
+    };
 
     range.reRangeFilter = function () { return true; };
     range.reRange = function (sc, so, ec, eo, keep_end) {
@@ -1002,7 +1026,6 @@
         var flag = false;
         function indentUL (UL, start, end) {
             var tagName = UL.tagName;
-            var className = UL.className;
             var node = UL.firstChild;
             var ul = UL;
             var li;
@@ -1023,6 +1046,7 @@
             // add li into the indented ul
             if (node.previousElementSibling) {
                 ul = document.createElement(tagName);
+                ul.className = UL.className;
 
                 while (node && flag) {
                     li = node;
@@ -1050,27 +1074,16 @@
                 }
             }
 
-            if (className.length) {
-                ul.className = className.replace(/indent([0-9])/, function (a,b,c) {
-                        var num = (b ? +b : 0) + (outdent ? -1 : 1);
-                        if (num <= 0) return '';
-                        return 'indent' + (num > 6 ? 6 : num);
-                    });
-
-                if (!ul.className.length) {
-                    ul.removeAttribute("class");
-                }
-            } else if (!outdent) {
-                ul.className += ' indent1';
-            } else {
-                console.log(ul, li);
+            if (!outdent) {
+                dom.indent(ul);
+            } else if (!dom.outdent(ul)) {
                 dom.splitTree(ul, li, 0);
             }
 
             // insert the rest of the non-indented ul
             if (node) {
                 var UL2 = document.createElement(tagName);
-                if (className.length) {
+                if (UL.className.length) {
                     UL2.className = className;
                 } else {
                     UL2.removeAttribute("class");
@@ -1089,16 +1102,12 @@
                 }
             }
         }
-        function indentOther (dom, start, end) {
+        function indentOther (p, start, end) {
             flag = true;
-            if (dom.className.match(/indent([0-9])/)) {
-                dom.className = dom.className.replace(/indent([0-9])/, function (a,b,c) {
-                    var num = (b ? +b : 0 ) + (outdent ? -1 : 1);
-                    if (!num) return "";
-                    return 'indent' + (num > 6 ? 6 : num);
-                });
-            } else if(!outdent) {
-                dom.className = (dom.className || "") + ' indent1';
+            if (!outdent) {
+                dom.indent(p);
+            } else if (!dom.outdent(p)) {
+                dom.splitTree(p, li, 0);
             }
             if ($.contains(dom, end)) {
                 flag = false;
@@ -1108,11 +1117,11 @@
         var ancestor = dom.commonAncestor(r.sc, r.ec);
         var $dom = $(ancestor);
 
-        if (!$(ancestor).is("ul, ol")) {
+        if (!dom.isList(ancestor)) {
             $dom = $(ancestor).children();
         }
         if (!$dom.length) {
-            $dom = $(r.sc).closest("ul, ol");
+            $dom = $(dom.ancestor(r.sc, dom.isList));
             if (!$dom.length) {
                 $dom = $(r.sc).closest(settings.options.styleTags.join(','));
             }
@@ -1120,7 +1129,7 @@
 
         $dom.each(function () {
             if (flag || $.contains(this, r.sc)) {
-                if (this.tagName === "UL" || this.tagName === "OL") {
+                if (dom.isList(this)) {
                     indentUL(this, r.sc, r.ec);
                 } else if (isFormatNode(this)) {
                     indentOther(this, r.sc, r.ec);
@@ -1134,7 +1143,7 @@
             // remove text nodes between lists
             var $ul = $parent.find('ul, ol');
             if (!$ul.length) {
-                $ul = $(r.sc).closest("ul, ol");
+                $ul = $(dom.ancestor(r.sc, dom.isList));
             }
             $ul.each(function () {
                 if (this.previousSibling &&
@@ -1151,7 +1160,7 @@
 
             // merge same ul or ol
             r = dom.merge($parent[0], r.sc, r.so, r.ec, r.eo, function (prev, cur) {
-                    if (prev && (prev.tagName === "UL" || prev.tagName === "OL") && dom.isEqual(prev, cur)) {
+                    if (prev && dom.isList(prev) && dom.isEqual(prev, cur)) {
                         return true;
                     }
                 }, true);
