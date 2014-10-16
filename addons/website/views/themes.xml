@@ -163,8 +163,8 @@
 <template id="option_bootstrap_less" name="option_bootstrap_less" inherit_id="website.theme" active="False" customize_show="False">
     <xpath expr="//link[@id='bootstrap_css']" position="replace">
         <link rel="stylesheet" href='/website/static/src/less/import_bootstrap.less'/>
-        <link rel="stylesheet" href='/website/static/src/less/colors.less' t-ignore="true"/>
-        <link rel="stylesheet" href="/web/static/lib/summernote/summernote.less"/>
+        <link rel="stylesheet" href='/website/static/src/less/colors.less'/>
+        <link rel="stylesheet" href="/website/static/src/less/ul.less"/>
     </xpath>
 </template>
 
