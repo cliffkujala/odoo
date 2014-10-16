@@ -574,7 +574,7 @@
                 } else if (outdent && !td.previousElementSibling && !$(td.parentNode).text().match(/\S/)) {
                     eventHandler.editor.backspace($editable, options);
                 } else {
-                    history.splitNext(); // for odoo
+                    $editable.data('NoteHistory').splitNext(); // for odoo
                     this.table.tab(r, outdent);
                 }
                 return false;
