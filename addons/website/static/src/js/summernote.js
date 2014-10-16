@@ -1330,7 +1330,7 @@
             'background-color': '#fff',
             'color': '#ff0000'
         });
-        $add.css({
+        $adds.css({
             'position': 'absolute',
             'cursor': 'pointer',
             'background-color': '#fff',
