@@ -645,7 +645,10 @@
             node = $clone[0].firstElementChild || $clone[0];
         } else if (r.so) {
             node = dom.splitTree(last, r.sc, r.so);
-        } else {
+        } else if (!r.so && r.isOnList() && !r.sc.textContent.length && !dom.ancestor(r.sc, function (node) { return node.tagName === 'LI'; }).nextElementSibling) {
+            // double enter on the end of a list = new line out of the list
+            node = $('<p><br/></p>').insertAfter(dom.ancestor(r.sc, dom.isList))[0];
+        }  else {
             var totalOffset = dom.makeOffsetPath(last, r.sc).reduce(function(pv, cv) { return pv + cv; }, 0);
             node = dom.splitTree(last, r.sc, r.so);
             if (!totalOffset) {
