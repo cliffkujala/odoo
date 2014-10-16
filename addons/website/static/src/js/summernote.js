@@ -523,6 +523,10 @@
     };
     range.WrappedRange.prototype.remove = function (mergeFilter) {
     };
+    range.WrappedRange.prototype.isOnCellFirst = function () {
+        var node = dom.ancestor(this.sc, function (node) {return ["LI", "DIV", "TD","TH"].indexOf(node.tagName) !== -1;});
+        return node && ["TD","TH"].indexOf(node.tagName) !== -1;
+    };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     /* add some text commands */
@@ -566,7 +570,7 @@
         var outdent = outdent || false;
 
         if (r.isCollapsed()) {
-            if (r.isOnCell()) {
+            if (r.isOnCell() && r.isOnCellFirst()) {
                 var td = dom.ancestor(r.sc, dom.isCell);
                 if (!outdent && !td.nextElementSibling && !td.parentNode.nextElementSibling) {
                     range.create(td.lastChild, td.lastChild.textContent.length, td.lastChild, td.lastChild.textContent.length).select();
@@ -1226,13 +1230,13 @@
     /* table */
     
     function summernote_table_scroll (event) {
-        var r = range.create();
-        if (r && r.isOnCell()) {
+        if (range.create().isOnCell()) {
             $('.o_table_handler').remove();
         }
     }
     function summernote_table_update (oStyle) {
-        if (!range.create().isOnCell()) {
+        var r = range.create();
+        if (!r.isOnCell() || !r.isOnCellFirst()) {
             $('.o_table_handler').remove();
             return;
         }
