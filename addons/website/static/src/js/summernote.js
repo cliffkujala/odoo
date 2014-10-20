@@ -299,7 +299,7 @@
                         eo = 1;
                         end = dom.lastChild(cur.previousSibling ? cur.previousSibling : cur.parentNode);
                         if (!end.tagName) {
-                            eo = end.textNode.length;
+                            eo = end.textContent.length;
                         }
                     }
                     cur.parentNode.removeChild(cur);
