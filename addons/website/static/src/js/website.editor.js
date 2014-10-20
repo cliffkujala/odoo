@@ -375,6 +375,7 @@
         $(document).on('mousedown', summernote_mousedown);
         $(document).on('mouseup', summernote_mouseup);
         $(document).on('click', summernote_click);
+        oLayoutInfo.editor.off('click').on('click', function (e) {e.preventDefault();}); // if the content editable is a link
         oLayoutInfo.editor.on('dblclick', 'img, .media_iframe_video, span.fa, i.fa, span.fa', function (event) {
             new website.editor.MediaDialog(oLayoutInfo.editor, event.target).appendTo(document.body);
         });
@@ -383,12 +384,13 @@
         var $node = oLayoutInfo.editor;
         if ($node.data('oe-model')) {
             var $nodes = $('[data-oe-model]')
+                .filter(function () { return this != $node[0];})
                 .filter('[data-oe-model="'+$node.data('oe-model')+'"]')
                 .filter('[data-oe-id="'+$node.data('oe-id')+'"]')
-                .filter('[data-oe-field="'+$node.data('oe-field')+'"]')
-                .filter('[data-oe-type="'+$node.data('oe-type')+'"]')
-                .filter('[data-oe-expression="'+$node.data('oe-expression')+'"]')
-                .filter(function () { return this != $node[0];});
+                .filter('[data-oe-field="'+$node.data('oe-field')+'"]');
+            if ($node.data('oe-type')) $nodes = $nodes.filter('[data-oe-type="'+$node.data('oe-type')+'"]');
+            if ($node.data('oe-expression')) $nodes = $nodes.filter('[data-oe-expression="'+$node.data('oe-expression')+'"]');
+            if ($node.data('oe-xpath')) $nodes = $nodes.filter('[data-oe-xpath="'+$node.data('oe-xpath')+'"]');
 
             if ($nodes.length) {
                 $node.on('content_changed', function () {
