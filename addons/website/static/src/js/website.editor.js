@@ -224,19 +224,6 @@
         if(!$popover.attr('disabled')) history.redo();
         return false;
     };
-    eventHandler.editor.cancel = function ($popover) {
-        setTimeout(function () {
-            $('#website-top-navbar [data-action="cancel"]').click();
-            var $modal = $('.modal-content > .modal-body').parents(".modal:first");
-            $modal.off('keyup.dismiss.bs.modal');
-            setTimeout(function () {
-                $modal.on('keyup.dismiss.bs.modal', function () {
-                    $(this).modal('hide');
-                });
-            },500);
-        },0);
-        return false;
-    };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     /* hack for image and link editor */
@@ -823,6 +810,23 @@
 
             this.history = history;
 
+            // handler for cancel editor
+            $(document).on('keydown', function (event) {
+                if (event.keyCode === 27 && !$('.modal-content:visible').length) {
+                    setTimeout(function () {
+                        $('#website-top-navbar [data-action="cancel"]').click();
+                        var $modal = $('.modal-content > .modal-body').parents(".modal:first");
+                        $modal.off('keyup.dismiss.bs.modal');
+                        setTimeout(function () {
+                            $modal.on('keyup.dismiss.bs.modal', function () {
+                                $(this).modal('hide');
+                            });
+                        },500);
+                    },0);
+                }
+            });
+
+            // activate editor
             var $last;
             $(document).on('mousedown', function (event) {
                 var $target = $(event.target);
@@ -1090,7 +1094,7 @@
                 val = $e.val(),
                 label = this.$('#link-text').val() || val;
 
-            if (test !== false && (!val || !$e[0].checkValidity())) {
+            if (!test && (!val || !$e[0].checkValidity())) {
                 // FIXME: error message
                 $e.closest('.form-group').addClass('has-error');
                 $e.focus();
@@ -1106,7 +1110,7 @@
                 def.resolve('mailto:' + val, false, label, classes);
             } else if ($e.val() && $e.val().length && $e.hasClass('page')) {
                 var data = $e.select2('data');
-                if (!data.create) {
+                if (test || !data.create) {
                     def.resolve(data.id, false, label || data.text, classes);
                 } else {
                     // Create the page, get the URL back
@@ -1221,7 +1225,7 @@
         },
         preview: function () {
             var $preview = this.$("#link-preview");
-            this.get_data(false).then(function (url, new_window, label, classes) {
+            this.get_data(true).then(function (url, new_window, label, classes) {
                 $preview.attr("target", new_window ? '_blank' : "")
                     .text((label && label.length ? label : url))
                     .attr("class", classes.replace(/pull-\w+/, ''));
