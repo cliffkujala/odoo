@@ -391,6 +391,28 @@
         oLayoutInfo.editor.on('dblclick', 'img, .media_iframe_video, span.fa, i.fa, span.fa', function (event) {
             new website.editor.MediaDialog(oLayoutInfo.editor, event.target).appendTo(document.body);
         });
+        
+        var clone_data = false;
+        var $node = oLayoutInfo.editor;
+        if ($node.data('oe-model')) {
+            var $nodes = $('[data-oe-model')
+                .filter('[data-oe-model="'+$node.data('oe-model')+'"]')
+                .filter('[data-oe-id="'+$node.data('oe-id')+'"]')
+                .filter('[data-oe-field="'+$node.data('oe-field')+'"]')
+                .filter('[data-oe-type="'+$node.data('oe-type')+'"]')
+                .filter('[data-oe-expression="'+$node.data('oe-expression')+'"]')
+                .filter(function () { return this != $node[0];});
+
+            if ($nodes.length) {
+                $node.on('content_changed', function () {
+                    if (!clone_data) {
+                        clone_data = true;
+                        $nodes.html(this.innerHTML);
+                        clone_data = false;
+                    }
+                });
+            }
+        }
     };
     var fn_dettach = eventHandler.dettach;
     eventHandler.dettach = function (oLayoutInfo, options) {
@@ -406,24 +428,6 @@
     /* Change History to have a global History for all summernote instances */
 
     var History = function History () {
-        function re_enable_snippet (r) {
-            $(document).trigger("click");
-            $(".oe_overlay").remove();
-            $(".o_editable *").filter(function () {
-                var $el = $(this);
-                if($el.data('snippet-editor')) {
-                    $el.removeData();
-                }
-            });
-
-            setTimeout(function () {
-                var target = r.sc.tagName ? r.sc : r.sc.parentNode;
-                var evt = document.createEvent("MouseEvents");
-                evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, target);
-                target.dispatchEvent(evt);
-            },0);
-        }
-
         var aUndo = [];
         var pos = 0;
 
@@ -440,10 +444,27 @@
 
         this.applySnap = function (oSnap) {
             var $editable = $(oSnap.editable);
+            $editable.trigger('mousedown');
+
             $editable.html(oSnap.contents).scrollTop(oSnap.scrollTop);
             var r = range.createFromBookmark(oSnap.editable, oSnap.bookmark);
-            re_enable_snippet(r);
             r.select();
+
+            $(document).trigger("click");
+            $(".oe_overlay").remove();
+            $(".o_editable *").filter(function () {
+                var $el = $(this);
+                if($el.data('snippet-editor')) {
+                    $el.removeData();
+                }
+            });
+
+            setTimeout(function () {
+                var target = r.sc.tagName ? r.sc : r.sc.parentNode;
+                var evt = document.createEvent("MouseEvents");
+                evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, target);
+                target.dispatchEvent(evt);
+            },0);
         };
 
         this.undo = function ($editable) {
