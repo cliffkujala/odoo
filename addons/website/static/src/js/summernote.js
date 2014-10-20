@@ -271,7 +271,7 @@
     };
     dom.removeSpace = function (node, begin, so, end, eo) {
         var removed = false;
-        var offsetEnd = end && (end.textContent.length - eo);
+        var offsetEnd = end && (dom.lastChild(end).textContent.length - eo);
         var add = node === begin;
 
         (function __remove_space (node) {
@@ -292,12 +292,15 @@
                 if (node.childNodes.length > 1 && !cur.tagName && !cur.textContent.match(/\S/)) {
                     removed = true;
                     if (cur === begin) {
-                        so -= cur.textContent.length;
-                        begin = cur.parentNode;
+                        so = 0;
+                        begin = dom.lastChild(cur.nextSibling ? cur.nextSibling : cur.parentNode);
                     }
                     if (cur === end) {
-                        offsetEnd = 0;
-                        end = cur.parentNode;
+                        eo = 1;
+                        end = dom.lastChild(cur.previousSibling ? cur.previousSibling : cur.parentNode);
+                        if (!end.tagName) {
+                            eo = end.textNode.length;
+                        }
                     }
                     cur.parentNode.removeChild(cur);
                     while (begin.tagName && begin.lastChild) {begin = begin.lastChild;}
@@ -685,7 +688,9 @@
             }
         }
 
-        range.create(dom.firstChild(node),0,dom.firstChild(node),0).select();
+        node = dom.firstChild(node);
+        node = node.tagName === "BR" ? node.parentNode : node;
+        range.create(node,0,node,0).select();
         return false;
     };
     eventHandler.editor.visible = function ($editable, options) {
@@ -955,35 +960,51 @@
     eventHandler.editor.insertUnorderedList = function ($editable, sorted) {
         $editable.data('NoteHistory').recordUndo($editable);
 
+        var parent;
         var rng = range.create();
         var node = rng.sc;
         while (node && node !== $editable[0]) {
+
+            parent = node.parentNode;
             if (node.tagName === (sorted ? "UL" : "OL")) {
 
                 var ul = document.createElement(sorted ? "ol" : "ul");
                 ul.className = node.className;
-                node.parentNode.insertBefore(ul, node);
+                parent.insertBefore(ul, node);
                 while (node.firstChild) {
                     ul.appendChild(node.firstChild);
                 }
-                node.parentNode.removeChild(node);
+                parent.removeChild(node);
                 rng.select();
                 return;
 
             } else if (node.tagName === (sorted ? "OL" : "UL")) {
 
-                var lis = $(node).find("li").get();
-                _.each(lis, function (li) {
-                    while (li.firstChild) {
-                        node.parentNode.insertBefore(li.firstChild, node);
-                    }
-                });
-                node.parentNode.removeChild(node);
+                var lis = [];
+                for (var i=0; i<node.children.length; i++) {
+                    lis.push(node.children[i]);
+                }
+
+                if (parent.tagName === "LI") {
+                    node = parent;
+                    parent = node.parentNode;
+                    _.each(lis, function (li) {
+                        parent.insertBefore(li, node);
+                    });
+                } else {
+                    _.each(lis, function (li) {
+                        while (li.firstChild) {
+                            parent.insertBefore(li.firstChild, node);
+                        }
+                    });
+                }
+
+                parent.removeChild(node);
                 rng.select();
                 return;
 
             }
-            node = node.parentNode;
+            node = parent;
         }
 
         var p0 = rng.sc;
@@ -1013,13 +1034,13 @@
             }
             i--;
         }
-        rng.select();
+        rng.clean().select();
         return false;
     };
     eventHandler.editor.insertOrderedList = function ($editable) {
         return this.insertUnorderedList($editable, true);
     };
-    eventHandler.editor.indent = function ($editable, outdent) {
+    eventHandler.editor.indent = function ($editable, outdent) { //todo: use ul in li with display: inline-block;
         $editable.data('NoteHistory').recordUndo($editable);
         var r = range.create();
 

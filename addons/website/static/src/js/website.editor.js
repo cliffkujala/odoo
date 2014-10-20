@@ -509,6 +509,19 @@
     var history = new History();
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // add focusIn to jQuery to allow to move caret into a div of a contentEditable area
+
+    $.fn.extend({
+        focusIn: function () {
+            if (this.length) {
+                var node = dom.firstChild(this[0]);
+                range.create(node, 0, node, 0).select();
+            }
+            return this;
+        }
+    });
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     website.no_editor = !!$(document.documentElement).data('editable-no-editor');
 
