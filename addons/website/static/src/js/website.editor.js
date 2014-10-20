@@ -631,6 +631,8 @@
         save: function () {
             var self = this;
 
+            var saved = {}; // list of allready saved views and data
+
             observer.disconnect();
             var defs = $('.o_editable')
                 .filter('.o_dirty')
@@ -638,6 +640,11 @@
                 .removeClass('o_dirty o_editable cke_focus oe_carlos_danger')
                 .map(function () {
                     var $el = $(this);
+
+                    // remove multi edition
+                    var key =  $el.data('oe-model')+":"+$el.data('oe-id')+":"+$el.data('oe-field')+":"+$el.data('oe-type')+":"+$el.data('oe-expression');
+                    if (saved[key]) return true;
+                    saved[key] = true;
 
                     // TODO: Add a queue with concurrency limit in webclient
                     // https://github.com/medikoo/deferred/blob/master/lib/ext/function/gate.js
@@ -876,6 +883,7 @@
                 self.trigger('rte:ready');
             }
         },
+
         _config: function () {
             return {
                 airMode : true,
