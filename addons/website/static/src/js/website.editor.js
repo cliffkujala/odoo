@@ -382,7 +382,7 @@
         var clone_data = false;
         var $node = oLayoutInfo.editor;
         if ($node.data('oe-model')) {
-            var $nodes = $('[data-oe-model')
+            var $nodes = $('[data-oe-model]')
                 .filter('[data-oe-model="'+$node.data('oe-model')+'"]')
                 .filter('[data-oe-id="'+$node.data('oe-id')+'"]')
                 .filter('[data-oe-field="'+$node.data('oe-field')+'"]')
