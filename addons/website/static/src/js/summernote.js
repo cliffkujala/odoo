@@ -434,28 +434,14 @@
         };
     };
     dom.indent = function (node) {
-        if (node.className.length) {
-            node.className = node.className.replace(/(?=^|\s+)indent([0-9])(?=\s+|$)/, function (a,b,c) {
-                    return 'indent' + (+b >= 5 ? 6 : (+b+1));
-                });
-        } else {
-            node.className += ' indent1';
-        }
-        return true;
+        var margin = parseFloat(node.style.marginLeft || 0)+1.5;
+        node.style.marginLeft = margin + "em";
+        return margin;
     };
     dom.outdent = function (node) {
-        var res = false;
-        if (node.className.length) {
-            node.className = node.className.replace(/(?=^|\s+)indent([0-9])(?=\s+|$)/, function (a,b,c) {
-                res = true;
-                if (+b <= 1) return '';
-                return ' indent' + (+b-1);
-            });
-        }
-        if (!node.className.length) {
-            node.removeAttribute("class");
-        }
-        return res;
+        var margin = parseFloat(node.style.marginLeft || 0)-1.5;
+        node.style.marginLeft = margin >= 0 ? margin + "em" : "";
+        return margin;
     };
 
     range.reRangeFilter = function () { return true; };
@@ -576,8 +562,7 @@
             var r = range.create();
             if (!r) return;
             var parent = r.sc.parentElement.parentElement;
-            r = dom.merge(parent, r.sc, r.so, r.sc, r.so, null, true);
-            r = dom.removeSpace(parent, r.sc, r.so, r.sc, r.so);
+            r = r.clean();
             if (r.ec.tagName === "BR") {
                 r.sc = r.ec = r.sc.previousSibling || r.sc.parentNode;
             }
@@ -772,10 +757,11 @@
         }
 
         var node = r.ec;
-        while (!node.nextSibling && !node.previousSibling) {node = node.parentNode;}
+        while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node)) {node = node.parentNode;}
         
         var content = r.ec.textContent.replace(/\s+$/, '');
         var temp;
+        var temp2;
 
         // media
         if (r.sc===r.ec && dom.isImg(node)) {
@@ -791,19 +777,27 @@
             }
         }
         // empty tag
-        else if (r.sc===r.ec && !content.length && node.nextSibling && r.sc.tagName && settings.options.deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
-            var next = node.nextSibling;
-            while (next.tagName && next.firstChild) {next = next.firstChild;}
+        else if (r.sc===r.ec && !content.length && (node.nextSibling || node.previousSibling) && r.sc.tagName && settings.options.deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
+            if (node.nextSibling) {
+                var next = node.nextSibling;
+                next = dom.firstChild(next);
+                range.create(next, 0, next, 0).select();
+            } else {
+                var prev = node.previousSibling;
+                prev = dom.lastChild(prev);
+                range.create(prev, prev.textContent.length, prev, prev.textContent.length).select();
+            }
             node.parentNode.removeChild(node);
-            range.create(next, 0, next, 0).select();
         }
         // normal feature if same tag and not the end
         else if (r.sc===r.ec && r.eo<content.length && content.length) return true;
         // merge with the next text node
         else if (!r.ec.tagName && r.ec.nextSibling && (!r.sc.nextSibling.tagName || r.sc.nextSibling.tagName === "BR")) return true;
         // jump to next node for delete
-        else if ((temp = dom.ancestorHaveNextSibling(r.sc)) && temp.tagName  !== ((temp = dom.hasContentAfter(temp) || {}).tagName)) {
-            r = range.create(temp, 0, temp, 0).select();
+        else if ((temp = dom.ancestorHaveNextSibling(r.sc)) && temp.tagName  !== ((temp2 = dom.hasContentAfter(temp) || {}).tagName) ||
+                // ul in li check
+                (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.lastElementChild.tagName !== temp2.firstElementChild.tagName)) {
+            r = range.create(temp2, 0, temp2, 0).select();
             return this.delete($editable, options);
         }
         //merge with the next block
@@ -1040,97 +1034,104 @@
     eventHandler.editor.insertOrderedList = function ($editable) {
         return this.insertUnorderedList($editable, true);
     };
-    eventHandler.editor.indent = function ($editable, outdent) { //todo: use ul in li with display: inline-block;
+    eventHandler.editor.indent = function ($editable, outdent) {
         $editable.data('NoteHistory').recordUndo($editable);
         var r = range.create();
 
         var flag = false;
         function indentUL (UL, start, end) {
+            var next;
             var tagName = UL.tagName;
             var node = UL.firstChild;
-            var ul = UL;
-            var li;
+            var parent = UL.parentNode;
+            var ul = document.createElement(tagName);
+            var li = document.createElement("li");
+            li.style.display = "inline-block";
+            li.appendChild(ul);
 
-            // search the first
-            while (node && !flag) {
-                if (node === start || $.contains(node, start)) {
+            if (flag) {
+                flag = 1;
+            }
+
+            // create and fill ul into a li
+            while (node) {
+                if (flag === 1 || node === start || $.contains(node, start)) {
                     flag = true;
+                    node.parentNode.insertBefore(li, node);
+                }
+                next = node.nextElementSibling;
+                if (flag) {
+                    ul.appendChild(node);
+                }
+                if (node === end || $.contains(node, end)) {
+                    flag = false;
                     break;
                 }
-                node = node.nextElementSibling;
+                node = next;
             }
 
-            if (!flag) {
-                return;
+            if (li.previousElementSibling && li.previousElementSibling.tagName === "LI" && li.previousElementSibling.firstElementChild.tagName === tagName) {
+                dom.doMerge(li.previousElementSibling.firstElementChild, ul);
+                li = li.previousElementSibling;
+                li.parentNode.removeChild(li.nextElementSibling);
             }
-
-            // add li into the indented ul
-            if (node.previousElementSibling) {
-                ul = document.createElement(tagName);
-                ul.className = UL.className;
-
-                while (node && flag) {
-                    li = node;
-                    node = node.nextElementSibling;
-                    if (li === end || $.contains(li, end)) {
-                        ul.appendChild(li);
-                        flag = false;
-                        break;
-                    }
-                    ul.appendChild(li);
-                }
-                if (UL.nextSibling) {
-                    UL.parentNode.insertBefore(ul, UL.nextSibling);
-                } else {
-                    UL.parentNode.appendChild(ul);
-                }
-            } else {
-                while (node) {
-                    li = node;
-                    node = node.nextElementSibling;
-                    if (li === end || $.contains(li, end)) {
-                        flag = false;
-                        break;
-                    }
-                }
-            }
-
-            if (!outdent) {
-                dom.indent(ul);
-            } else if (!dom.outdent(ul)) {
-                dom.splitTree(ul, li, 0);
-            }
-
-            // insert the rest of the non-indented ul
-            if (node) {
-                var UL2 = document.createElement(tagName);
-                if (UL.className.length) {
-                    UL2.className = className;
-                } else {
-                    UL2.removeAttribute("class");
-                }
-
-                while (node) {
-                    li = node;
-                    node = node.nextElementSibling;
-                    UL2.appendChild(li);
-                }
-
-                if (ul.nextElementSibling) {
-                    ul.parentNode.insertBefore(UL2, ul.nextSibling);
-                } else {
-                    ul.parentNode.appendChild(UL2);
-                }
+            if (li.nextElementSibling && li.nextElementSibling.tagName === "LI" && li.nextElementSibling.firstElementChild.tagName === tagName) {
+                dom.doMerge(li.firstElementChild, li.nextElementSibling.firstElementChild);
+                li.parentNode.removeChild(li.nextElementSibling);
             }
         }
-        function indentOther (p, start, end) {
-            flag = true;
-            if (!outdent) {
-                dom.indent(p);
-            } else if (!dom.outdent(p)) {
-                dom.splitTree(p, li, 0);
+        function outdenttUL (UL, start, end) {
+            var next;
+            var tagName = UL.tagName;
+            var node = UL.firstChild;
+            var parent = UL.parentNode;
+            var li = UL.parentNode.tagName === "LI" ? UL.parentNode : UL;
+            var ul = UL.parentNode.tagName === "LI" ? UL.parentNode.parentNode : UL.parentNode;
+
+            if (ul.tagName !== "UL" && ul.tagName !== "OL") return;
+
+            // create and fill ul into a li
+            while (node) {
+                if (node === start || $.contains(node, start)) {
+                    flag = true;
+                    if (UL.firstElementChild !== start && UL.lastElementChild !== end && li.tagName === "LI") {
+                        li = dom.splitTree(li, node, 0);
+                    }
+                }
+                next = node.nextElementSibling;
+                if (flag) {
+                    ul.insertBefore(node, li);
+                }
+                if (node === end || $.contains(node, end)) {
+                    flag = false;
+                    break;
+                }
+                node = next;
             }
-            if ($.contains(dom, end)) {
+
+            if (li.firstElementChild.tagName === tagName && !li.firstElementChild.firstElementChild) {
+                li.parentNode.removeChild( li );
+            }
+
+            if (!UL.firstElementChild) {
+                li = UL.parentNode.tagName === "LI" ? UL.parentNode : UL;
+                li.parentNode.removeChild( li );
+            }
+
+            dom.merge(parent, start, 0, end, 1, null, true);
+        }
+        function indentOther (p, start, end) {
+            if (p === start || $.contains(p, start)) {
+                flag = true;
+            }
+            if (flag) {
+                if (outdent) {
+                    dom.outdent(p);
+                } else {
+                    dom.indent(p);
+                }
+            }
+            if (p === end || $.contains(p, end)) {
                 flag = false;
             }
         }
@@ -1151,7 +1152,11 @@
         $dom.each(function () {
             if (flag || $.contains(this, r.sc)) {
                 if (dom.isList(this)) {
-                    indentUL(this, r.sc, r.ec);
+                    if (outdent) {
+                        outdenttUL(this, r.sc, r.ec);
+                    } else {
+                        indentUL(this, r.sc, r.ec);
+                    }
                 } else if (isFormatNode(this)) {
                     indentOther(this, r.sc, r.ec);
                 }
