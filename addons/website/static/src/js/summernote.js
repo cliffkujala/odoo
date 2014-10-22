@@ -797,6 +797,7 @@
         else if ((temp = dom.ancestorHaveNextSibling(r.sc)) && temp.tagName  !== ((temp2 = dom.hasContentAfter(temp) || {}).tagName) ||
                 // ul in li check
                 (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.lastElementChild.tagName !== temp2.firstElementChild.tagName)) {
+            temp2 = dom.firstChild(temp2);
             r = range.create(temp2, 0, temp2, 0).select();
             return this.delete($editable, options);
         }
