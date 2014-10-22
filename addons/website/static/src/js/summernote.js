@@ -1240,8 +1240,11 @@
                 node.style.backgroundColor = "";
                 if (!sObjColor.indexOf('bg-')) {
                     node.className = (node.className || '').replace(/\s*bg-[^\s]+\s*/, '') + ' ' + sObjColor;
-                } else {
+                } else if (sObjColor !== 'inherit') {
                     node.style.backgroundColor = sObjColor;
+                }
+                if (!node.className.length) {
+                    node.removeAttribute('class');
                 }
             }
         }
@@ -1252,6 +1255,12 @@
         return false;
     };
     eventHandler.editor.backColor = function ($editable, sObjColor) {
+        var r = range.create();
+        if (r.isCollapsed() && r.isOnCell()) {
+            var cell = dom.ancestor(r.sc, dom.isCell);
+            color.backColor([cell], sObjColor);
+            return false;
+        }
         var nodes = createFontNode();
         color.backColor(nodes, sObjColor);
         return false;
