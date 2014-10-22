@@ -852,7 +852,7 @@
     };
     eventHandler.editor.backspace = function ($editable, options) {
         $editable.data('NoteHistory').recordUndo($editable, "backspace");
-        var temp;
+
         var r = range.create();
         if (!r.isCollapsed()) {
             r = r.deleteContents().select();
@@ -863,16 +863,11 @@
         while (!node.nextSibling && !node.previousSibling) {node = node.parentNode;}
 
         var content = r.ec.textContent.replace(/\s+$/, '');
+        var temp;
+        var temp2;
 
-        // empty tag
-        if (r.sc===r.ec && !content.length  && node.previousSibling && r.sc.tagName && settings.options.deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
-            var next = node.previousSibling;
-            while (next.tagName && next.lastChild) {next = next.lastChild;}
-            node.parentNode.removeChild(node);
-            range.create(next, next.textContent.length, next, next.textContent.length).select();
-        }
         // table tr td
-        else if (r.sc===r.ec && r.isOnCell() && !r.so && (r.sc === (temp = dom.ancestor(r.sc, dom.isCell)) || r.sc === temp.firstChild)) {
+        if (r.sc===r.ec && r.isOnCell() && !r.so && (r.sc === (temp = dom.ancestor(r.sc, dom.isCell)) || r.sc === temp.firstChild)) {
             if (temp.previousElementSibling) {
                 var td = temp.previousElementSibling;
                 node = td.lastChild || td;
@@ -892,14 +887,29 @@
                 }
             }
         }
+        // empty tag
+        else if (r.sc===r.ec && !content.length && (node.nextSibling || node.previousSibling) && r.sc.tagName && settings.options.deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
+            if (node.previousSibling) {
+                var prev = node.previousSibling;
+                prev = dom.lastChild(prev);
+                range.create(prev, prev.textContent.length, prev, prev.textContent.length).select();
+            } else {
+                var next = node.nextSibling;
+                next = dom.firstChild(next);
+                range.create(next, 0, next, 0).select();
+            }
+            node.parentNode.removeChild(node);
+        }
         // normal feature if same tag and not the begin
         else if (r.sc===r.ec && r.so || r.eo) return true;
         // merge with the previous text node
         else if (!r.ec.tagName && r.ec.previousSibling && (!r.sc.previousSibling.tagName || r.sc.previousSibling.tagName === "BR")) return true;
         // jump to previous node for delete
-        else if ((temp = dom.ancestorHavePreviousSibling(r.sc)) && temp.tagName !== ((temp = dom.hasContentBefore(temp) || {}).tagName)) {
-            temp = dom.lastChild(temp);
-            r = range.create(temp, temp.textContent.length, temp, temp.textContent.length).select();
+        else if ((temp = dom.ancestorHavePreviousSibling(r.sc)) && temp.tagName  !== ((temp2 = dom.hasContentBefore(temp) || {}).tagName) ||
+                // ul in li check
+                (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.firstElementChild.tagName !== temp2.lastElementChild.tagName)) {
+            temp2 = dom.lastChild(temp2);
+            r = range.create(temp2, temp2.textContent.length, temp2, temp2.textContent.length).select();
             return this.backspace($editable, options);
         }
         //merge with the previous block
