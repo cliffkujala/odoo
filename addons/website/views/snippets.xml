@@ -411,7 +411,8 @@
                 <div class="col-md-12 text-center mt16 mb32">
                     <h2>Our Offers</h2>
                 </div>
-
+              </div>
+              <div class="row">
                 <div class="col-md-4">
                     <div class="panel panel-info">
 
@@ -1034,7 +1035,7 @@
     </div>
 
     <div data-js='content'
-        data-selector="blockquote, .well, .panel, .oe_share, .o_image_floating"
+        data-selector="blockquote, .well, *:not(.row)>*>.panel, .oe_share, .o_image_floating"
         data-drop-near="p, h1, h2, h3, blockquote, .well, .panel, .oe_share"
         data-drop-in=".content">
     </div>
