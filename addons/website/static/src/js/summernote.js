@@ -796,7 +796,7 @@
         // jump to next node for delete
         else if ((temp = dom.ancestorHaveNextSibling(r.sc)) && temp.tagName  !== ((temp2 = dom.hasContentAfter(temp) || {}).tagName) ||
                 // ul in li check
-                (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.lastElementChild.tagName !== temp2.firstElementChild.tagName)) {
+                (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.lastElementChild && temp2.firstElementChild && temp.lastElementChild.tagName !== temp2.firstElementChild.tagName)) {
             temp2 = dom.firstChild(temp2);
             r = range.create(temp2, 0, temp2, 0).select();
             return this.delete($editable, options);
@@ -908,7 +908,7 @@
         // jump to previous node for delete
         else if ((temp = dom.ancestorHavePreviousSibling(r.sc)) && temp.tagName  !== ((temp2 = dom.hasContentBefore(temp) || {}).tagName) ||
                 // ul in li check
-                (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.firstElementChild.tagName !== temp2.lastElementChild.tagName)) {
+                (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.firstElementChild && temp2.lastElementChild && temp.firstElementChild.tagName !== temp2.lastElementChild.tagName)) {
             temp2 = dom.lastChild(temp2);
             r = range.create(temp2, temp2.textContent.length, temp2, temp2.textContent.length).select();
             return this.backspace($editable, options);
