@@ -175,6 +175,31 @@ li > p {
   margin: 0;
 }
 
+.o_ul_toggle_self, .o_ul_toggle_next {
+  display: none;
+}
+
+.o_ul_folded .o_close {
+  display: none !important;
+}
+.o_ul_folded .o_ul_toggle_self, .o_ul_folded .o_ul_toggle_next {
+  display: inline-block;
+  line-height: inherit;
+  float: left;
+  position: relative;
+  margin-left: -1em;
+  left: -0.35em;
+  z-index: 1;
+}
+.o_ul_folded .o_ul_toggle_self:after, .o_ul_folded .o_ul_toggle_next:after {
+  content: "\f04d";
+  position: absolute;
+  margin: 0.25em 0 0.25em -0.9em;
+  font-size: 0.8em;
+  color: white;
+  z-index: -1;
+}
+
 /* Extra Styles */
 img.shadow {
   -moz-border-radius: 3px;

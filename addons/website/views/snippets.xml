@@ -1106,6 +1106,11 @@
         <li data-clear_style=""><a>Reset Transformation</a></li>
     </div>
 
+    <div data-js='ul'
+         data-selector=":not(li) > ul">
+        <li data-toggle_class="o_ul_folded"> <a href="#">Folded list</a> </li>
+    </div>
+
 </template>
 
 

@@ -1614,6 +1614,18 @@
         },
     });
 
+    website.snippet.options.ul = website.snippet.Option.extend({
+        start: function () {
+            this._super();
+            this.$target.data("snippet-view", new website.snippet.animationRegistry.ul(this.$target, true));
+        },
+        clean_for_save: function () {
+            this._super();
+            this.$target.find("ul.o_close, ol.o_close, li.o_close").removeClass('o_close');
+            this.$target.find('.o_ul_toggle_self, .o_ul_toggle_next').remove();
+        }
+    });
+
     website.snippet.Editor = openerp.Class.extend({
         init: function (BuildingBlock, dom) {
             this.BuildingBlock = BuildingBlock;
