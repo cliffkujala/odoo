@@ -742,10 +742,6 @@
             this.option= option_id;
             this.$el = option.$el.find(">li").clone();
             this.data = option.$el.data();
-
-            this.set_active();
-            this.$target.on('snippet-option-reset', _.bind(this.set_active, this));
-            this._bind_li_menu();
         },
 
         _bind_li_menu: function () {
@@ -800,6 +796,9 @@
         },
 
         start: function () {
+            this.set_active();
+            this.$target.on('snippet-option-reset', _.bind(this.set_active, this));
+            this._bind_li_menu();
         },
 
         on_focus : function () {
@@ -933,20 +932,21 @@
         clean_for_save: dummy
     });
     website.snippet.options.background = website.snippet.Option.extend({
-        start: function () {
+        start: function ($change_target) {
+            this.$bg = $change_target || this.$target;
             this._super();
-            var src = this.$target.css("background-image").replace(/url\(['"]*|['"]*\)|^none$/g, "");
-            if (this.$target.hasClass('oe_custom_bg')) {
+            var src = this.$bg.css("background-image").replace(/url\(['"]*|['"]*\)|^none$/g, "");
+            if (this.$bg.hasClass('oe_custom_bg')) {
                 this.$el.find('li[data-choose_image]').data("background", src).attr("data-background", src);
             }
         },
         background: function(type, value, $li) {
             if (value && value.length) {
-                this.$target.css("background-image", 'url(' + value + ')');
-                this.$target.addClass("oe_img_bg");
+                this.$bg.css("background-image", 'url(' + value + ')');
+                this.$bg.addClass("oe_img_bg");
             } else {
-                this.$target.css("background-image", "");
-                this.$target.removeClass("oe_img_bg").removeClass("oe_custom_bg");
+                this.$bg.css("background-image", "");
+                this.$bg.removeClass("oe_img_bg").removeClass("oe_custom_bg");
             }
         },
         choose_image: function(type, value, $li) {
@@ -955,7 +955,7 @@
             var self = this;
             var $image = $('<img class="hidden"/>');
             $image.attr("src", value);
-            $image.appendTo(self.$target);
+            $image.appendTo(self.$bg);
 
             var editor = new website.editor.MediaDialog(null, $image[0]);
             editor.appendTo(document.body);
@@ -963,21 +963,20 @@
 
             $image.on('saved', self, function (o) {
                 var value = $image.attr("src");
-                self.$target.css("background-image", 'url(' + value + ')');
-                self.$el.find('li[data-choose_image]').data("background", value).attr("data-background", value);
-                self.$target.trigger("snippet-option-change", [self]);
                 $image.remove();
-                self.$target.addClass('oe_custom_bg oe_img_bg');
+                self.$el.find('li[data-choose_image]').data("background", value).attr("data-background", value);
+                self.background(type, value,$li);
+                self.$bg.addClass('oe_custom_bg');
+                self.$bg.trigger("snippet-option-change", [self]);
                 self.set_active();
             });
             editor.on('cancel', self, function () {
-                self.$target.trigger("snippet-option-change", [self]);
                 $image.remove();
             });
         },
         set_active: function () {
             var self = this;
-            var src = this.$target.css("background-image").replace(/url\(['"]*|['"]*\)|^none$/g, "");
+            var src = this.$bg.css("background-image").replace(/url\(['"]*|['"]*\)|^none$/g, "");
             this._super();
 
             this.$el.find('li[data-background]:not([data-background=""])')
