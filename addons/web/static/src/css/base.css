@@ -3425,3 +3425,7 @@ body {
     position: static !important;
   }
 }
+
+.apps-client {
+  border: 0px;
+}
