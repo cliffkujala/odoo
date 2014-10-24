@@ -868,8 +868,20 @@
                     $editable.data('rte', self);
                     $last = $editable;
 
+                    try {
+                        document.execCommand('enableObjectResizing', false, false);
+                        document.execCommand('enableInlineTableEditing', false, false);
+                        document.execCommand( '2D-position', false, false);
+                    } catch (e) {}
+
+                    document.body.addEventListener('mscontrolselect', function (evt) {evt.preventDefault(); return false;});
+                    document.body.addEventListener('controlselect', function (evt) {evt.preventDefault(); return false;});
+                    document.body.addEventListener('resizestart', function (evt) {evt.preventDefault(); return false;});
+                    document.body.addEventListener('movestart', function (evt) {evt.preventDefault(); return false;});
+                    document.body.addEventListener('dragstart', function (evt) {evt.preventDefault(); return false;});
+
                     if (!range.create()) {
-                        range.create($editable[0].firstChild || $editable[0],0,$editable[0].firstChild || $editable[0],0).select();
+                        range.create(dom.firstChild($editable),0).select();
                     }
                 }
             });
@@ -952,7 +964,13 @@
                         if (m.attributeName === 'contenteditable') { return false; }
                         if (m.attributeName === 'attributeeditable') { return false; }
                         // remove content editable attribute from firefox
-                        if (m.attributeName.indexOf('_moz') === 0) { return false; }
+                        if (m.attributeName.indexOf('_moz') === 0) {
+                            if (!m.oldValue) {
+                                // remove stupid _moz attributes
+                                $(m.target).filter(function () { return this.attributes[m.attributeName]; }).removeAttr(m.attributeName);
+                            }
+                            return false;
+                        }
                         // ignore id modification
                         if (m.attributeName === 'id') { return false; }
                         // style not change
