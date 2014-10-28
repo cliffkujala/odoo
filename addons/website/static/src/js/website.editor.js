@@ -881,7 +881,7 @@
                     document.body.addEventListener('dragstart', function (evt) {evt.preventDefault(); return false;});
 
                     if (!range.create()) {
-                        range.create(dom.firstChild($editable),0).select();
+                        range.create(dom.firstChild($editable[0]),0).select();
                     }
                 }
             });
