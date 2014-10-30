@@ -904,7 +904,7 @@
             });
 
             if (!restart) {
-                $('#wrapwrap').on('click', '*', function (event) {
+                $('#wrapwrap, .o_editable').on('click', '*', function (event) {
                     event.preventDefault();
                 });
                 self.trigger('rte:ready');

@@ -178,7 +178,7 @@
         while (begin && begin.tagName && begin.firstChild) {begin = begin.firstChild;}
         while (end && end.tagName && begin.firstChild) {end = end.firstChild;}
 
-        (function __merge (node) {
+        function __merge (node) {
             var merged = false;
             var prev;
             for (var k=0; k<node.childNodes.length; k++) {
@@ -259,7 +259,10 @@
                 _merged = true;
                 __merge(node);
             }
-        })(node);
+        }
+        if (node) {
+            __merge(node);
+        }
 
         return {
             merged: _merged,
@@ -442,6 +445,19 @@
         var margin = parseFloat(node.style.marginLeft || 0)-1.5;
         node.style.marginLeft = margin >= 0 ? margin + "em" : "";
         return margin;
+    };
+    dom.scrollIntoViewIfOutOfView = function (container, node) {
+        var node = node.tagName ? node : node.parentNode;
+        var elY = 0;
+        var elH = node.offsetHeight;
+        while (node.offsetParent && node !== container) {
+            elY += node.offsetTop;
+            node = node.offsetParent;
+        }
+
+        if ((container.scrollTop + container.clientHeight) < (elY + elH)) {
+            container.scrollTop += (elY + elH) - container.clientHeight;
+        }
     };
 
     range.reRangeFilter = function () { return true; };
@@ -676,6 +692,9 @@
         node = dom.firstChild(node);
         node = node.tagName === "BR" ? node.parentNode : node;
         range.create(node,0,node,0).select();
+
+        dom.scrollIntoViewIfOutOfView($editable[0], node);
+
         return false;
     };
     eventHandler.editor.visible = function ($editable, options) {
@@ -759,6 +778,10 @@
         var node = r.ec;
         while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node)) {node = node.parentNode;}
         
+        if (node === $editable[0] || $.contains(node, $editable[0])) {
+            return false;
+        }
+
         var content = r.ec.textContent.replace(/\s+$/, '');
         var temp;
         var temp2;
@@ -861,7 +884,11 @@
         }
 
         var node = r.sc;
-        while (!node.nextSibling && !node.previousSibling) {node = node.parentNode;}
+        while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node)) {node = node.parentNode;}
+
+        if (node === $editable[0] || $.contains(node, $editable[0])) {
+            return false;
+        }
 
         var content = r.ec.textContent.replace(/\s+$/, '');
         var temp;
