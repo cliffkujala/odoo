@@ -39,7 +39,7 @@
         <menuitem
             action="product.product_uom_form_action" id="menu_stock_uom_form_action"
             parent="menu_stock_configuration" sequence="35" groups="product.group_uom"/>
-
+        
         <record id="stock_inventory_line_tree" model="ir.ui.view">
             <field name="name">stock.inventory.line.tree</field>
             <field name="model">stock.inventory.line</field>
@@ -1937,6 +1937,10 @@
                 </xpath>
             </field>
         </record>
-        
+
+        <!-- Barcode Nomenclatures -->
+        <menuitem parent="menu_stock_configuration" action="pos_barcodes.action_barcode_nomenclature_form" id="menu_wms_barcode_nomenclature_all"
+            sequence="50"/> <!--groups="pos_barcodes.group_barcode_nomenclature"/>-->
+       
     </data>
 </openerp>
