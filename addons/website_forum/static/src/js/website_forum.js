@@ -213,5 +213,24 @@ $(document).ready(function () {
                 }
             });
         }
+
+        $('textarea[name="content"]').each(function () {
+            var $textarea = $(this);
+            var $form = $textarea.closest('form');
+            $textarea.summernote({
+                    height: 150,
+                    toolbar: [
+                        ['font', ['bold', 'italic', 'underline', 'clear']],
+                        ['para', ['ul', 'ol', 'paragraph']],
+                        ['table', ['table']],
+                        ['insert', ['link', 'picture']],
+                        ['history', ['undo', 'redo']]
+                    ]
+                });
+            $form.on('click', 'button, .a-submit', function () {
+                $textarea.html($form.find('.note-editable').code());
+            });
+        });
+        
     }
 });

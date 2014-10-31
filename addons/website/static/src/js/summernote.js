@@ -115,7 +115,30 @@
         }
         return true;
     };
+    /**
+     * Checks that the node only has a @style, not e.g. @class or whatever
+     */
+    dom.has_only_style = function (node) {
+        for (var i = 0; i < node.attributes.length; i++) {
+            var attr = node.attributes[i];
+            if (attr.attributeName !== 'style') {
+                return false;
+            }
+        }
+        return true;
+    };
+    dom.has_programmatic_style = function (node) {
+        var styles = ["float", "display", "position", "top", "left", "right", "bottom"];
+        for (var i = 0; i < node.style.length; i++) {
+          var style = node.style[i];
+          if (styles.indexOf(style) !== -1) {
+              return true;
+          }
+        }
+        return false;
+    };
     dom.mergeFilter = function (prev, cur) {
+        // merge text nodes
         if (prev && !prev.tagName && !cur.tagName) {
             return true;
         }
@@ -123,14 +146,21 @@
             return true;
         }
         if (prev && dom.isEqual(prev, cur) &&
-            ((prev.tagName && "inline".indexOf(window.getComputedStyle(prev).display) !== -1 &&
-              cur.tagName && "inline".indexOf(window.getComputedStyle(cur).display) !== -1))) {
+            ((prev.tagName && window.getComputedStyle(prev).display === "inline" &&
+              cur.tagName && window.getComputedStyle(cur).display === "inline"))) {
             return true;
         }
         if (cur.tagName === "FONT" && !cur.attributes.getNamedItem('style')) {
             return true;
         }
-        if (cur.tagName === "SPAN" && !cur.className) {
+        // On backspace, webkit browsers create a <span> with a bunch of
+        // inline styles "remembering" where they come from.
+        // chances are we had e.g.
+        //  <p>foo</p>
+        //  <p>bar</p>
+        // merged the lines getting this in webkit
+        //  <p>foo<span>bar</span></p>
+        if (cur.tagName === "SPAN" && dom.has_only_style(cur) && !dom.has_programmatic_style(cur)) {
             return true;
         }
     };

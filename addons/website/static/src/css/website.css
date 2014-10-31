@@ -1,4 +1,4 @@
-@charset "UTF-8";
+@charset "utf-8";
 /*       THIS CSS FILE IS FOR WEBSITE THEMING CUSTOMIZATION ONLY
  *
  * css for editor buttons, openerp widget included in the website and other
@@ -202,11 +202,13 @@ li > p {
 
 /* Extra Styles */
 img.shadow {
-  -moz-border-radius: 3px;
   -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  -ms-border-radius: 3px;
+  -o-border-radius: 3px;
   border-radius: 3px;
-  -moz-box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.2);
   -webkit-box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.2);
+  -moz-box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.2);
   box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.2);
   margin: 0 auto;
 }
@@ -223,7 +225,12 @@ header a.navbar-brand img {
 }
 
 #wrapwrap p:empty:after {
-  content: "⁠";
+  content: "\2060";
+}
+
+/* ----- Editor (for public user, like forum) ----- */
+.note-toolbar {
+  margin-left: 0 !important;
 }
 
 /* ----- Snippets Styles ----- */
@@ -239,23 +246,6 @@ header a.navbar-brand img {
 }
 
 /* ----- EDITOR ----- */
-#oe_main_menu_navbar {
-  min-height: 34px;
-  z-index: 1001;
-  -moz-border-radius: 0px;
-  -webkit-border-radius: 0px;
-  border-radius: 0px;
-  margin-bottom: 0px;
-}
-#oe_main_menu_navbar li a, #oe_main_menu_navbar li button {
-  padding: 4px 8px 4px 8px;
-  margin-top: 2px;
-  font-size: 13px;
-}
-#oe_main_menu_navbar .navbar-nav.navbar-right:last-child {
-  margin-right: 0 !important;
-}
-
 .css_non_editable_mode_hidden {
   display: none !important;
 }
@@ -279,8 +269,8 @@ header a.navbar-brand img {
 
 /* ----- BOOTSTRAP HACK FOR STICKY FOOTER ----- */
 html, body, #wrapwrap {
-  -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
   box-sizing: border-box;
   height: 100%;
 }
@@ -589,7 +579,7 @@ ul.nav-stacked > li > a {
   padding: 15px;
 }
 .o_gallery.o_slideshow .carousel ul.carousel-indicators li {
-  border: 1px solid #aaa;
+  border: 1px solid #aaaaaa;
 }
 .o_gallery .carousel-inner .item img {
   max-width: none;
@@ -627,11 +617,11 @@ ul.nav-stacked > li > a {
   height: 35px;
   margin: 0 0px 5px 5px;
   padding: 0;
-  border: 1px solid #aaa;
+  border: 1px solid #aaaaaa;
   text-indent: initial;
   background-size: cover;
   opacity: 0.5;
-  background-color: #000;
+  background-color: black;
 }
 .o_gallery.o_slideshow .carousel ul.carousel-indicators li.active, .modal-body.o_slideshow .carousel ul.carousel-indicators li.active {
   opacity: 1;
@@ -685,11 +675,11 @@ div.carousel div.carousel-content {
 }
 
 .oe_green {
-  background-color: #169C78;
+  background-color: #169c78;
   color: white;
 }
 .oe_green .text-muted {
-  color: #ddd;
+  color: #dddddd;
 }
 
 .oe_blue_light {
@@ -697,7 +687,7 @@ div.carousel div.carousel-content {
   color: white;
 }
 .oe_blue_light .text-muted {
-  color: #ddd;
+  color: #dddddd;
 }
 
 .oe_blue {
@@ -710,7 +700,7 @@ div.carousel div.carousel-content {
   color: white;
 }
 .oe_orange .text-muted {
-  color: #ddd;
+  color: #dddddd;
 }
 
 .oe_purple {
@@ -718,15 +708,15 @@ div.carousel div.carousel-content {
   color: white;
 }
 .oe_purple .text-muted {
-  color: #ddd;
+  color: #dddddd;
 }
 
 .oe_red {
-  background-color: #9C1b31;
+  background-color: #9c1b31;
   color: white;
 }
 .oe_red .text-muted {
-  color: #ddd;
+  color: #dddddd;
 }
 
 /* Misc */
@@ -779,8 +769,10 @@ span[data-oe-type="monetary"] {
 }
 
 .oe_template_fallback {
-  -moz-column-count: 3;
   -webkit-column-count: 3;
+  -moz-column-count: 3;
+  -ms-column-count: 3;
+  -o-column-count: 3;
   column-count: 3;
 }
 

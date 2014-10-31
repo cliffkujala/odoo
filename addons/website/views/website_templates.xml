@@ -145,7 +145,6 @@
                 ga('create', _.str.trim('<t t-esc="website.google_analytics_key"/>'), 'auto');
                 ga('send','pageview');
             </script>
-            <t t-raw="footer or ''" name='layout_footer'/>
         </body>
     </html>
 </template>
@@ -181,15 +180,20 @@
     </xpath>
 </template>
 
+<template id="assets_common" inherit_id="web.assets_common" name="Website common assets">
+    <xpath expr='.' position="inside">
+        <script type="text/javascript" src="/web/static/lib/summernote/summernote.js"></script>
+        <script type="text/javascript" src="/website/static/src/js/summernote.js"></script>
+        <link rel="stylesheet" href="/web/static/lib/summernote/summernote.css"/>
+    </xpath>
+</template>
+
 <template id="assets_editor" name="Editor assets">
     <link rel='stylesheet' href='/website/static/src/css/snippets.css'/>
     <link rel='stylesheet' href='/website/static/src/css/editor.css'/>
     <link rel='stylesheet' href="/web/static/lib/jquery.ui/css/smoothness/jquery-ui-1.9.1.custom.css"/>
     <link rel="stylesheet" href="/web/static/lib/select2/select2.css"/>
     <link rel="stylesheet" href="/website/static/lib/select2-bootstrap-css/select2-bootstrap.css"/>
-    <script type="text/javascript" src="/web/static/lib/summernote/summernote.js"></script>
-    <script type="text/javascript" src="/website/static/src/js/summernote.js"></script>
-    <link rel="stylesheet" href="/web/static/lib/summernote/summernote.css"/>
 
     <script type="text/javascript" src="/web/static/lib/select2/select2.js"></script>
     <script type="text/javascript" src="/website/static/lib/ace/ace.js"></script>
