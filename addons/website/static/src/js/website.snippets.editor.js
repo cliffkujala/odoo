@@ -842,19 +842,23 @@
             self.$target.trigger("snippet-option-reset", [this]);
         },
 
-        // call data-method args as method
+        // call data-method args as method (data-only can be used)
         select: function (type, $li) {
             var self = this,
                 $methods = [],
                 el = $li[0],
                 $el;
 
+            if ($li.data('only') && type !== $li.data('only')) {
+                return;
+            }
+
             if (type==="click") {
                 this.reset();
                 this.BuildingBlock.parent.rte.historyRecordUndo(this.$target);
             }
 
-            function filter (k) { return k !== 'oeId' && k !== 'oeModel' && k !== 'oeField' && k !== 'oeXpath' && k !== 'oeSourceId';}
+            function filter (k) { return k !== 'oeId' && k !== 'oeModel' && k !== 'oeField' && k !== 'oeXpath' && k !== 'oeSourceId' && k !== 'only';}
             function hasData(el) {
                 for (var k in el.dataset) {
                     if (filter (k)) {

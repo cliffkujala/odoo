@@ -328,11 +328,7 @@
     </div>
 
     <div name="Image Floating" class="o_block_image_floating">
-        <div class="oe_snippet_thumbnail">
-            <img class="oe_snippet_thumbnail_img" src="/website/static/src/img/blocks/block_text_image.png"/>
-            <span class="oe_snippet_thumbnail_title">Image Floating</span>
-        </div>
-        <div class="oe_snippet_body o_image_floating o_margin_l pull-right">
+        <div class="o_image_floating o_margin_l pull-right">
             <div class="o_container">
                 <img class="img img-rounded img-responsive" src="/website/static/src/img/library/ipad.png"/>
                 <mark class="text-center"><a href="#"><strong>Click Here</strong></a></mark>
@@ -1045,32 +1041,29 @@
         data-drop-in=".oe_structure, [data-oe-type=html]">
     </div>
 
-    <div data-snippet-option-id='image_floating_margin'
-        data-selector=".o_image_floating">
+    <div data-selector=".o_image_floating">
         <li class="dropdown-submenu">
             <a tabindex="-2" href="#">Margin</a>
             <ul class="dropdown-menu">
-                <li data-value="o_margin_xl"> <a>Extra-Large</a> </li>
-                <li data-value="o_margin_l"> <a>Large</a> </li>
-                <li data-value="o_margin_m"  > <a>Medium</a> </li>
-                <li data-value="o_margin_s"  > <a>Small</a></li>
-                <li data-value=""  > <a>None</a></li>
+                <li data-select_class="o_margin_xl"> <a>Extra-Large</a> </li>
+                <li data-select_class="o_margin_l"> <a>Large</a> </li>
+                <li data-select_class="o_margin_m"  > <a>Medium</a> </li>
+                <li data-select_class="o_margin_s"  > <a>Small</a></li>
+                <li data-select_class=""  > <a>None</a></li>
             </ul>
         </li>
     </div>
 
-    <div data-snippet-option-id='image_floating_hidelink'
-        data-selector=".o_image_floating">
-        <li data-value="o_hide_link"><a>Hide link</a></li>
+    <div data-selector=".o_image_floating">
+        <li data-toggle_class="o_hide_link"><a>Hide link</a></li>
     </div>
 
-    <div data-snippet-option-id='image_floating_side'
-         data-selector=".o_image_floating">
+    <div data-selector=".o_image_floating">
         <li class="dropdown-submenu">
             <a tabindex="-2" href="#">Float</a>
             <ul class="dropdown-menu">
-                <li data-value="pull-left"><a>Left</a></li>
-                <li data-value="pull-right"><a>Right</a></li>
+                <li data-select_class="pull-left" data-only="click"><a>Left</a></li>
+                <li data-select_class="pull-right" data-only="click"><a>Right</a></li>
             </ul>
         </li>
     </div>
