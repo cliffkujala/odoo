@@ -234,6 +234,7 @@ class hr_applicant(osv.Model):
         'emp_id': fields.many2one('hr.employee', string='Employee', track_visibility='onchange', help='Employee linked to the applicant.'),
         'user_email': fields.related('user_id', 'email', type='char', string='User Email', readonly=True),
         'attachment_number': fields.function(_get_attachment_number, string='Number of Attachments', type="integer"),
+        'emp_name': fields.related('emp_id', 'name', type='char', string='Employee Name'),
     }
 
     _defaults = {
@@ -250,6 +251,17 @@ class hr_applicant(osv.Model):
     _group_by_full = {
         'stage_id': _read_group_stage_ids
     }
+
+    def action_get_created_employee(self, cr, uid, ids, context=None):
+        if isinstance(ids, (list, tuple)):
+            ids = ids and ids[0] or False
+        applicants = self.browse(cr, uid, ids, context=context)
+        action_id = self.pool.get('ir.model.data').xmlid_to_res_id(cr, uid, 'hr.open_view_employee_list')
+        dict_act_window = self.pool.get('ir.actions.act_window').read(cr, uid, [action_id], context=context)[0]
+        if applicants.emp_id.id and dict_act_window:
+            dict_act_window['res_id'] = applicants.emp_id.id
+        dict_act_window['view_mode'] = 'form,tree'
+        return dict_act_window
 
     def onchange_job(self, cr, uid, ids, job_id=False, context=None):
         department_id = False
