@@ -776,18 +776,14 @@
         }
 
         var node = r.ec;
-        while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node)) {node = node.parentNode;}
-        
-        if (node === $editable[0] || $.contains(node, $editable[0])) {
-            return false;
-        }
+        while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node) && !dom.isImg(node)) {node = node.parentNode;}
 
         var content = r.ec.textContent.replace(/\s+$/, '');
         var temp;
         var temp2;
 
         // media
-        if (r.sc===r.ec && dom.isImg(node)) {
+        if (r.sc===r.ec && dom.isImg(node) && dom.isImg(node)) {
             var parent;
             var index;
             while (dom.isImg(node)) {
@@ -795,12 +791,18 @@
                 index = dom.makeOffsetPath(parent, node)[0];
                 if (index>0)
                 range.create(node.previousSibling,0,node.previousSibling,0).select();
+                if (!dom.hasContentAfter(node) && !dom.hasContentBefore(node)) {
+                    parent.appendChild($('<br/>')[0]);
+                }
                 parent.removeChild(node);
                 node = parent;
             }
         }
         // empty tag
         else if (r.sc===r.ec && !content.length && (node.nextSibling || node.previousSibling) && r.sc.tagName && settings.options.deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
+            if (node === $editable[0] || $.contains(node, $editable[0])) {
+                return false;
+            }
             if (node.nextSibling) {
                 var next = node.nextSibling;
                 next = dom.firstChild(next);
@@ -884,11 +886,7 @@
         }
 
         var node = r.sc;
-        while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node)) {node = node.parentNode;}
-
-        if (node === $editable[0] || $.contains(node, $editable[0])) {
-            return false;
-        }
+        while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node) && !dom.isImg(node)) {node = node.parentNode;}
 
         var content = r.ec.textContent.replace(/\s+$/, '');
         var temp;
@@ -917,6 +915,9 @@
         }
         // empty tag
         else if (r.sc===r.ec && !content.length && (node.nextSibling || node.previousSibling) && r.sc.tagName && settings.options.deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
+            if (node === $editable[0] || $.contains(node, $editable[0])) {
+                return false;
+            }
             if (node.previousSibling) {
                 var prev = node.previousSibling;
                 prev = dom.lastChild(prev);

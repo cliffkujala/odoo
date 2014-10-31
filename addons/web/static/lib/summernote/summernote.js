@@ -1754,10 +1754,6 @@
      */
     this.currentStyle = function (elTarget) {
       var rng = range.create();
-      if (rng && rng.sc !== elTarget && rng.ec !== elTarget && !$.contains(elTarget, rng.sc) && !$.contains(elTarget, rng.ec)) { // fix odoo
-        rng = range.create(elTarget,0,elTarget,0);
-        rng.select();
-      }
       return rng ? rng.isOnEditable() && style.current(rng, elTarget) : false;
     };
 
@@ -3081,6 +3077,7 @@
           $target = $($selection.data('target'));
         }
 
+        // fix by odoo (if double undo button then redo: raise)
         if (editor[sEvent]) { // on command
           var $editable = oLayoutInfo.editable();
           $editable.trigger('focus');

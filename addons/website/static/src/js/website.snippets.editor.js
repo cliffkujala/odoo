@@ -1001,7 +1001,9 @@
             var self = this;
             var res = this._super();
 
-            this.$el.find('li').append( openerp.qweb.render('website.colorpicker') );
+            if (!this.$el.find('.colorpicker').length) {
+                this.$el.find('li').append( openerp.qweb.render('website.colorpicker') );
+            }
 
             var classes = [];
             this.$el.find(".colorpicker button").map(function () {
@@ -1020,8 +1022,8 @@
         },
         bind_events: function () {
             var self = this;
-            var $td = this.$el.find(".colorpicker button");
-            var $colors = $td.children();
+            var $td = this.$el.find(".colorpicker td");
+            var $colors = this.$el.find(".colorpicker button");
             $colors
                 .mouseenter(function () {
                     self.$target.removeClass(self.classes).addClass($(this).attr("class"));
@@ -1178,7 +1180,7 @@
             };
             this.$target.on('slid.bs.carousel', function () {
                 if(self.editor && self.editor.styles.background) {
-                    self.editor.styles.background.$target = self.$target.find(".item.active");
+                    self.editor.styles.background.$bg = self.$target.find(".item.active");
                     self.editor.styles.background.set_active();
                 }
                 self.$target.carousel("pause");

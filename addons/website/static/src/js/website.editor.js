@@ -54,7 +54,7 @@
         $imagePopover.find('button[data-event="floatMe"][data-value="none"]').remove();
 
         // padding button
-        var $padding = $('<div class="o_undo btn-group"/>');
+        var $padding = $('<div class="btn-group"/>');
         $padding.insertBefore($imagePopover.find('.btn-group:first'));
         var $button = $(renderer.tplIconButton('fa fa-plus-square-o', {
                 title: _t('Padding'),
@@ -68,7 +68,7 @@
         $ul.append('<li><a data-event="padding" href="#" data-value="xl">'+_t('xl')+'</a></li>');
 
         // padding button
-        var $imageprop = $('<div class="o_image btn-group"/>');
+        var $imageprop = $('<div class="btn-group"/>');
         $imageprop.appendTo($imagePopover.find('.popover-content'));
         $(renderer.tplIconButton('fa fa-picture-o', {
                 title: _t('Edit'),
@@ -78,6 +78,12 @@
                 title: _t('Remove'),
                 event: 'delete'
             })).appendTo($imageprop);
+
+        $imagePopover.find('.popover-content').append($airPopover.find(".note-history").clone());
+        
+        //////////////// link popover
+
+        $linkPopover.find('.popover-content').append($airPopover.find(".note-history").clone());
 
         //////////////// text/air popover
 
@@ -116,30 +122,6 @@
             $format.filter('[data-value="'+node.tagName.toLowerCase()+'"]')
                 .parent().addClass("active");
         });
-
-        //////////////// history Undo & Redo
-
-        if (!$('#note-undo-popover').size()) {
-            var $undoPopover = $('<div class="note-popover"><div id="note-undo-popover" class="note-undo-popover popover" style="display: block; top: 1px !important; right: 20px !important;"><div class="popover-content"></div></div>');
-
-            var $prevnext = $('<div class="o_undo btn-group"/>');
-            var $prev = $(renderer.tplIconButton('fa fa-undo', {
-                    title: _t('Undo'),
-                    event: 'undo',
-                }))
-                .appendTo($prevnext);
-            var $next = $(renderer.tplIconButton('fa fa-repeat', {
-                    title: _t('Redo'),
-                    event: 'redo',
-                }))
-                .appendTo($prevnext);
-
-            $undoPopover.find('.popover-content').append($prevnext);
-            $undoPopover.on('click', '[data-event]', function () {
-                eventHandler.editor[$(this).data('event')]($(this));
-            });
-            $undoPopover.appendTo(document.body);
-        }
 
         //////////////// tooltip
 
@@ -184,8 +166,8 @@
             $popover.data('loaded', true);
         }
 
-        $('.o_undo button:has(.fa-undo)').attr('disabled', !history.hasUndo());
-        $('.o_undo button:has(.fa-repeat)').attr('disabled', !history.hasRedo());
+        $popover.find('button[data-event="undo"]').attr('disabled', !history.hasUndo());
+        $popover.find('button[data-event="redo"]').attr('disabled', !history.hasRedo());
 
         if (oStyle.range.sc.tagName === "IMG") {
             oStyle.image = oStyle.range.sc;
@@ -212,8 +194,8 @@
     };
 
     $(document).on('click keyup', function () {
-        $('.o_undo button:has(.fa-undo)').attr('disabled', !history.hasUndo());
-        $('.o_undo button:has(.fa-repeat)').attr('disabled', !history.hasRedo());
+        $('button[data-event="undo"]').attr('disabled', !history.hasUndo());
+        $('button[data-event="redo"]').attr('disabled', !history.hasRedo());
     });
 
     eventHandler.editor.undo = function ($popover) {
@@ -333,7 +315,7 @@
     }
     var cursor_mousedown;
     function summernote_mouseup (event) {
-        if ($(event.target).closest("#website-top-navbar, .note-popover, .o_undo").length) {
+        if ($(event.target).closest("#website-top-navbar, .note-popover").length) {
             return;
         }
         // don't rerange if simple click
@@ -345,7 +327,7 @@
         history.splitNext();
 
         cursor_mousedown = event;
-        var $btn = $(event.target).closest('.note-popover, .o_undo');
+        var $btn = $(event.target).closest('.note-popover');
         if ($btn.length) {
             var r = range.create();
             if (r) {
@@ -923,6 +905,7 @@
                     ['para', ['ul', 'ol', 'paragraph']],
                     ['table', ['table']],
                     ['insert', ['link', 'picture']],
+                    ['history', ['undo', 'redo']],
                 ],
                 oninit: function() {
                 },

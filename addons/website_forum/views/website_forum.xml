@@ -56,7 +56,8 @@
                             ['font', ['bold', 'italic', 'underline', 'clear']],
                             ['para', ['ul', 'ol', 'paragraph']],
                             ['table', ['table']],
-                            ['insert', ['link', 'picture']]
+                            ['insert', ['link', 'picture']],
+                            ['history', ['undo', 'redo']]
                         ]
                     });
                 $form.on('click', 'button, .a-submit', function () {
