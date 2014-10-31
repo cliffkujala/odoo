@@ -476,17 +476,41 @@
         node.style.marginLeft = margin >= 0 ? margin + "em" : "";
         return margin;
     };
-    dom.scrollIntoViewIfOutOfView = function (container, node) {
-        var node = node.tagName ? node : node.parentNode;
-        var elY = 0;
-        var elH = node.offsetHeight;
-        while (node.offsetParent && node !== container) {
-            elY += node.offsetTop;
-            node = node.offsetParent;
+    dom.scrollIntoViewIfNeeded = function (node) {
+        if (node.scrollIntoViewIfNeeded) {
+            node.scrollIntoViewIfNeeded(false);
+            return;
         }
+        var node = node.tagName ? node : node.parentNode;
+        var offsetParent = node.offsetParent;
+        while (offsetParent) {
+            var elY = 0;
+            var elH = node.offsetHeight;
+            var parent = node;
 
-        if ((container.scrollTop + container.clientHeight) < (elY + elH)) {
-            container.scrollTop += (elY + elH) - container.clientHeight;
+            while (offsetParent && parent) {
+                elY += node.offsetTop;
+
+                // get if a parent have a scrollbar
+                parent = node.parentNode;
+                while (parent != offsetParent &&
+                    (parent.tagName === "BODY" || ["auto", "scroll"].indexOf(window.getComputedStyle(parent).overflowY) === -1)) {
+                    parent = parent.parentNode;
+                }
+                node = parent;
+
+                if (parent !== offsetParent) {
+                    elY -= parent.offsetTop;
+                    parent = null;
+                }
+
+                offsetParent = node.offsetParent;
+            }
+
+            if ((node.tagName === "BODY" || ["auto", "scroll"].indexOf(window.getComputedStyle(node).overflowY) !== -1) &&
+                (node.scrollTop + node.clientHeight) < (elY + elH)) {
+                node.scrollTop = (elY + elH) - node.clientHeight;
+            }
         }
     };
 
@@ -723,7 +747,7 @@
         node = node.tagName === "BR" ? node.parentNode : node;
         range.create(node,0,node,0).select();
 
-        dom.scrollIntoViewIfOutOfView($editable[0], node);
+        dom.scrollIntoViewIfNeeded(node);
 
         return false;
     };
