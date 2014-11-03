@@ -153,9 +153,15 @@ class res_partner_title(osv.osv):
         'domain': fields.selection([('partner', 'Partner'), ('contact', 'Contact')], 'Domain', required=True)
     }
     _defaults = {
-        'domain': 'contact',
+        'domain': lambda self,cr,uid,context: 'partner' if context is not None and context.get('is_company') else 'contact'
     }
-
+    
+    def _search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False, access_rights_uid=None):
+        if context is None:
+            context = {}
+        if 'is_company' in context:
+            args += [('domain','=','partner')] if context.get('is_company') else [('domain','=','contact')]
+        return super(res_partner_title,self)._search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count, access_rights_uid=access_rights_uid)
 
 @api.model
 def _lang_get(self):
@@ -361,10 +367,7 @@ class res_partner(osv.Model, format_address):
         value = {'title': False}
         if is_company:
             value['use_parent_address'] = False
-            domain = {'title': [('domain', '=', 'partner')]}
-        else:
-            domain = {'title': [('domain', '=', 'contact')]}
-        return {'value': value, 'domain': domain}
+        return {'value': value}
 
     def onchange_address(self, cr, uid, ids, use_parent_address, parent_id, context=None):
         def value_or_id(val):
@@ -560,7 +563,7 @@ class res_partner(osv.Model, format_address):
                 'res_model': 'res.partner',
                 'view_mode': 'form',
                 'res_id': partner.commercial_partner_id.id,
-                'target': 'new',
+                'target': 'current',
                 'flags': {'form': {'action_buttons': True}}}
 
     def open_parent(self, cr, uid, ids, context=None):

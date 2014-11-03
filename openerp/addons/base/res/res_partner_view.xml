@@ -182,7 +182,9 @@
                             <field name="fax"/>
                             <field name="user_ids" invisible="1"/>
                             <field name="email" widget="email" attrs="{'required': [('user_ids','!=', [])]}"/>
-                            <field name="title" options='{"no_open": True}'/>
+                            <label for="title" string="Title" attrs="{'invisible': [('is_company','=',True)]}"/>
+                            <label for="title" string="Entity" attrs="{'invisible': [('is_company','=',False)]}" style="margin-left: -8px"/>
+                            <field name="title" options='{"no_open": True}' nolabel="1" colspan="0" context="{'is_company': is_company}"/>
                         </group>
                     </group>
 

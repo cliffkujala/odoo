@@ -87,11 +87,9 @@
                             </page>
                             <page string="Procurements" groups="base.group_user">
                                 <group name="procurement">
-                                    <group name="general">
+                                    <group name="general" col="4">
                                         <field name="standard_price"/>
-                                    </group>
-                                    <group name="procurement_uom" groups="product.group_uom" string="Purchase">
-                                        <field name="uom_po_id"/>
+                                        <field name="uom_po_id" groups="product.group_uom"/>
                                     </group>
                                 </group>
                                 <separator string="Suppliers"/>
@@ -260,7 +258,7 @@
                         <field name="attribute_line_ids" widget="one2many_list" context="{'show_attribute': False}">
                             <tree string="Variants" editable="bottom">
                                 <field name="attribute_id"/>
-                                <field name="value_ids" widget="many2many_tags" options="{'no_create_edit': True}" domain="[('attribute_id', '=', attribute_id)]" context="{'default_attribute_id': attribute_id}"/>
+                                <field name="value_ids" widget="many2many_tags" options="{'no_create_edit': True}" domain="[('attribute_id', '=', attribute_id)]" context="{'default_attribute_id': attribute_id}" string="Product Attribute Value(s)"/>
                             </tree>
                         </field>
                     </page>
