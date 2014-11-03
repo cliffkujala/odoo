@@ -6,6 +6,10 @@
 
 // Navbar =====================================================================
 
+header a.navbar-brand img {
+  max-height: 65px !important;
+}
+
 .navbar {
   font-family: @headings-font-family;
 
@@ -17,13 +21,17 @@
 
   &-nav > li > a {
     padding: @padding-base-vertical @padding-base-horizontal;
-    margin: 12px 6px;
+    margin: 12px 2px;
     border: 1px solid transparent;
     border-radius: @border-radius-base;
 
     &:hover {
       border: 1px solid #ddd;
     }
+  }
+
+  &-nav > li.divider {
+     margin-top: 22px !important;
   }
 
   &-nav > .active > a,
@@ -54,7 +62,7 @@
 
 // Buttons ====================================================================
 
-.btn {
+.btn:not(.fa-shopping-cart) {
   font-family: @headings-font-family;
 }
 

@@ -371,3 +371,12 @@ ul.wizard li.text-primary .chevron:before
 ul.wizard li:first-child
     padding-left: 15px
     border-radius: 4px 0 0 4px
+
+.oe_editable.product_desc:empty:before
+    content: attr(placeholder)
+
+@media print
+  .oe_website_sale div.ship_address
+    float: left !important
+  footer
+    display: none !important

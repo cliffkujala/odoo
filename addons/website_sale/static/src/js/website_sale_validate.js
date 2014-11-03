@@ -12,16 +12,15 @@ $(document).ready(function () {
         }).then(function (result) {
             var tx_node = $('div.oe_website_sale_tx_status');
             _poll_nbr += 1;
-            if (result.state == 'pending' && result.validation == 'automatic' && _poll_nbr <= 5) {
-                var txt = result.mesage;
+            if (result[1].state == 'pending' && result[1].validation == 'automatic' && _poll_nbr <= 5) {
+                tx_node.html(result[0]);
                 setTimeout(function () {
                     payment_transaction_poll_status();
                 }, 1000);
             }
             else {
-                var txt = result.message;
+                tx_node.html(result[0]);
             }
-            tx_node.html(txt);
         });
     }
 

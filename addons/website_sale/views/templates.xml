@@ -287,7 +287,7 @@
           <div class="row">
             <div class="col-sm-4">
                 <ol class="breadcrumb">
-                    <li><a t-att-href="keep(category=0)" onclick="history.go(-1); return false;">Products</a></li>
+                    <li><a t-att-href="keep(category=0)">Products</a></li>
                     <li t-if="category"><a t-att-href="keep('/shop/category/%s' % slug(category), category=0)" t-field="category.name"/></li>
                     <li class="active"><span t-field="product.name"/></li>
                 </ol>
@@ -332,7 +332,7 @@
                 </form>
 
                 <hr t-if="product.description_sale"/>
-                <div><p t-field="product.description_sale" class="text-muted"/></div>
+                <div><p t-field="product.description_sale" class="text-muted product_desc" placeholder="Product description"/></div>
                 <hr/>
                 <p class="text-muted">
                     30-day money-back guarantee<br/>
@@ -351,17 +351,13 @@
 <template id="product_quantity" inherit_id="website_sale.product" customize_show="True" name="Select Quantity">
   <xpath expr="//a[@id='add_to_cart']" position="before">
     <div class="css_quantity input-group oe_website_spinner">
-        <span class="input-group-addon">
-            <a t-attf-href="#" class="mb8 js_add_cart_json">
-                <i class="fa fa-minus"></i>
-            </a>
-        </span>
-        <input type="text" class="js_quantity form-control" data-min="1" name="add_qty" value="1"/>
-        <span class="input-group-addon">
-            <a t-attf-href="#" class="mb8 float_left js_add_cart_json">
-                <i class="fa fa-plus"></i>
-            </a>
-        </span>
+        <a t-attf-href="#" class="mb8 input-group-addon js_add_cart_json">
+            <i class="fa fa-minus"></i>
+        </a>
+        <input type="text" class="form-control" data-min="1" name="add_qty" value="1"/>
+        <a t-attf-href="#" class="mb8 input-group-addon float_left js_add_cart_json">
+            <i class="fa fa-plus"></i>
+        </a>
     </div>
   </xpath>
 </template>
@@ -639,20 +635,16 @@
                               </td>
                               <td class="text-center">
                                   <div class="input-group oe_website_spinner">
-                                      <span class="input-group-addon">
-                                          <a t-attf-href="#" class="mb8 js_add_cart_json" data-no-instant="">
-                                              <i class="fa fa-minus"></i>
-                                          </a>
-                                      </span>
+                                      <a t-attf-href="#" class="mb8 input-group-addon js_add_cart_json" data-no-instant="">
+                                          <i class="fa fa-minus"></i>
+                                      </a>
                                       <input type="text" class="js_quantity form-control"
                                           t-att-data-line-id="line.id" 
                                           t-att-data-product-id="line.product_id.id"
                                           t-att-value="int(line.product_uom_qty)"/>
-                                      <span class="input-group-addon">
-                                          <a t-attf-href="#" class="mb8 float_left js_add_cart_json" data-no-instant="">
-                                              <i class="fa fa-plus"></i>
-                                          </a>
-                                      </span>
+                                      <a t-attf-href="#" class="mb8 input-group-addon float_left js_add_cart_json" data-no-instant="">
+                                          <i class="fa fa-plus"></i>
+                                      </a>
                                   </div>
                               </td>
                           </tr>
@@ -1077,7 +1069,7 @@
       <div id="wrap">
         <div class="container oe_website_sale">
 
-          <ul class="wizard pull-right">
+          <ul class="wizard pull-right hidden-print">
               <li class="text-muted">Review Order<span class="chevron"></span></li>
               <li class="text-muted">Shipping &amp; Billing<span class="chevron"></span></li>
               <li class="text-muted">Payment<span class="chevron"></span></li>
@@ -1085,11 +1077,32 @@
           </ul>
           <h1 class="mb32">Order <em t-field="order.name"/> Confirmed</h1>
           <div class="row">
+              <div class="col-md-8 thanks_msg">
+                  <h2>Thank you for your order.</h2>
+                  <div class="oe_website_sale_tx_status" t-att-data-order-id="order.id"></div>
+              </div>
+              <div class="col-md-3 col-md-offset-1 text-muted pull-right ship_address" id="right_column">
+                <h4>Bill To:</h4>
+                <div t-field="order.partner_invoice_id" t-field-options='{
+                    "widget": "contact",
+                    "fields": ["address", "name", "phone", "email"]
+                    }'/>
+                <t>
+                    <h4 class="mt32">Ship To:</h4>
+                    <t t-if="order.partner_shipping_id and order.partner_shipping_id.id != order.partner_invoice_id.id">
+                      <div t-field="order.partner_shipping_id" t-field-options='{
+                        "widget": "contact",
+                        "fields": ["address", "name", "phone"]
+                        }'/>
+                    </t>
+                    <address t-if="order.partner_shipping_id.id == order.partner_invoice_id.id">Ship to the same address</address>
+                </t>
+              </div>
               <div class="col-md-8 oe_cart">
-                  <div class="oe_website_sale_tx_status" t-att-data-order-id="order.id">
-                  </div>
-                  <h3 class="mt32"><strong>Order Details:</strong></h3>
                   <table class="table">
+                      <caption class="text-left">
+                          <h3 class="mt32"><strong>Order Details:</strong></h3>
+                      </caption>
                       <thead>
                           <tr>
                               <th>Products</th>
@@ -1139,23 +1152,6 @@
                   <div class="clearfix"/>
                   <div class="oe_structure"/>
               </div>
-              <div class="col-md-3 col-md-offset-1 text-muted" id="right_column">
-                <h4>Bill To:</h4>
-                <div t-field="order.partner_invoice_id" t-field-options='{
-                    "widget": "contact",
-                    "fields": ["address", "name", "phone", "email"]
-                    }'/>
-                <t>
-                    <h4 class="mt32">Ship To:</h4>
-                    <t t-if="order.partner_shipping_id and order.partner_shipping_id.id != order.partner_invoice_id.id">
-                      <div t-field="order.partner_shipping_id" t-field-options='{
-                        "widget": "contact",
-                        "fields": ["address", "name", "phone"]
-                        }'/>
-                    </t>
-                    <address t-if="order.partner_shipping_id.id == order.partner_invoice_id.id">Ship to the same address</address>
-                </t>
-              </div>
           </div>
 
         </div>
@@ -1163,6 +1159,38 @@
       </div>
 
   </t>
+</template>
+
+<template id="order_state_message" name="Order State Message">
+    <t t-if="(not_order and state == 'error') or (not tx_ids and state == 'error')">
+      <p>There seems to be an error with your request.</p>
+    </t>
+    <t t-if="not tx_ids and state == 'done'">
+      <p>Your order has been confirmed, thank you for your loyalty.</p>
+    </t>
+    <t t-if="tx_ids and state == 'done'">
+      <p>Your payment has been received.</p>
+    </t>
+    <t t-if="tx_ids and state == 'cancel'">
+      <p>The payment seems to have been canceled.</p>
+    </t>
+    <t t-if="tx_ids and state == 'pending' and validation == 'manual'">
+      <p>Your transaction is waiting confirmation.
+        <t t-if="tx_post_msg"><t t-esc="tx_post_msg"/></t>
+      </p>
+    </t>
+    <t t-if="tx_ids and state not in ['done', 'cancel', 'pending']">
+      <p>Your transaction is waiting confirmation.</p>
+    </t>
+</template>
+
+<template id="print_button" inherit_id="website_sale.confirmation" active="True" customize_show="True" name="Print Button">
+  <xpath expr="//div[@class='col-md-8 thanks_msg']/h2" position="replace">
+    <h2>Thank you for your order.
+      <a class="btn btn-primary pull-right hidden-print" href="/shop/print_saleorder" target="_blank">
+        <i class="fa fa-print"></i> Print</a>
+    </h2>
+  </xpath>
 </template>
 
 <!-- Page Shop my cart and payment total -->
