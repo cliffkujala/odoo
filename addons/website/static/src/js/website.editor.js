@@ -1070,7 +1070,8 @@
                 this.data.iniClassName = $(this.data.range.sc).attr("class") || "";
                 this.data.className = this.data.iniClassName.replace(/(^|\s+)(btn(?!\s|$)|btn-[a-z0-9_-]*)/gi, '');
 
-                var nodes = dom.listBetween(this.data.range.sc, this.data.range.ec);
+                var is_link = this.data.range.sc.tagName === "A"
+                var nodes = is_link ? this.data.range.sc.childNodes : dom.listBetween(this.data.range.sc, this.data.range.ec);
                 if (nodes.length > 1) {
                     var text = "";
                     this.data.images = [];
@@ -1078,9 +1079,9 @@
                         if (dom.isImg(nodes[i])) {
                             this.data.images.push(nodes[i]);
                             text += '[IMG]';
-                        } else if (i===0) {
+                        } else if (!is_link && i===0) {
                             text += nodes[i].textContent.slice(this.data.range.so, Infinity);
-                        } else if (i===nodes.length-1) {
+                        } else if (!is_link && i===nodes.length-1) {
                             text += nodes[i].textContent.slice(0, this.data.range.eo);
                         } else {
                             text += nodes[i].textContent;
