@@ -1510,25 +1510,6 @@
           boundaryPoints.eo
         );
       };
-
-      /**
-       * delete contents on range
-       * @return {WrappedRange}
-       */
-      this.deleteContents = function () { // hack odoo
-        if (this.isCollapsed()) {
-          return this;
-        }
-
-        prevBP = dom.removeBetween(sc, so, ec, eo);
-
-        return new WrappedRange(
-          prevBP.node,
-          prevBP.offset,
-          prevBP.node,
-          prevBP.offset
-        );
-      };
       
       /**
        * makeIsOn: return isOn(pred) function

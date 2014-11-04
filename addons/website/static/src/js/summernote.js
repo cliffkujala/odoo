@@ -436,11 +436,12 @@
 
             var ancestor_sc = sc;
             var ancestor_ec = ec;
-            while (ancestor !== ancestor_sc && ancestor !== ancestor_sc.parentNode) { ancestor_sc = ancestor_sc.parentNode; } // fix by odoo
-            while (ancestor !== ancestor_ec && ancestor !== ancestor_ec.parentNode) { ancestor_ec = ancestor_ec.parentNode; } // fix by odoo
+            while (ancestor !== ancestor_sc && ancestor !== ancestor_sc.parentNode) { ancestor_sc = ancestor_sc.parentNode; }
+            while (ancestor !== ancestor_ec && ancestor !== ancestor_ec.parentNode) { ancestor_ec = ancestor_ec.parentNode; }
 
-            var begin = dom.splitTree(ancestor_sc, sc, so);
-            var last = dom.splitTree(ancestor_ec, ec, eo).previousSibling;
+            var begin = sc.textContent.slice(0, so).match(/\S/) ? dom.splitTree(ancestor_sc, sc, so) : sc;
+            var last = ec.textContent.slice(eo, Infinity).match(/\S/) ? dom.splitTree(ancestor_ec, ec, eo).previousSibling : ec;
+
             var nodes = dom.listBetween(begin, last);
             sc = dom.lastChild(begin.previousSibling);
             so = sc.textContent.length;
@@ -590,6 +591,20 @@
 
         return range.create(sc, so, ec, eo);
     };
+    range.WrappedRange.prototype.deleteContents = function () {
+        if (this.isCollapsed()) {
+          return this;
+        }
+
+        var prevBP = dom.removeBetween(this.sc, this.so, this.ec, this.eo);
+
+        return new range.WrappedRange(
+          prevBP.node,
+          prevBP.offset,
+          prevBP.node,
+          prevBP.offset
+        );
+    };
     range.WrappedRange.prototype.clean = function (mergeFilter) {
         var node = this.sc === this.ec ? this.sc : this.commonAncestor();
         if (node.childNodes.length <=1) {
@@ -660,7 +675,7 @@
                 } else if (outdent && !td.previousElementSibling && !$(td.parentNode).text().match(/\S/)) {
                     eventHandler.editor.backspace($editable, options);
                 } else {
-                    $editable.data('NoteHistory').splitNext(); // for odoo
+                    $editable.data('NoteHistory').splitNext();
                     this.table.tab(r, outdent);
                 }
                 return false;
@@ -731,6 +746,9 @@
             node = $clone[0].firstElementChild || $clone[0];
         } else if (r.so) {
             node = dom.splitTree(last, r.sc, r.so);
+            if (!node.textContent.match(/\S/)) {
+                $(node).html('<br/>');
+            }
         } else if (!r.so && r.isOnList() && !r.sc.textContent.length && !dom.ancestor(r.sc, function (node) { return node.tagName === 'LI'; }).nextElementSibling) {
             // double enter on the end of a list = new line out of the list
             node = $('<p><br/></p>').insertAfter(dom.ancestor(r.sc, dom.isList))[0];
@@ -745,7 +763,7 @@
 
         node = dom.firstChild(node);
         node = node.tagName === "BR" ? node.parentNode : node;
-        range.create(node,0,node,0).select();
+        range.create(node,0).select();
 
         dom.scrollIntoViewIfNeeded(node);
 
@@ -755,41 +773,38 @@
         $editable.data('NoteHistory').recordUndo($editable, "visible");
 
         var r = range.create();
-        if (!r.isCollapsed()) {
+        if (!r.isCollapsed() && r.ec !== r.sc && (r.ec.tagName || r.ec.parentNode !== r.sc.parentNode)) {
             r = r.deleteContents().select();
         }
 
+         // don't write in forbidden tag (like span for font awsome)
         var node = r.sc;
-        var needChange = false;
         while (node.parentNode) {
             if ($(node).is(settings.options.forbiddenWrite.join(","))) {
-                needChange = true;
+                var text = node.previousSibling;
+                if (text && !text.tagName && text.textContent.match(/\S/)) {
+                    range.create(text, text.textContent.length, text, text.textContent.length).select();
+                } else {
+                    text = node.parentNode.insertBefore(document.createTextNode( "_" ), node);
+                    range.create(text, 0, text, 0).select();
+                    setTimeout(function () {
+                        var text = range.create().sc;
+                        text.textContent = text.textContent.replace(/_$/, '');
+                        range.create(text, text.textContent.length-1, text, text.textContent.length-1).select();
+                    },0);
+                }
                 break;
             }
             node = node.parentNode;
         }
 
-        if (needChange) {
-            var text = node.previousSibling;
-            if (text && !text.tagName && text.textContent.match(/\S/)) {
-                range.create(text, text.textContent.length, text, text.textContent.length).select();
-            } else {
-                text = node.parentNode.insertBefore(document.createTextNode( "_ " ), node);
-                range.create(text, 0, text, 0).select();
-                setTimeout(function () {
-                    var text = range.create().sc;
-                    text.textContent = text.textContent.replace(/_ $/, ' ');
-                    range.create(text, text.textContent.length-1, text, text.textContent.length-1).select();
-                },0);
-            }
-        }
         return true;
     };
     var fn_editor_fontSize = eventHandler.editor.fontSize;
     eventHandler.editor.fontSize = function ($editable, sValue) {
         fn_editor_fontSize.call(this, $editable, sValue);
         var r = range.create();
-        var ancestor = dom.commonAncestor(r.sc, r.ec);
+        var ancestor = r.commonAncestor();
         var $fonts = $(ancestor).find('font, span');
         if (!$fonts.length) {
             $fonts = $(ancestor).closest('font, span');
@@ -1229,7 +1244,7 @@
             }
         }
 
-        var ancestor = dom.commonAncestor(r.sc, r.ec);
+        var ancestor = r.commonAncestor();
         var $dom = $(ancestor);
 
         if (!dom.isList(ancestor)) {
