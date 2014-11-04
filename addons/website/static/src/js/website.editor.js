@@ -87,18 +87,6 @@
 
         //////////////// text/air popover
 
-        var $para = $airPopover.find(".note-para");
-        var $parent = $('<div class="note-ul btn-group"/>').insertBefore($para);
-        var $button = $(renderer.tplIconButton('fa fa-list-ul', {
-                title: _t('List'),
-                dropdown: true
-            }))
-            .appendTo($parent);
-        var $div = $('<div class="dropdown-menu"><div class="note-li btn-group"/></div>').insertAfter($button);
-        $para.find('[data-event="insertUnorderedList"]').appendTo($div.children());
-        $para.find('[data-event="insertOrderedList"]').appendTo($div.children());
-        $para.find('div.note-list').appendTo($div);
-
         var $color = $airPopover.find('.note-color');
         var html = openerp.qweb.render('website.colorpicker');
         $color.find('.note-color-palette').prepend(html);
@@ -168,10 +156,6 @@
 
         $popover.find('button[data-event="undo"]').attr('disabled', !history.hasUndo());
         $popover.find('button[data-event="redo"]').attr('disabled', !history.hasRedo());
-
-        if (oStyle.range.sc.tagName === "IMG") {
-            oStyle.image = oStyle.range.sc;
-        }
 
         if (oStyle.image) {
             if (oStyle.image.parentNode.className.match(/(^|\s)media_iframe_video(\s|$)/i)) {

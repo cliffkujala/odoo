@@ -144,11 +144,11 @@
         start: function () {
             var url = encodeURIComponent(window.location.href);
             var title = encodeURIComponent($("title").text());
-            this.$target.find("a").each(function () {
+            this.$("a").each(function () {
                 var $a = $(this);
                 $a.attr("href", $(this).attr("href").replace("{url}", url).replace("{title}", title));
                 if ($a.attr("target") && $a.attr("target").match(/_blank/i)) {
-                    $a.click(function () {
+                    $a.on('click', function () {
                         window.open(this.href,'','menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=550,width=600');
                         return false;
                     });
@@ -167,12 +167,12 @@
     website.snippet.animationRegistry.ul = website.snippet.Animation.extend({
         selector: "ul.o_ul_folded, ol.o_ul_folded",
         start: function () {
-            this.$target.find('.o_ul_toggle_self, .o_ul_toggle_next').remove();
+            this.$('.o_ul_toggle_self, .o_ul_toggle_next').remove();
 
-            this.$target.find('li:has(>ul,>ol)').map(function () {
+            this.$('li:has(>ul,>ol)').map(function () {
                     // get if the li contain a text label
-                    if (!_.filter(_.toArray(this.childNodes), function (a) { return a.nodeType == 3;})
-                        .reduce(function (a,b) { return a.textContent + b.textContent;}).match(/\S/)) {
+                    var texts = _.filter(_.toArray(this.childNodes), function (a) { return a.nodeType == 3;});
+                    if (!texts.length || !texts.reduce(function (a,b) { return a.textContent + b.textContent;}).match(/\S/)) {
                         return;
                     }
                     $(this).children('ul,ol').addClass('o_close');
@@ -180,16 +180,16 @@
                 })
                 .prepend('<a href="#" class="o_ul_toggle_self fa fa-plus-square" />');
 
-            this.$target.find('.o_ul_toggle_self').on('click', function () {
+            this.$('.o_ul_toggle_self').on('click', function () {
                 $(this).closest('li').find('ul,ol').toggleClass('o_close');
             });
 
-            var $li = this.$target.find('li:has(+li:not(>.o_ul_toggle_self)>ul, +li:not(>.o_ul_toggle_self)>ol)');
+            var $li = this.$('li:has(+li:not(>.o_ul_toggle_self)>ul, +li:not(>.o_ul_toggle_self)>ol)');
             $li.map(function () { return $(this).children()[0] || this; })
                 .prepend('<a href="#" class="o_ul_toggle_next fa fa-plus-square" />');
             $li.next().addClass('o_close');
 
-            this.$target.find('.o_ul_toggle_next').on('click', function () {
+            this.$('.o_ul_toggle_next').on('click', function () {
                 $(this).closest('li').next().toggleClass('o_close');
             });
         },

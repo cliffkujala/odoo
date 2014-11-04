@@ -681,7 +681,13 @@
                 return false;
             }
 
-            if (r.so && r.sc.textContent.slice(0, r.so).match(/\S/)) {
+            if (!r.so && r.isOnList()) {
+                if (outdent) {
+                    this.outdent($editable);
+                } else {
+                    this.indent($editable);
+                }
+            } else {
                 if (!outdent){
                     var next = r.sc.splitText(r.so);
                     this.insertTab($editable, r, options.tabsize);
@@ -700,11 +706,6 @@
             }
         }
 
-        if (outdent) {
-            this.outdent($editable);
-        } else {
-            this.indent($editable);
-        }
         return false;
     };
     eventHandler.editor.untab = function ($editable, options) {
@@ -1154,7 +1155,7 @@
             var parent = UL.parentNode;
             var ul = document.createElement(tagName);
             var li = document.createElement("li");
-            li.style.display = "inline-block";
+            li.style.display = "inline";
             li.appendChild(ul);
 
             if (flag) {

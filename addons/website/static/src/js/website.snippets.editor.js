@@ -1629,6 +1629,11 @@
             this._super();
             this.$target.find("ul.o_close, ol.o_close, li.o_close").removeClass('o_close');
             this.$target.find('.o_ul_toggle_self, .o_ul_toggle_next').remove();
+        },
+        toggle_class: function (type, value, $li) {
+            this._super(type, value, $li);
+            this.$target.data("snippet-view").stop();
+            this.$target.data("snippet-view", new website.snippet.animationRegistry.ul(this.$target, true));
         }
     });
 

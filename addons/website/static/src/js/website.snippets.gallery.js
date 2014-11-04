@@ -54,6 +54,7 @@
                     return;
                 }
             });
+            this.$target.attr("contentEditable", false);
         },
         bind_change: function () {
             var self = this;
