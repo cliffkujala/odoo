@@ -445,7 +445,7 @@ class website(osv.osv):
                 yield page
 
     def search_pages(self, cr, uid, ids, needle=None, limit=None, context=None):
-        name = (needle or "").replace("/page/website.", "").replace("/page/", "")
+        name = re.sub(r"^/p(a(g(e(/(w(e(b(s(i(t(e(\.)?)?)?)?)?)?)?)?)?)?)?)?", "", needle or "")
         res = []
         for page in self.enumerate_pages(cr, uid, ids, query_string=name, context=context):
             if needle in page['loc']:
