@@ -913,7 +913,10 @@
     </label>
 </t>
 
-<div t-name="PivotView" class="oe_pivot"/>
+<div t-name="PivotView" class="oe_pivot">
+    <div class="o-field-selection"/>
+    <div class="o-pivot-table"/>
+</div>
 
 <t t-name="PivotView.buttons">
     <div class="btn-group btn-group-sm">
@@ -926,11 +929,21 @@
             Measures <span class="caret"/>
         </button>
         <ul class="oe-measure-list dropdown-menu">
-            <li t-foreach="measures" t-as="measure" t-att-data-field="measure">
-                <a><t t-esc="measures[measure].string"/></a>
+            <li t-foreach="measures" t-as="measure" t-att-data-field="measure[0]">
+                <a><t t-esc="measure[1].string"/></a>
             </li>
+            <li class="divider"></li>
+            <li data-field="__count__"><a>Quantity</a></li>
         </ul>
     </div>
+</t>
+
+<t t-name="PivotView.FieldSelection">
+    <ul class="dropdown-menu o-field-menu" role="menu">
+        <t t-foreach="fields" t-as="field">
+            <li t-att-data-field="field[0]"><a><t t-esc="field[1].string"/></a></li>
+        </t>
+    </ul>
 </t>
 
 <div t-name="PivotView.nodata" class="oe_view_nocontent" >

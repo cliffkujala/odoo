@@ -1517,6 +1517,54 @@
 .openerp .oe_view.oe_cannot_create .oe_view_nocontent_create {
   display: none;
 }
+.openerp .oe_pivot table {
+  width: auto;
+}
+.openerp .oe_pivot col.hover {
+  background-color: #f5f5f5;
+}
+.openerp .oe_pivot th {
+  background-color: #f0eeee;
+  font-weight: normal;
+  vertical-align: top;
+  border: 1px solid #bfbfb6;
+  border-top: none;
+}
+.openerp .oe_pivot th.oe-total {
+  font-weight: bold;
+  vertical-align: bottom;
+}
+.openerp .oe_pivot td {
+  border: 1px solid #bfbfb6;
+  text-align: right;
+}
+.openerp .oe_pivot .oe-closed, .openerp .oe_pivot .oe-opened {
+  cursor: pointer;
+  background-color: #f0eeee;
+  border-left: none;
+  text-align: left;
+}
+.openerp .oe_pivot .oe-closed:hover, .openerp .oe_pivot .oe-opened:hover {
+  background-color: #e6e6e6;
+}
+.openerp .oe_pivot .oe-closed:before {
+  font-family: FontAwesome;
+  margin-right: 5px;
+  content: "";
+}
+.openerp .oe_pivot .oe-opened:before {
+  font-family: FontAwesome;
+  margin-right: 5px;
+  content: "";
+  text-align: left;
+}
+.openerp .oe_pivot .measure-row {
+  padding: 0px 5px 0px 5px;
+  font-size: 12px;
+}
+.openerp .oe_pivot .dropdown-menu a {
+  color: black;
+}
 .openerp .oe_formview {
   background: white;
 }
