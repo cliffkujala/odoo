@@ -443,7 +443,7 @@
             var last = ec.textContent.slice(eo, Infinity).match(/\S/) ? dom.splitTree(ancestor_ec, ec, eo).previousSibling : ec;
 
             var nodes = dom.listBetween(begin, last);
-            sc = dom.lastChild(begin.previousSibling);
+            sc = dom.lastChild(begin.previousSibling || begin);
             so = sc.textContent.length;
             
             for (var i=0; i<nodes.length; i++) {
@@ -774,7 +774,7 @@
         $editable.data('NoteHistory').recordUndo($editable, "visible");
 
         var r = range.create();
-        if (!r.isCollapsed() && r.ec !== r.sc && (r.ec.tagName || r.ec.parentNode !== r.sc.parentNode)) {
+        if (!r.isCollapsed() && r.ec !== r.sc && r.eo && (r.ec.tagName || r.ec.parentNode !== r.sc.parentNode)) {
             r = r.deleteContents().select();
         }
 
@@ -787,10 +787,10 @@
                     range.create(text, text.textContent.length, text, text.textContent.length).select();
                 } else {
                     text = node.parentNode.insertBefore(document.createTextNode( "_" ), node);
-                    range.create(text, 0, text, 0).select();
+                    range.create(text, 1, text, 1).select();
                     setTimeout(function () {
                         var text = range.create().sc;
-                        text.textContent = text.textContent.replace(/_$/, '');
+                        text.textContent = text.textContent.replace(/^_/, '');
                         range.create(text, text.textContent.length, text, text.textContent.length).select();
                     },0);
                 }
