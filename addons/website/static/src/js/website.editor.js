@@ -162,10 +162,7 @@
                 oStyle.image = oStyle.image.parentNode;
             }
             $imagePopover.show();
-            var prev = oStyle.image.previousSibling;
-            var parent = oStyle.image.parentNode;
-            var index = Array.prototype.indexOf.call(parent.childNodes, oStyle.image);
-            range.create(parent, index, parent, index+1).select();
+            range.create(oStyle.image, 0, dom.firstChild(dom.ancestorHaveNextSibling(oStyle.image).nextSibling), 0).select();
         }
 
         if (oStyle.anchor && (!oStyle.range.isCollapsed() || (oStyle.range.sc.tagName && !dom.isAnchor(oStyle.range.sc)) || (oStyle.image && !$(oStyle.image).closest('a').length))) {
@@ -1059,7 +1056,20 @@
                 this.data.className = this.data.iniClassName.replace(/(^|\s+)btn(-[a-z0-9_-]*)?/gi, ' ');
 
                 var is_link = this.data.range.sc.tagName === "A";
-                var nodes = is_link ? this.data.range.sc.childNodes : dom.listBetween(this.data.range.sc, this.data.range.ec);
+                var r = this.data.range;
+
+                if (r.sc.tagName) {
+                    r.sc = dom.firstChild(r.so ? r.sc.childNodes[r.so] : r.sc);
+                    r.so = 0;
+                }
+                if (r.ec.tagName) {
+                    r.ec = dom.firstChild(r.eo ? r.ec.childNodes[r.eo] : r.ec);
+                    r.eo = 0;
+                }
+                this.data.range = range.create(r.sc, r.so, r.ec, r.eo).select();
+
+                var nodes = is_link ? this.data.range.sc.childNodes : dom.listBetween(r.sc, r.ec);
+
                 if (nodes.length > 1) {
                     var text = "";
                     this.data.images = [];
@@ -1068,9 +1078,9 @@
                             this.data.images.push(nodes[i]);
                             text += '[IMG]';
                         } else if (!is_link && i===0) {
-                            text += nodes[i].textContent.slice(this.data.range.so, Infinity);
+                            text += nodes[i].textContent.slice(r.so, Infinity);
                         } else if (!is_link && i===nodes.length-1) {
-                            text += nodes[i].textContent.slice(0, this.data.range.eo);
+                            text += nodes[i].textContent.slice(0, r.eo);
                         } else {
                             text += nodes[i].textContent;
                         }
