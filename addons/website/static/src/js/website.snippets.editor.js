@@ -1614,9 +1614,6 @@
                 new website.editor.MediaDialog(self.$target.closest('.o_editable'), self.$target[0]).appendTo(document.body);
                 self.BuildingBlock.make_active(false);
             }
-            setTimeout(function () {
-                self.$target.find(".css_editable_mode_display").removeAttr("_moz_abspos");
-            },0);
         },
     });
 

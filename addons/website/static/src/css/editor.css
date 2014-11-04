@@ -127,7 +127,7 @@
   display: none;
 }
 
-.o_editable .css_editable_mode_display {
+.o_editable .media_iframe_video .css_editable_mode_display {
   display: block !important;
 }
 

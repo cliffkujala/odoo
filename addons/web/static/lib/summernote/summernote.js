@@ -1847,11 +1847,13 @@
      * @param {jQuery} $editable
      * @param {String} sUrl
      */
-    this.insertVideo = function ($editable, sUrl) {
-      recordUndo($editable);
+    this.insertVideo = function ($editable, sUrl, returnVideo) { // hack odoo
+      if (!returnVideo) {
+        recordUndo($editable);
+      }
 
       // video url patterns(youtube, instagram, vimeo, dailymotion, youku)
-      var ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      var ytRegExp = /^.*(youtu.\w+\/|youtube.\w+\/|\/v\/|u\/\w\/|\/embed\/|\/watch\?v=|\&v=)([^#\&\?]*).*/; // fix odoo (youtube.com)
       var ytMatch = sUrl.match(ytRegExp);
 
       var igRegExp = /\/\/instagram.com\/p\/(.[a-zA-Z0-9]*)/;
@@ -1901,6 +1903,10 @@
           .attr('src', '//player.youku.com/embed/' + youkuMatch[1]);
       } else {
         // this is not a known video link. Now what, Cat? Now what?
+      }
+
+      if (returnVideo) {
+        return $video;
       }
 
       if ($video) {

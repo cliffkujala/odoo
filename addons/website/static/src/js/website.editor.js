@@ -162,7 +162,10 @@
                 oStyle.image = oStyle.image.parentNode;
             }
             $imagePopover.show();
-            range.createFromNode(oStyle.image).select();
+            var prev = oStyle.image.previousSibling;
+            var parent = oStyle.image.parentNode;
+            var index = Array.prototype.indexOf.call(parent.childNodes, oStyle.image);
+            range.create(parent, index, parent, index+1).select();
         }
 
         if (oStyle.anchor && (!oStyle.range.isCollapsed() || (oStyle.range.sc.tagName && !dom.isAnchor(oStyle.range.sc)) || (oStyle.image && !$(oStyle.image).closest('a').length))) {
@@ -303,9 +306,9 @@
             return;
         }
         // don't rerange if simple click
-        if (!cursor_mousedown || 10 < Math.pow(cursor_mousedown.clientX-event.clientX, 2)+Math.pow(cursor_mousedown.clientY-event.clientY, 2) ) {
-            reRangeSelect(event);
-        }
+        // if (!cursor_mousedown || 10 < Math.pow(cursor_mousedown.clientX-event.clientX, 2)+Math.pow(cursor_mousedown.clientY-event.clientY, 2) ) {
+        //     reRangeSelect(event);
+        // }
     }
     function summernote_mousedown (event) {
         history.splitNext();
@@ -1380,7 +1383,6 @@
             setTimeout(function () {
                 $el.trigger("saved", self.active.media);
                 $(document.body).trigger("media-saved", [$el[0], self.active.media]);
-                console.log(self.active.media, 0, self.active.media.nextSibling || self.active.media, 0);
                 range.create(self.active.media, 0, self.active.media.nextSibling || self.active.media, 0).select();
                 $(self.active.media).trigger("mouseup");
             },0);
@@ -1860,20 +1862,6 @@
                 $button.removeClass("btn-default").addClass("btn-primary");
             }
         },
-        get_url: function () {
-            var video_id = this.$("#video_id").val();
-            var video_type = this.$("#video_type").val();
-            switch (video_type) {
-                case "youtube":
-                    return "//www.youtube.com/embed/" + video_id + "?autoplay=" + (this.$("#autoplay").is(":checked") ? 1 : 0);
-                case "vimeo":
-                    return "//player.vimeo.com/video/" + video_id + "?autoplay=" + (this.$("#autoplay").is(":checked") ? 1 : 0);
-                case "dailymotion":
-                    return "//www.dailymotion.com/embed/video/" + video_id + "?autoplay=" + (this.$("#autoplay").is(":checked") ? 1 : 0);
-                default:
-                    return video_id;
-            }
-        },
         get_embed_video: function (event) {
             event.preventDefault();
             var embedvideo = this.$("input#embedvideo").val().match(/src=["']?([^"']+)["' ]?/);
@@ -1885,31 +1873,8 @@
         },
         get_video: function (event) {
             if (event) event.preventDefault();
-            var needle = this.$("input#urlvideo").val();
-            var video_id;
-            var video_type;
-
-            if (needle.indexOf(".youtube.") != -1) {
-                video_type = "youtube";
-                video_id = needle.match(/\.youtube\.[a-z]+\/(embed\/|watch\?v=)?([^\/?&]+)/i)[2];
-            } else if (needle.indexOf("//youtu.") != -1) {
-                video_type = "youtube";
-                video_id = needle.match(/youtube\.[a-z]+\/([^\/?&]+)/i)[1];
-            } else if (needle.indexOf("player.vimeo.") != -1 || needle.indexOf("//vimeo.") != -1) {
-                video_type = "vimeo";
-                video_id = needle.match(/vimeo\.[a-z]+\/(video\/)?([^?&]+)/i)[2];
-            } else if (needle.indexOf(".dailymotion.") != -1) {
-                video_type = "dailymotion";
-                video_id = needle.match(/dailymotion\.[a-z]+\/(embed\/)?(video\/)?([^\/?&]+)/i)[3];
-            } else {
-                video_type = "";
-                video_id = needle;
-            }
-
-            this.$("#video_id").val(video_id);
-            this.$("#video_type").val(video_type);
-
-            this.$iframe.attr("src", this.get_url());
+            var $video = eventHandler.editor.insertVideo(null, this.$("input#urlvideo").val(), true);
+            this.$iframe.attr("src", $video ? $video.attr("src") : "");
             return false;
         },
         save: function () {
@@ -1920,9 +1885,10 @@
             }
             var video_type = this.$("#video_type").val();
             var $iframe = $(
-                '<div class="media_iframe_video" data-src="'+this.get_url()+'">'+
-                    '<div class="css_editable_mode_display">&nbsp;</div>'+
-                    '<iframe src="'+this.get_url()+'" frameborder="0" allowfullscreen="allowfullscreen"></iframe>'+
+                '<div class="media_iframe_video" data-src="'+this.$iframe.attr("src")+'">'+
+                    '<div class="css_editable_mode_display" contentEditable="false">&nbsp;</div>'+
+                    '<div class="media_iframe_video_size" contentEditable="false">&nbsp;</div>'+
+                    '<iframe src="'+this.$iframe.attr("src")+'" frameborder="0" allowfullscreen="allowfullscreen" contentEditable="false"></iframe>'+
                 '</div>');
             $('.insert-media').replaceWith($iframe);
             $(this.media).replaceWith($iframe);

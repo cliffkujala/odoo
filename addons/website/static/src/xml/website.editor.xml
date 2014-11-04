@@ -386,15 +386,13 @@
             
             <div id="video-preview" style="width: 450px; margin: 0 auto;">
                 <div class="media_iframe_video">
+                    <div class="media_iframe_video_size"></div>
                     <iframe
                         src=""
                         frameborder="0"
                         allowfullscreen="allowfullscreen"></iframe>
                 </div>
             </div>
-
-            <input type="hidden" id="video_id" value=""/>
-            <input type="hidden" id="video_type" value=""/>
 
             <div class="text-center mt32">
                 <div class="checkbox">

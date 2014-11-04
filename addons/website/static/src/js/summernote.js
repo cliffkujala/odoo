@@ -779,7 +779,7 @@
         }
 
          // don't write in forbidden tag (like span for font awsome)
-        var node = r.sc;
+        var node = dom.firstChild(r.sc.tagName && r.so ? r.sc.childNodes[r.so] : r.sc);
         while (node.parentNode) {
             if ($(node).is(settings.options.forbiddenWrite.join(","))) {
                 var text = node.previousSibling;
@@ -791,7 +791,7 @@
                     setTimeout(function () {
                         var text = range.create().sc;
                         text.textContent = text.textContent.replace(/_$/, '');
-                        range.create(text, text.textContent.length-1, text, text.textContent.length-1).select();
+                        range.create(text, text.textContent.length, text, text.textContent.length).select();
                     },0);
                 }
                 break;
