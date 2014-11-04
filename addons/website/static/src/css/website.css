@@ -224,6 +224,11 @@ header a.navbar-brand img {
   max-height: 50px;
 }
 
+hr {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+}
+
 #wrapwrap p:empty:after {
   content: "\2060";
 }
