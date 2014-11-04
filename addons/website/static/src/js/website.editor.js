@@ -178,7 +178,7 @@
                 oStyle.image = oStyle.image.parentNode;
             }
             $imagePopover.show();
-            range.create(oStyle.image,0,oStyle.image,0).select();
+            range.createFromNode(oStyle.image).select();
         }
 
         if (oStyle.anchor && (!oStyle.range.isCollapsed() || (oStyle.range.sc.tagName && !dom.isAnchor(oStyle.range.sc)) || (oStyle.image && !$(oStyle.image).closest('a').length))) {
@@ -499,7 +499,7 @@
         focusIn: function () {
             if (this.length) {
                 var node = dom.firstChild(this[0]);
-                range.create(node, 0, node, 0).select();
+                range.create(node, 0).select();
             }
             return this;
         }
@@ -797,7 +797,7 @@
             var $editable = $target.is('[data-oe-model], .o_editable') ? $target : $target.closest('[data-oe-model], .o_editable');
             $target.mousedown();
             if (!range.create()) {
-                range.create($target[0],0,$target[0],0).select();
+                range.create($target[0],0).select();
             }
             this.history.recordUndo( $editable );
             $target.mousedown();
@@ -1063,14 +1063,14 @@
         init: function (editable, data) {
             this._super(editable, data);
             this.editable = editable;
-            this.data = data;
+            this.data = data || {};
 
             this.data.className = "";
             if (this.data.range) {
                 this.data.iniClassName = $(this.data.range.sc).attr("class") || "";
-                this.data.className = this.data.iniClassName.replace(/(^|\s+)(btn(?!\s|$)|btn-[a-z0-9_-]*)/gi, '');
+                this.data.className = this.data.iniClassName.replace(/(^|\s+)btn(-[a-z0-9_-]*)?/gi, ' ');
 
-                var is_link = this.data.range.sc.tagName === "A"
+                var is_link = this.data.range.sc.tagName === "A";
                 var nodes = is_link ? this.data.range.sc.childNodes : dom.listBetween(this.data.range.sc, this.data.range.ec);
                 if (nodes.length > 1) {
                     var text = "";
@@ -1155,24 +1155,25 @@
             var style = this.$("input[name='link-style-type']:checked").val() || '';
             var size = this.$("input[name='link-style-size']:checked").val() || '';
             var classes = (this.data.className || "") + (style && style.length ? " btn " : "") + style + " " + size;
+            var isNewWindow = this.$('input.window-new').prop('checked');
 
             var done = $.when();
             if ($e.hasClass('email-address') && $e.val().indexOf("@") !== -1) {
-                def.resolve('mailto:' + val, false, label, classes);
+                def.resolve('mailto:' + val, isNewWindow, label, classes);
             } else if ($e.val() && $e.val().length && $e.hasClass('page')) {
                 var data = $e.select2('data');
                 if (test || !data.create) {
-                    def.resolve(data.id, false, label || data.text, classes);
+                    def.resolve(data.id, isNewWindow, label || data.text, classes);
                 } else {
                     // Create the page, get the URL back
                     $.get(_.str.sprintf(
                             '/website/add/%s?noredirect=1', encodeURI(data.id)))
                         .then(function (response) {
-                            def.resolve(response, false, label, classes);
+                            def.resolve(response, isNewWindow, label, classes);
                         });
                 }
             } else {
-                def.resolve(val, this.$('input.window-new').prop('checked'), label, classes);
+                def.resolve(val, isNewWindow, label, classes);
             }
             return def;
         },
@@ -1184,14 +1185,14 @@
                     self.data.url = url;
                     self.data.newWindow = new_window;
                     self.data.text = label;
-                    self.data.className = classes;
+                    self.data.className = classes.replace(/\s+/gi, ' ').replace(/^\s+|\s+$/gi, '');
 
                     self.trigger("save", self.data);
                 }).then(_super);
         },
         bind_data: function () {
             var href = this.data.url;
-            var new_window = this.data.newWindow;
+            var new_window = this.data.isNewWindow;
             var text = this.data.text;
             var classes = this.data.iniClassName;
 
@@ -1394,6 +1395,7 @@
             setTimeout(function () {
                 $el.trigger("saved", self.active.media);
                 $(document.body).trigger("media-saved", [$el[0], self.active.media]);
+                console.log(self.active.media, 0, self.active.media.nextSibling || self.active.media, 0);
                 range.create(self.active.media, 0, self.active.media.nextSibling || self.active.media, 0).select();
                 $(self.active.media).trigger("mouseup");
             },0);

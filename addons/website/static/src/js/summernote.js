@@ -436,8 +436,8 @@
 
             var ancestor_sc = sc;
             var ancestor_ec = ec;
-            while (ancestor !== ancestor_sc.parentNode) { ancestor_sc = ancestor_sc.parentNode; }
-            while (ancestor !== ancestor_ec.parentNode) { ancestor_ec = ancestor_ec.parentNode; }
+            while (ancestor !== ancestor_sc && ancestor !== ancestor_sc.parentNode) { ancestor_sc = ancestor_sc.parentNode; } // fix by odoo
+            while (ancestor !== ancestor_ec && ancestor !== ancestor_ec.parentNode) { ancestor_ec = ancestor_ec.parentNode; } // fix by odoo
 
             var begin = dom.splitTree(ancestor_sc, sc, so);
             var last = dom.splitTree(ancestor_ec, ec, eo).previousSibling;

@@ -1647,7 +1647,7 @@
        * @return {WrappedRange}
        */
       createFromNode: function (node) {
-        return this.create(node, 0, node, 1);
+        return this.create(node, 0, node, dom.length(node)); // fix by odoo
       },
 
       /**
@@ -2034,7 +2034,7 @@
       var anchor = rng.insertNode($('<A>' + sLinkText + '</A>')[0]);
       $(anchor).attr({
         href: sLinkUrl,
-        target: isNewWindow ? '_blank' : ''
+        target: isNewWindow ? '_blank' : null // fix by odoo: don't have target in the dom if empty attribute
       });
 
       rng = range.createFromNode(anchor);
