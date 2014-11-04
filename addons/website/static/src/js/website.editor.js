@@ -844,18 +844,19 @@
                     $last.destroy();
                     $last = null;
                 }
-                if ($editable.size() && (!$last || $last[0] != $editable[0])) {
+                if ($editable.size() && (!$last || $last[0] != $editable[0]) &&
+                        ($target.closest('[contenteditable]').attr('contenteditable') || "").toLowerCase() !== 'false') {
                     $editable.summernote(self._config());
                     $editable.data('NoteHistory', self.history);
                     $editable.data('rte', self);
                     $last = $editable;
 
+                    // firefox & IE fix
                     try {
                         document.execCommand('enableObjectResizing', false, false);
                         document.execCommand('enableInlineTableEditing', false, false);
                         document.execCommand( '2D-position', false, false);
                     } catch (e) {}
-
                     document.body.addEventListener('mscontrolselect', function (evt) {evt.preventDefault(); return false;});
                     document.body.addEventListener('controlselect', function (evt) {evt.preventDefault(); return false;});
                     document.body.addEventListener('resizestart', function (evt) {evt.preventDefault(); return false;});
