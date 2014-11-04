@@ -53,7 +53,7 @@
         $imagePopover.find('button[data-event="removeMedia"]').parent().remove();
         $imagePopover.find('button[data-event="floatMe"][data-value="none"]').remove();
 
-        $imagePopover.find('.popover-content').prepend('<span>Alt: <span></span class="o_image_alt"></span>&nbsp;&nbsp;');
+        $imagePopover.find('.popover-content').prepend('<span><strong>Alt: </strong><span class="o_image_alt"></span></span>&nbsp;&nbsp;');
 
         // padding button
         var $padding = $('<div class="btn-group"/>');
@@ -163,7 +163,8 @@
             if (oStyle.image.parentNode.className.match(/(^|\s)media_iframe_video(\s|$)/i)) {
                 oStyle.image = oStyle.image.parentNode;
             }
-            $imagePopover.find('.o_image_alt').text( $(oStyle.image).attr("alt") || $(oStyle.image).attr("title") || "" );
+            var alt =  $(oStyle.image).attr("alt");
+            $imagePopover.find('.o_image_alt').text( alt || "" ).parent().toggle(!!alt);
             $imagePopover.show();
             range.create(oStyle.image, 0, dom.firstChild(dom.ancestorHaveNextSibling(oStyle.image).nextSibling), 0).select();
         }
@@ -1082,7 +1083,6 @@
                     nodes = dom.ancestor(r.sc, dom.isAnchor).childNodes;
                 }
 
-
                 if (nodes.length > 1) {
                     var text = "";
                     this.data.images = [];
@@ -1475,7 +1475,7 @@
         start: function () {
             var self = this;
             var res = this._super();
-            var o = { url: null };
+            var o = { url: null, alt: null };
             // avoid typos, prevent addition of new properties to the object
             Object.preventExtensions(o);
             this.trigger('start', o);
@@ -1494,6 +1494,7 @@
         save: function () {
             if (!this.link) {
                 this.link = this.$(".existing-attachments img:first").attr('src');
+                this.alt = this.$(".existing-attachments img:first").attr('alt');
             }
 
             if (this.media.tagName !== "IMG") {
