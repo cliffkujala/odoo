@@ -37,6 +37,20 @@
 .note-popover .popover-content .note-ul .dropdown-menu .note-li {
   margin-right: 5px;
 }
+.note-popover .popover-content > span {
+  display: inline-block;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+  border-radius: 3px;
+  background-color: white;
+  border-color: #cccccc;
+  padding: 4px 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
 .note-popover .popover-content .colorpicker {
   margin: 0;
 }

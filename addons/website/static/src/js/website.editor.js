@@ -53,6 +53,8 @@
         $imagePopover.find('button[data-event="removeMedia"]').parent().remove();
         $imagePopover.find('button[data-event="floatMe"][data-value="none"]').remove();
 
+        $imagePopover.find('.popover-content').prepend('<span>Alt: <span></span class="o_image_alt"></span>&nbsp;&nbsp;');
+
         // padding button
         var $padding = $('<div class="btn-group"/>');
         $padding.insertBefore($imagePopover.find('.btn-group:first'));
@@ -161,6 +163,7 @@
             if (oStyle.image.parentNode.className.match(/(^|\s)media_iframe_video(\s|$)/i)) {
                 oStyle.image = oStyle.image.parentNode;
             }
+            $imagePopover.find('.o_image_alt').text( $(oStyle.image).attr("alt") || $(oStyle.image).attr("title") || "" );
             $imagePopover.show();
             range.create(oStyle.image, 0, dom.firstChild(dom.ancestorHaveNextSibling(oStyle.image).nextSibling), 0).select();
         }
@@ -1055,20 +1058,30 @@
                 this.data.iniClassName = $(this.data.range.sc).attr("class") || "";
                 this.data.className = this.data.iniClassName.replace(/(^|\s+)btn(-[a-z0-9_-]*)?/gi, ' ');
 
-                var is_link = this.data.range.sc.tagName === "A";
+                var is_link = this.data.range.isOnAnchor();
                 var r = this.data.range;
 
-                if (r.sc.tagName) {
-                    r.sc = dom.firstChild(r.so ? r.sc.childNodes[r.so] : r.sc);
-                    r.so = 0;
+                var nodes;
+                if (!is_link) {
+                    if (r.sc.tagName) {
+                        r.sc = dom.firstChild(r.so ? r.sc.childNodes[r.so] : r.sc);
+                        r.so = 0;
+                    }
+                    if (r.ec.tagName) {
+                        if (r.eo === r.ec.childNodes.length) {
+                            r.ec = dom.lastChild(r.ec);
+                            r.eo = r.ec.textContent.length;
+                        } else {
+                            r.ec = dom.firstChild(r.eo ? r.ec.childNodes[r.eo] : r.ec);
+                            r.eo = 0;
+                        }
+                    }
+                    this.data.range = range.create(r.sc, r.so, r.ec, r.eo).select();
+                    nodes = dom.listBetween(r.sc, r.ec);
+                } else {
+                    nodes = dom.ancestor(r.sc, dom.isAnchor).childNodes;
                 }
-                if (r.ec.tagName) {
-                    r.ec = dom.firstChild(r.eo ? r.ec.childNodes[r.eo] : r.ec);
-                    r.eo = 0;
-                }
-                this.data.range = range.create(r.sc, r.so, r.ec, r.eo).select();
 
-                var nodes = is_link ? this.data.range.sc.childNodes : dom.listBetween(r.sc, r.ec);
 
                 if (nodes.length > 1) {
                     var text = "";
@@ -1490,10 +1503,11 @@
             }
 
             this.trigger('save', {
-                url: this.link
+                url: this.link,
+                alt: this.alt
             });
 
-            $(this.media).attr('src', this.link);
+            $(this.media).attr('src', this.link).attr('alt', this.alt);
             return this._super();
         },
         clear: function () {
@@ -1605,9 +1619,9 @@
                 .find('li.next').toggleClass('disabled', (from + per_screen >= records.length));
         },
         select_existing: function (e) {
-            var link = $(e.currentTarget).attr('src');
-            this.link = link;
-            this.selected_existing(link);
+            this.link = $(e.currentTarget).attr('src');
+            this.alt = $(e.currentTarget).attr('alt');
+            this.selected_existing(this.link);
         },
         selected_existing: function (link) {
             this.$('.existing-attachment-cell.media_selected').removeClass("media_selected");
