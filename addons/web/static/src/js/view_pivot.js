@@ -149,6 +149,7 @@ instance.web.PivotView = instance.web.View.extend({
         var id = $(event.target).data('id'),
             header = this.headers[id];
         header.expanded = false;        
+        header.children = [];
         this.display_table();
     },
     on_closed_header_click: function (event) {
@@ -163,16 +164,20 @@ instance.web.PivotView = instance.web.View.extend({
     },
     on_field_menu_selection: function (event) {
         var field = $(event.target).parent().data('field');
-        this.expand_header(this.last_header_selected, field);
+        this.expand_header(this.last_header_selected, field)
+            .then(this.proxy('display_table'));
     },
     expand_header: function (header_id, field) {
         var self = this,
-            header = this.headers[header_id],
-            fields = [].concat(field, this.col_groupbys, this.active_measures),
+            header = this.headers[header_id];
+
+        var other_root = header.root === this.main_row.root ? this.main_col.root : this.main_row.root,
+            other_groupbys = header.root === this.main_row.root ? this.col_groupbys : this.row_groupbys,
+            fields = [].concat(field, other_groupbys, this.active_measures),
             groupbys = [];
 
-        for (var i = 0; i <= this.col_groupbys.length; i++) {
-            groupbys.push([field].concat(this.col_groupbys.slice(0,i)));
+        for (var i = 0; i <= other_groupbys.length; i++) {
+            groupbys.push([field].concat(other_groupbys.slice(0,i)));
         }
         return $.when.apply(null, groupbys.map(function (groupby) {
             return self.model.query(fields)
@@ -181,14 +186,35 @@ instance.web.PivotView = instance.web.View.extend({
                 .lazy(false)
                 .group_by(groupby);
         })).then(function () {
-            var data = Array.prototype.slice.call(arguments);
-            console.log("data", data);
+            var data = Array.prototype.slice.call(arguments),
+                datapt, attrs, j, k, l, row, col, cell_value;
+            for (i = 0; i < data.length; i++) {
+                for (j = 0; j < data[i].length; j++){
+                    datapt = data[i][j];
+                    attrs = datapt.attributes;
+                    if (i === 0) attrs.value = [attrs.value];
+                    for (k = 0; k < attrs.value.length; k++) {
+                        attrs.value[k] = self.sanitize_value(attrs.value[k]);
+                    }
+                    if (i === 0) {
+                        row = self.make_header(datapt, header.root, 0, 1, header);
+                    } else {
+                        row = self.get_header(datapt, header.root, 0, 1, header);
+                    }
+                    col = self.get_header(datapt, other_root, 1, i + 1);
+
+                    for (cell_value = {}, l=0; l < self.active_measures.length; l++) {
+                        cell_value[self.active_measures[l]] = attrs.aggregates[self.active_measures[l]];
+                    }
+                    self.cells[row.id] || (self.cells[row.id] = []);
+                    cell_value['__count__'] = attrs.length;
+                    self.cells[row.id][col.id] = cell_value;
+                }
+            }
         });
     },
     // returns a deferred that resolve when the data is loaded.
     load_data: function () {
-        console.log('load_data');
-
         var self = this,
             i, j, 
             groupbys = [],
@@ -261,13 +287,18 @@ instance.web.PivotView = instance.web.View.extend({
         if (value instanceof Array) return value[1];
         return value;
     },
-    make_header: function (data_pt, root, i, j) {
+    make_header: function (data_pt, root, i, j, parent_header) {
         var attrs = data_pt.attributes,
             value = attrs.value,
-            title = value.length ? value[value.length - 1] : total,
+            title = value.length ? value[value.length - 1] : total;
+        var path, parent;
+        if (parent_header) {
+            path = parent_header.path.concat(title);
+            parent = parent_header;
+        } else {
             path = [total].concat(value.slice(i,j-1)),
             parent = value.length? find_path_in_tree(root, path) : null;
-
+        } 
         var header = {
             id: generate_id(),
             title: title,
@@ -284,11 +315,17 @@ instance.web.PivotView = instance.web.View.extend({
         }
         return header;
     },
-    get_header: function (data_pt, root, i, j) {
-        var path = [total].concat(data_pt.attributes.value.slice(i,j));
+    get_header: function (data_pt, root, i, j, parent) {
+        var path;
+        if (parent) {
+            path = parent.path.concat(data_pt.attributes.value.slice(i,j));
+        } else {
+            path = [total].concat(data_pt.attributes.value.slice(i,j));
+        }
         return find_path_in_tree(root, path);
     },
     display_table: function () {
+        console.log('display_table');
         if (!this.active_measures.length || !this.has_data) {
             return this.$table_container.empty().append(QWeb.render('PivotView.nodata'));
         }
