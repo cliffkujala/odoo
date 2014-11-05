@@ -114,7 +114,7 @@ instance.web.PivotView = instance.web.View.extend({
                 }
             }
         });
-        this.measures['__count__'] = {string: "Quantity", type: "integer"};
+        this.measures.__count__ = {string: "Quantity", type: "integer"};
     },
     do_search: function (domain, context, group_by) {
         this.domain = domain;
@@ -136,7 +136,7 @@ instance.web.PivotView = instance.web.View.extend({
     },
     on_button_click: function (event) {
         var $target = $(event.target);
-        if ($target.hasClass('oe-pivot-flip')) {this.flip()};
+        if ($target.hasClass('oe-pivot-flip')) {this.flip();}
         if ($target.parents('.oe-measure-list').length) {
             var parent = $target.parent(),
                 field = parent.data('field');
@@ -150,28 +150,46 @@ instance.web.PivotView = instance.web.View.extend({
             header = this.headers[id];
         header.expanded = false;        
         header.children = [];
+        var groupbys = (header.root === this.main_row.root) ? this.row_groupbys : this.col_groupbys;
+        var new_groupby_length = this.get_header_depth(header.root) - 1;
+        groupbys.splice(new_groupby_length);
         this.display_table();
     },
     on_closed_header_click: function (event) {
-        var id = $(event.target).data('id');
-        var $test = $(event.target);
-        var pos = $test.position();
-        this.last_header_selected = id;
-        this.$field_selection.find('ul').css('top', pos.top + $test.parent().height() - 2);
-        this.$field_selection.find('ul').css('left', pos.left + event.offsetX);
-        this.$field_selection.find('ul').show();
-        event.stopPropagation();
+        var id = $(event.target).data('id'),
+            header = this.headers[id],
+            groupbys = (header.root===this.main_row.root ? this.row_groupbys : this.col_groupbys);
+        if (header.path.length - 1 < groupbys.length) {
+            this.expand_header(header, groupbys[header.path.length - 1])
+                .then(this.proxy('display_table'));
+        } else {
+            var $test = $(event.target);
+            var pos = $test.position();
+            this.last_header_selected = id;
+            this.$field_selection.find('ul').css('top', pos.top + $test.parent().height() - 2);
+            this.$field_selection.find('ul').css('left', pos.left + event.offsetX);
+            this.$field_selection.find('ul').show();
+            event.stopPropagation();            
+        }
     },
     on_field_menu_selection: function (event) {
-        var field = $(event.target).parent().data('field');
-        this.expand_header(this.last_header_selected, field)
+        var self = this;
+        var field = $(event.target).parent().data('field'),
+            header = this.headers[this.last_header_selected];
+        this.expand_header(header, field)
+            .then(function () {
+                var groupbys;
+                if (header.root === self.main_row.root) groupbys = self.row_groupbys;
+                else groupbys = self.col_groupbys;
+                groupbys.push(field);
+            })
             .then(this.proxy('display_table'));
     },
-    expand_header: function (header_id, field) {
-        var self = this,
-            header = this.headers[header_id];
+    expand_header: function (header, field) {
+        var self = this;
 
         var other_root = header.root === this.main_row.root ? this.main_col.root : this.main_row.root,
+            this_groupbys = header.root === this.main_row.root ? this.row_groupbys : this.col_groupbys,
             other_groupbys = header.root === this.main_row.root ? this.col_groupbys : this.row_groupbys,
             fields = [].concat(field, other_groupbys, this.active_measures),
             groupbys = [];
@@ -187,14 +205,17 @@ instance.web.PivotView = instance.web.View.extend({
                 .group_by(groupby);
         })).then(function () {
             var data = Array.prototype.slice.call(arguments),
-                datapt, attrs, j, k, l, row, col, cell_value;
+                datapt, attrs, j, k, l, row, col, cell_value, field_name;
             for (i = 0; i < data.length; i++) {
                 for (j = 0; j < data[i].length; j++){
                     datapt = data[i][j];
+                    console.log(datapt);
                     attrs = datapt.attributes;
                     if (i === 0) attrs.value = [attrs.value];
                     for (k = 0; k < attrs.value.length; k++) {
-                        attrs.value[k] = self.sanitize_value(attrs.value[k]);
+                        if (k < 1) field_name = field;
+                        else field_name = other_groupbys[k - 1];
+                        attrs.value[k] = self.sanitize_value(attrs.value[k], field_name);
                     }
                     if (i === 0) {
                         row = self.make_header(datapt, header.root, 0, 1, header);
@@ -206,8 +227,9 @@ instance.web.PivotView = instance.web.View.extend({
                     for (cell_value = {}, l=0; l < self.active_measures.length; l++) {
                         cell_value[self.active_measures[l]] = attrs.aggregates[self.active_measures[l]];
                     }
+                    cell_value.__count__ = attrs.length;
                     self.cells[row.id] || (self.cells[row.id] = []);
-                    cell_value['__count__'] = attrs.length;
+                    console.log('bbb', row, col, self.cells);
                     self.cells[row.id][col.id] = cell_value;
                 }
             }
@@ -241,7 +263,8 @@ instance.web.PivotView = instance.web.View.extend({
             col_gbs = this.col_groupbys,
             data = Array.prototype.slice.call(arguments),
             main_row_header, main_col_header,
-            row, col, attrs, datapt, cell_value;
+            row, col, attrs, datapt, cell_value,
+            field;
 
         for (i = 0; i < row_gbs.length + 1; i++) {
             for (j = 0; j < col_gbs.length + 1; j++) {
@@ -252,7 +275,9 @@ instance.web.PivotView = instance.web.View.extend({
                         attrs.value = [attrs.value];
                     }
                     for (l = 0; l < attrs.value.length; l++) {
-                        attrs.value[l] = this.sanitize_value(attrs.value[l]);
+                        if (l < i) field = row_gbs[l];
+                        else field = col_gbs[l - i];
+                        attrs.value[l] = this.sanitize_value(attrs.value[l], field);
                     }
                     if (j === 0) {
                         row = this.make_header(datapt, main_row_header, 0, i);
@@ -273,7 +298,7 @@ instance.web.PivotView = instance.web.View.extend({
                     for (cell_value = {}, m=0; m < this.active_measures.length; m++) {
                         cell_value[this.active_measures[m]] = attrs.aggregates[this.active_measures[m]];
                     }
-                    cell_value['__count__'] = attrs.length;
+                    cell_value.__count__ = attrs.length;
                     this.cells[row.id][col.id] = cell_value;
                 }
                 index++;
@@ -282,9 +307,13 @@ instance.web.PivotView = instance.web.View.extend({
         this.main_row = { root: main_row_header };
         this.main_col = { root: main_col_header };
     },
-    sanitize_value: function (value) {
+    sanitize_value: function (value, field) {
         if (value === false) return _t("Undefined");
         if (value instanceof Array) return value[1];
+        if (field && this.fields[field] && (this.fields[field].type === 'selection')) {
+            var selected = _.where(this.fields[field].selection, {0: value})[0];
+            return selected ? selected[1] : value;
+        }
         return value;
     },
     make_header: function (data_pt, root, i, j, parent_header) {
@@ -325,7 +354,7 @@ instance.web.PivotView = instance.web.View.extend({
         return find_path_in_tree(root, path);
     },
     display_table: function () {
-        console.log('display_table');
+        console.log('display_table', this);
         if (!this.active_measures.length || !this.has_data) {
             return this.$table_container.empty().append(QWeb.render('PivotView.nodata'));
         }
@@ -348,6 +377,7 @@ instance.web.PivotView = instance.web.View.extend({
             $table.find('col:eq(' + $(this).index()+')').toggleClass('hover');
         });
         this.$table_container.empty().append($fragment);
+        this.$table_container.find('.oe-opened,.oe-closed').tooltip();
     },
     draw_headers: function ($thead, headers) {
         var self = this,
@@ -390,7 +420,7 @@ instance.web.PivotView = instance.web.View.extend({
     },
     draw_rows: function ($tbody, rows) {
         var self = this,
-            i, j, value, length, $row, $cell, $header,
+            i, j, value, $row, $cell, $header,
             nbr_measures = this.active_measures.length,
             length = rows[0].values.length,
             display_total = this.main_col.width > 1;
@@ -447,7 +477,7 @@ instance.web.PivotView = instance.web.View.extend({
             if (nbr_measures === 1) {
                 total_cell.title = this.measures[this.active_measures[0]].string;
                 total_cell.total = true;
-            };
+            }
             result[0].push(total_cell);
         }
         if (nbr_measures > 1) {
@@ -476,6 +506,13 @@ instance.web.PivotView = instance.web.View.extend({
             if (!hdr.expanded) width++;
         });
         return {width: width, depth: depth};
+    },
+    get_header_depth: function (header) {
+        var depth = 1;
+        traverse_tree(header, function (hdr) {
+            depth = Math.max(depth, hdr.path.length);
+        });
+        return depth;
     },
     compute_rows: function () {
         var self = this,
@@ -509,8 +546,10 @@ instance.web.PivotView = instance.web.View.extend({
         }
     },
     get_value: function (id1, id2) {
-        if (id1 in this.cells) return this.cells[id1][id2];
-        else return this.cells[id2][id1];
+        if ((id1 in this.cells) && (id2 in this.cells[id1])) {
+            return this.cells[id1][id2];
+        }
+        return this.cells[id2][id1];
     },
     flip: function () {
         var temp = this.main_col;
