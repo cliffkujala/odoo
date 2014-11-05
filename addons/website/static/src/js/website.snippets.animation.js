@@ -147,14 +147,14 @@
             this.$("a").each(function () {
                 var $a = $(this);
                 $a.attr("href", $(this).attr("href").replace("{url}", url).replace("{title}", title));
-                if ($a.attr("target") && $a.attr("target").match(/_blank/i)) {
+                if ($a.attr("target") && $a.attr("target").match(/_blank/i) && !$a.closest('.o_editable').length) {
                     $a.on('click', function () {
                         window.open(this.href,'','menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=550,width=600');
                         return false;
                     });
                 }
             });
-        },
+        }
     });
 
     website.snippet.animationRegistry.media_video = website.snippet.Animation.extend({

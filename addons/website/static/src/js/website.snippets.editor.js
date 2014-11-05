@@ -191,6 +191,7 @@
                     }
                 };
             } else {
+                var selector = selector.split(/\s*,/).join(":o_editable, ") + ":o_editable";
                 return {
                     closest: function ($from, parentNode) {
                         var parents = self.$editable.get();
@@ -316,7 +317,7 @@
         bind_snippet_click_editor: function () {
             var self = this;
             var snipped_event_flag;
-            $(document).on('click', '.o_editable', function (event) {
+            $(document).on('click', '*', function (event) {
                 var srcElement = event.srcElement || (event.originalEvent && (event.originalEvent.originalTarget || event.originalEvent.target));
                 if (snipped_event_flag || !srcElement) {
                     return;
@@ -742,6 +743,11 @@
             this.option= option_id;
             this.$el = option.$el.find(">li").clone();
             this.data = option.$el.data();
+        },
+
+        // helper for this.$target.find
+        $: function (selector) {
+            return this.$target(selector);
         },
 
         _bind_li_menu: function () {
@@ -1800,9 +1806,13 @@
         */
         start: function () {
             var self = this;
-            this.$overlay.on('click', '.oe_snippet_clone', _.bind(this.on_clone, this));
-            this.$overlay.on('click', '.oe_snippet_remove', _.bind(this.on_remove, this));
-            this._drag_and_drop();
+            if (!this.$target.parent().is(':o_editable')) {
+                this.$overlay.find('.oe_snippet_move, .oe_snippet_clone, .oe_snippet_remove').remove();
+            } else {
+                this.$overlay.on('click', '.oe_snippet_clone', _.bind(this.on_clone, this));
+                this.$overlay.on('click', '.oe_snippet_remove', _.bind(this.on_remove, this));
+                this._drag_and_drop();
+            }
         },
 
         on_clone: function () {
