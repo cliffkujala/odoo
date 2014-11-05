@@ -125,10 +125,10 @@
                         <button class="oe_inline oe_stat_button" type="action"
                             context="{'default_opportunity_id': active_id, 'search_default_opportunity_id': active_id, 'default_partner_id': partner_id, 'default_duration': 1.0}"
                             name="%(crm.crm_phonecall_category_phone_incoming0)d" icon="fa-phone">
-                            <div>Calls</div>
+                            <field string="Calls" name="calls_count" widget="statinfo"/>
                         </button>
                     </div>
-                    <div class="oe_title">
+                    <div class="oe_title oe_title_width">
                         <label for="name" class="oe_edit_only"/>
                         <h1><field name="name" placeholder="Describe the lead..."/></h1>
                     </div>
@@ -176,8 +176,8 @@
                             <field name="type" invisible="1"/>
                         </group>
                         <group>
-                            <field name="priority" widget="priority"/>
                             <field name="tag_ids" widget="many2many_tags"/>
+                            <field name="priority" widget="priority"/>
                         </group>
                     </group>
                     <notebook colspan="4">
@@ -186,14 +186,14 @@
                     </page>
                     <page string="Extra Info">
                         <group>
+                            <group string="Mailings">
+                                <field name="opt_out"/>
+                                <field name="message_bounce"/>
+                            </group>
                             <group string="Categorization" groups="base.group_multi_company,base.group_no_one" name="categorization">
                                 <field name="company_id"
                                     groups="base.group_multi_company"
                                     widget="selection"/>
-                            </group>
-                            <group string="Mailings">
-                                <field name="opt_out"/>
-                                <field name="message_bounce"/>
                             </group>
                             <group string="Misc">
                                 <field name="probability" groups="base.group_no_one"/>
@@ -401,7 +401,7 @@
                             <button class="oe_inline oe_stat_button" type="action"
                                 name="%(crm.crm_phonecall_category_phone_incoming0)d" icon="fa-phone"
                                 context="{'default_opportunity_id': active_id, 'search_default_opportunity_id': active_id, 'default_partner_id': partner_id, 'default_duration': 1.0}">
-                                <div>Calls</div>
+                                <field string="Calls" name="calls_count" widget="statinfo"/>
                             </button>
                             <button class="oe_inline oe_stat_button" type="object"
                                 context="{'partner_id': partner_id}"
@@ -409,7 +409,7 @@
                                 <field string="Meetings" name="meeting_count" widget="statinfo"/>
                             </button>
                         </div>
-                        <div class="oe_title">
+                        <div class="oe_title oe_title_width">
                             <label for="name" class="oe_edit_only"/>
                             <h1><field name="name" placeholder="e.g. Product Pricing"/></h1>
                             <label for="planned_revenue" style="padding-right: 50px" class="oe_edit_only"/>
