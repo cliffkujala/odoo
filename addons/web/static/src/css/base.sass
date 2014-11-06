@@ -1333,6 +1333,23 @@ $sheet-padding: 16px
         .dropdown-menu
             a
                 color: black
+            .pivot-dropdown-submenu
+                position: relative
+                > .dropdown-menu
+                    top: 0
+                    left: 100%
+                .field-selection:after
+                    content: "\f0da"
+                    width: 3px
+                    float: right
+                    margin-left: 5px
+                    color: #333
+                    font-family: FontAwesome
+            .pivot-dropdown-submenu:hover
+                > .dropdown-menu
+                    display: block
+
+
 
     // }}}
     // FormView.base and dynamic tags {{{

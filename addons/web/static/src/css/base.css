@@ -1565,6 +1565,24 @@
 .openerp .oe_pivot .dropdown-menu a {
   color: black;
 }
+.openerp .oe_pivot .dropdown-menu .pivot-dropdown-submenu {
+  position: relative;
+}
+.openerp .oe_pivot .dropdown-menu .pivot-dropdown-submenu > .dropdown-menu {
+  top: 0;
+  left: 100%;
+}
+.openerp .oe_pivot .dropdown-menu .pivot-dropdown-submenu .field-selection:after {
+  content: "";
+  width: 3px;
+  float: right;
+  margin-left: 5px;
+  color: #333;
+  font-family: FontAwesome;
+}
+.openerp .oe_pivot .dropdown-menu .pivot-dropdown-submenu:hover > .dropdown-menu {
+  display: block;
+}
 .openerp .oe_formview {
   background: white;
 }

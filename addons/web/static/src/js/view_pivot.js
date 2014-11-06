@@ -36,8 +36,14 @@ instance.web.PivotView = instance.web.View.extend({
         this.ready = false; // will be ready after the first do_search
         this.data_loaded = $.Deferred();
 
-        this.row_groupbys = [];
-        this.col_groupbys = [];
+        this.main_row = {
+            root: undefined,
+            groupbys: [],
+        };
+        this.main_col = {
+            root: undefined,
+            groupbys: [],
+        };
         this.active_measures = [];
         this.headers = {};
         this.cells = {};
@@ -64,10 +70,11 @@ instance.web.PivotView = instance.web.View.extend({
             }
         });
         var another_ctx = {fields: _.pairs(this.groupable_fields)};
+        console.log("anotherctx", another_ctx);
         this.$field_selection = this.$('.o-field-selection');
         this.$field_selection.html(QWeb.render('PivotView.FieldSelection', another_ctx));
         openerp.web.bus.on('click', self, function () {
-            self.$field_selection.find('ul').hide();
+            self.$field_selection.find('ul').first().hide();
         });
     },
     view_loading: function (fvg) {
@@ -84,7 +91,7 @@ instance.web.PivotView = instance.web.View.extend({
                 self.active_measures.push(name);
                 break;
             case 'col':
-                self.col_groupbys.push(name);
+                self.main_col.groupbys.push(name);
                 break;
             default:
                 if ('operator' in field.attrs) {
@@ -92,7 +99,7 @@ instance.web.PivotView = instance.web.View.extend({
                     break;
                 }
             case 'row':
-                self.row_groupbys.push(name);
+                self.main_row.groupbys.push(name);
             }
         });
         if (!self.active_measures.length) {
@@ -117,19 +124,28 @@ instance.web.PivotView = instance.web.View.extend({
         this.measures.__count__ = {string: "Quantity", type: "integer"};
     },
     do_search: function (domain, context, group_by) {
+        if (_.isEqual(domain, this.domain)) return;
         this.domain = domain;
         this.context = context;
-        var col_groupbys = []; // to do: extract properly from context
         if (!this.ready) {
-            this.row_groupbys = group_by.length ? group_by : this.row_groupbys;
-            this.col_groupbys = col_groupbys.length ? col_groupbys : this.col_groupbys;
+            this.data_loaded = this.load_data(true);
             this.ready = true;
-            this.data_loaded = this.load_data();
-        } else {
-            this.row_groupbys = group_by;
-            this.data_loaded = this.load_data();
-            this.do_show();
+            return;
         }
+        this.data_loaded = this.load_data(true);
+        return this.do_show();
+
+        // var col_groupbys = []; // to do: extract properly from context
+        // if (!this.ready) {
+        //     this.row_groupbys = group_by.length ? group_by : this.row_groupbys;
+        //     this.col_groupbys = col_groupbys.length ? col_groupbys : this.col_groupbys;
+        //     this.ready = true;
+        //     this.data_loaded = this.load_data();
+        // } else {
+        //     this.row_groupbys = group_by;
+        //     this.data_loaded = this.load_data();
+        //     this.do_show();
+        // }
     },
     do_show: function () {
         this.data_loaded.done(this.display_table.bind(this));
@@ -137,6 +153,7 @@ instance.web.PivotView = instance.web.View.extend({
     on_button_click: function (event) {
         var $target = $(event.target);
         if ($target.hasClass('oe-pivot-flip')) {this.flip();}
+        if ($target.hasClass('oe-pivot-expand-all')) {this.expand_all();}
         if ($target.parents('.oe-measure-list').length) {
             var parent = $target.parent(),
                 field = parent.data('field');
@@ -150,15 +167,14 @@ instance.web.PivotView = instance.web.View.extend({
             header = this.headers[id];
         header.expanded = false;        
         header.children = [];
-        var groupbys = (header.root === this.main_row.root) ? this.row_groupbys : this.col_groupbys;
         var new_groupby_length = this.get_header_depth(header.root) - 1;
-        groupbys.splice(new_groupby_length);
+        header.root.groupbys.splice(new_groupby_length);
         this.display_table();
     },
     on_closed_header_click: function (event) {
         var id = $(event.target).data('id'),
             header = this.headers[id],
-            groupbys = (header.root===this.main_row.root ? this.row_groupbys : this.col_groupbys);
+            groupbys = header.root.groupbys;
         if (header.path.length - 1 < groupbys.length) {
             this.expand_header(header, groupbys[header.path.length - 1])
                 .then(this.proxy('display_table'));
@@ -166,31 +182,31 @@ instance.web.PivotView = instance.web.View.extend({
             var $test = $(event.target);
             var pos = $test.position();
             this.last_header_selected = id;
-            this.$field_selection.find('ul').css('top', pos.top + $test.parent().height() - 2);
-            this.$field_selection.find('ul').css('left', pos.left + event.offsetX);
-            this.$field_selection.find('ul').show();
+            var $menu = this.$field_selection.find('ul').first();
+            $menu.css('top', pos.top + $test.parent().height() - 2);
+            $menu.css('left', pos.left + event.offsetX);
+            $menu.show();
             event.stopPropagation();            
         }
     },
     on_field_menu_selection: function (event) {
         var self = this;
         var field = $(event.target).parent().data('field'),
+            interval = $(event.target).data('interval'),
             header = this.headers[this.last_header_selected];
+        if (interval) field = field + ':' + interval;
         this.expand_header(header, field)
             .then(function () {
-                var groupbys;
-                if (header.root === self.main_row.root) groupbys = self.row_groupbys;
-                else groupbys = self.col_groupbys;
-                groupbys.push(field);
+                header.root.groupbys.push(field);
             })
             .then(this.proxy('display_table'));
     },
     expand_header: function (header, field) {
         var self = this;
 
-        var other_root = header.root === this.main_row.root ? this.main_col.root : this.main_row.root,
-            this_groupbys = header.root === this.main_row.root ? this.row_groupbys : this.col_groupbys,
-            other_groupbys = header.root === this.main_row.root ? this.col_groupbys : this.row_groupbys,
+        var other_root = header.root.other_root,
+            this_groupbys = header.root.groupbys,
+            other_groupbys = header.root.other_root.groupbys,
             fields = [].concat(field, other_groupbys, this.active_measures),
             groupbys = [];
 
@@ -209,7 +225,6 @@ instance.web.PivotView = instance.web.View.extend({
             for (i = 0; i < data.length; i++) {
                 for (j = 0; j < data[i].length; j++){
                     datapt = data[i][j];
-                    console.log(datapt);
                     attrs = datapt.attributes;
                     if (i === 0) attrs.value = [attrs.value];
                     for (k = 0; k < attrs.value.length; k++) {
@@ -223,25 +238,28 @@ instance.web.PivotView = instance.web.View.extend({
                         row = self.get_header(datapt, header.root, 0, 1, header);
                     }
                     col = self.get_header(datapt, other_root, 1, i + 1);
-
+                    if (!col) continue;
                     for (cell_value = {}, l=0; l < self.active_measures.length; l++) {
                         cell_value[self.active_measures[l]] = attrs.aggregates[self.active_measures[l]];
                     }
                     cell_value.__count__ = attrs.length;
-                    self.cells[row.id] || (self.cells[row.id] = []);
-                    console.log('bbb', row, col, self.cells);
+                    if (!self.cells[row.id]) self.cells[row.id] = [];
                     self.cells[row.id][col.id] = cell_value;
                 }
             }
         });
     },
+    expand_all: function () {
+        this.load_data(false).then(this.proxy('display_table'));
+    },
     // returns a deferred that resolve when the data is loaded.
-    load_data: function () {
+    load_data: function (update) {
+        var should_update = (update && this.main_row.root && this.main_col.root);
         var self = this,
             i, j, 
             groupbys = [],
-            row_gbs = this.row_groupbys,
-            col_gbs = this.col_groupbys,
+            row_gbs = this.main_row.groupbys,
+            col_gbs = this.main_col.groupbys,
             fields = [].concat(row_gbs, col_gbs, this.active_measures);
         for (i = 0; i < row_gbs.length + 1; i++) {
             for (j = 0; j < col_gbs.length + 1; j++) {
@@ -254,14 +272,16 @@ instance.web.PivotView = instance.web.View.extend({
                 .context(self.context)
                 .lazy(false)
                 .group_by(groupby);
-        })).then(self.prepare_data.bind(this));
+        })).then(function () {
+            var data = Array.prototype.slice.call(arguments);
+            self.prepare_data(data, should_update);
+        });
     },
-    prepare_data: function () {
+    prepare_data: function (data, should_update) {
         var i, j, k, l, m,
             index = 0,
-            row_gbs = this.row_groupbys,
-            col_gbs = this.col_groupbys,
-            data = Array.prototype.slice.call(arguments),
+            row_gbs = this.main_row.groupbys,
+            col_gbs = this.main_col.groupbys,
             main_row_header, main_col_header,
             row, col, attrs, datapt, cell_value,
             field;
@@ -294,7 +314,7 @@ instance.web.PivotView = instance.web.View.extend({
                         main_row_header = row;
                         main_col_header = col;
                     }
-                    this.cells[row.id] || (this.cells[row.id] = []);
+                    if (!this.cells[row.id]) this.cells[row.id] = [];
                     for (cell_value = {}, m=0; m < this.active_measures.length; m++) {
                         cell_value[this.active_measures[m]] = attrs.aggregates[this.active_measures[m]];
                     }
@@ -304,8 +324,40 @@ instance.web.PivotView = instance.web.View.extend({
                 index++;
             }
         }
-        this.main_row = { root: main_row_header };
-        this.main_col = { root: main_col_header };
+        if (should_update) {
+            this.update_tree(this.main_row.root, main_row_header);
+            this.update_tree(this.main_col.root, main_col_header);
+        }
+        main_row_header.groupbys = this.main_row.groupbys;
+        main_row_header.other_root = main_col_header;
+        main_col_header.groupbys = this.main_col.groupbys;
+        main_col_header.other_root = main_row_header;
+        this.main_row.root = main_row_header;
+        this.main_col.root = main_col_header;
+    },
+    update_tree: function (old_tree, new_tree) {
+        if (!old_tree.expanded) {
+            new_tree.expanded = false;
+            new_tree.children = [];
+            return;
+        }
+        var tree, j, old_title, new_title;
+        for (var i = 0; i < new_tree.children.length; i++) {
+            tree = undefined;
+            new_title = new_tree.children[i].path[new_tree.children[i].path.length - 1];
+            for (j = 0; j < old_tree.children.length; j++) {
+                old_title = old_tree.children[j].path[old_tree.children[j].path.length - 1];
+                if (old_title === new_title) {
+                    tree = old_tree.children[j];
+                    break;
+                }
+            }
+            if (tree) this.update_tree(tree, new_tree.children[i]);
+            else {
+                new_tree.children[i].expanded = false;
+                new_tree.children[i].children = [];
+            }
+        }
     },
     sanitize_value: function (value, field) {
         if (value === false) return _t("Undefined");
@@ -325,12 +377,11 @@ instance.web.PivotView = instance.web.View.extend({
             path = parent_header.path.concat(title);
             parent = parent_header;
         } else {
-            path = [total].concat(value.slice(i,j-1)),
-            parent = value.length? find_path_in_tree(root, path) : null;
+            path = [total].concat(value.slice(i,j-1));
+            parent = value.length ? find_path_in_tree(root, path) : null;
         } 
         var header = {
             id: generate_id(),
-            title: title,
             expanded: false,
             domain: data_pt.model._domain,
             children: [],
@@ -354,7 +405,6 @@ instance.web.PivotView = instance.web.View.extend({
         return find_path_in_tree(root, path);
     },
     display_table: function () {
-        console.log('display_table', this);
         if (!this.active_measures.length || !this.has_data) {
             return this.$table_container.empty().append(QWeb.render('PivotView.nodata'));
         }
@@ -373,9 +423,9 @@ instance.web.PivotView = instance.web.View.extend({
         }
         this.draw_headers($thead, headers);
         this.draw_rows($tbody, rows);
-        $table.on('hover', 'td', function () {
-            $table.find('col:eq(' + $(this).index()+')').toggleClass('hover');
-        });
+        // $table.on('hover', 'td', function () {
+        //     $table.find('col:eq(' + $(this).index()+')').toggleClass('hover');
+        // });
         this.$table_container.empty().append($fragment);
         this.$table_container.find('.oe-opened,.oe-closed').tooltip();
     },
@@ -384,7 +434,7 @@ instance.web.PivotView = instance.web.View.extend({
             i, j, cell, $row, $cell,
             display_total = this.main_col.width > 1;
 
-        var groupby_labels = _.map(this.col_groupbys, function (gb) {
+        var groupby_labels = _.map(this.main_col.groupbys, function (gb) {
             return self.groupable_fields[gb.split(':')[0]].string;
         });
 
@@ -425,7 +475,7 @@ instance.web.PivotView = instance.web.View.extend({
             length = rows[0].values.length,
             display_total = this.main_col.width > 1;
 
-        var groupby_labels = _.map(this.row_groupbys, function (gb) {
+        var groupby_labels = _.map(this.main_row.groupbys, function (gb) {
             return self.groupable_fields[gb.split(':')[0]].string;
         });
         var measure_types = this.active_measures.map(function (name) {
@@ -443,7 +493,7 @@ instance.web.PivotView = instance.web.View.extend({
             for (j = 0; j < length; j++) {
                 value = format_value(rows[i].values[j], {type: measure_types[j % nbr_measures]});
                 $cell = $('<td>').text(value);
-                if ((j >= length - this.active_measures.length) && display_total) {
+                if (((j >= length - this.active_measures.length) && display_total) || i === 0){
                     $cell.css('font-weight', 'bold');   
                 }
                 $row.append($cell);
@@ -464,7 +514,7 @@ instance.web.PivotView = instance.web.View.extend({
                 cell = {
                     width: self.get_header_width(header) * nbr_measures,
                     height: header.expanded ? 1 : depth - index,
-                    title: header.title,
+                    title: header.path[header.path.length-1],
                     id: header.id,
                     expanded: header.expanded,
                 };
@@ -524,7 +574,7 @@ instance.web.PivotView = instance.web.View.extend({
             result.push({
                 id: header.id,
                 indent: header.path.length - 1,
-                title: header.title,
+                title: header.path[header.path.length-1],
                 expanded: header.expanded,
                 values: values,              
             });
@@ -549,17 +599,12 @@ instance.web.PivotView = instance.web.View.extend({
         if ((id1 in this.cells) && (id2 in this.cells[id1])) {
             return this.cells[id1][id2];
         }
-        return this.cells[id2][id1];
+        if (id2 in this.cells) return this.cells[id2][id1];
     },
     flip: function () {
         var temp = this.main_col;
         this.main_col = this.main_row;
         this.main_row = temp;
-
-        temp = this.row_groupbys;
-        this.row_groupbys = this.col_groupbys;
-        this.col_groupbys = temp;
-
         this.display_table();
     },
     toggle_measure: function (field) {
