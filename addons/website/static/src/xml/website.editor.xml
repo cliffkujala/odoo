@@ -336,10 +336,26 @@
         </div>
     </t>
 
+    <t t-name="website.editor.dialog.alt">
+        <t t-call="website.editor.dialog">
+            <t t-set="title">Change media Alt and Title</t>
+            <form action="#" class="form-horizontal">
+                <div class="form-group">
+                    <label for="alt" class="col-sm-2 control-label">Alt:</label>
+                    <div class="col-sm-9"><input id="alt" type="text" class="form-control" required="required" t-att-value="widget.alt"/></div>
+                </div>
+                <div class="form-group">
+                    <label for="title" class="col-sm-2 control-label">Title:</label>
+                    <div class="col-sm-9"><input id="title" type="text" class="form-control" required="required" t-att-value="widget.title"/></div>
+                </div>
+            </form>
+        </t>
+    </t>
+
     <t t-name="website.editor.dialog.font-icons">
         <form action="#">
             <input type="hidden" id="fa-icon"/>
-            <input type="hidden" id="fa-size"/>
+            <input type="hidden" id="fa-size" value="fa-1x"/>
             <div class="font-icons-icons">
                 <t t-call="website.editor.dialog.font-icons.icons">
                     <t t-set="icons" t-value="widget.icons"/>

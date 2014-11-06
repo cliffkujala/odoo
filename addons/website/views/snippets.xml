@@ -644,46 +644,45 @@
             <div class="container">
                 <div class="row">
                     <div class="col-md-5 text-center">
-                        <h2>List of Features</h2>
-                        <h4 class="text-muted">Add a great slogan</h4>
-                    </div>
-                    <div class="col-md-5 text-center col-md-offset-2">
-                        <h2>Second List</h2>
-                        <h4 class="text-muted">Add a great slogan</h4>
-                    </div>
-                </div><div class="row">
-                    <div class="col-md-5 mt16 mb16">
-                        <div class="row">
-                          <div class="col-md-12">
+                        <div class="col-md-12 mt16 mb16">
+                            <h2>List of Features</h2>
+                            <h4 class="text-muted">Add a great slogan</h4>
+                        </div>
+                        <div class="col-md-12">
                             <span style="min-width: 45px" class="fa fa-3x fa-comment pull-left mb16"></span>
                             <h3 class="mt0 mb0">Change Icons</h3>
                             <p>Click on the icon to adapt it to your feature</p>
-                          </div><div class="col-md-12">
+                        </div>
+                        <div class="col-md-12">
                             <span style="min-width: 45px" class="fa fa-3x fa-columns pull-left mb16"></span>
                             <h3 class="mt0 mb0">Duplicate</h3>
                             <p>Duplicate blocks to add more features.</p>
-                          </div><div class="col-md-12">
+                        </div>
+                        <div class="col-md-12">
                             <span style="min-width: 45px" class="fa fa-3x fa-user pull-left mb16"></span>
                             <h3 class="mt0 mb0">Delete Blocks</h3>
                             <p class="text-muted">Select and delete blocks to remove some features.</p>
-                          </div>
                         </div>
                     </div>
-                    <div class="col-md-5 col-md-offset-2 mt16 mb16">
-                        <div class="row">
-                          <div class="col-md-12">
+                    <div class="col-md-5 text-center col-md-offset-2">
+                        <div class="col-md-12 mt16 mb16">
+                            <h2>Second List</h2>
+                            <h4 class="text-muted">Add a great slogan</h4>
+                        </div>
+                        <div class="col-md-12">
                             <span style="min-width: 45px" class="fa fa-3x fa-magic pull-left mb16"></span>
                             <h3 class="mt0 mb0">Great Value</h3>
                             <p>Tell features the visitor would like to know, not what you'd like to say.</p>
-                          </div><div class="col-md-12">
+                        </div>
+                        <div class="col-md-12">
                             <span style="min-width: 45px" class="fa fa-3x fa-bolt pull-left mb16"></span>
                             <h3 class="mt0 mb0">Change Background</h3>
                             <p>From the main container, you can change the background to highlight features.</p>
-                          </div><div class="col-md-12">
+                        </div>
+                        <div class="col-md-12">
                             <span style="min-width: 45px" class="fa fa-3x fa-picture-o pull-left mb16"></span>
                             <h3 class="mt0 mb0">Sample images</h3>
                             <p>All these icons are licensed under creative commons so that you can use them.</p>
-                          </div>
                         </div>
                     </div>
                 </div>

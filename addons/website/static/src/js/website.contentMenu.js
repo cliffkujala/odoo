@@ -13,7 +13,7 @@
                 ev.preventDefault();
                 var $content_item = $(this);
                 self[$content_item.data('action')]();
-            })
+            });
             
             return this._super();
         },

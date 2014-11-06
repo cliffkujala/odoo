@@ -1594,22 +1594,23 @@
 
     website.snippet.options.media = website.snippet.Option.extend({
         start: function () {
-            var self = this;
             this._super();
-
             website.snippet.start_animation(true, this.$target);
-
-            $(this.$target).on("saved", self, function (event, prev , item) {
-                self.editor.on_blur();
-                self.BuildingBlock.make_active(false);
-                if (self.$target.parent().data("oe-field") !== "image") {
-                    self.BuildingBlock.make_active($(item));
-                }
-            });
         },
         edition: function (type, value) {
             if(type !== "click") return;
-            new website.editor.MediaDialog(this.$target.closest('.o_editable'), this.$target[0]).appendTo(document.body);
+            var self = this;
+            var editor = new website.editor.MediaDialog(this.$target.closest('.o_editable'), this.$target[0]);
+            editor.appendTo(document.body);
+            editor.on('saved', this, function (item, old) {
+                self.editor.on_blur();
+                self.BuildingBlock.make_active(false);
+                if (self.$target.parent().data("oe-field") !== "image") {
+                    setTimeout(function () {
+                        self.BuildingBlock.make_active($(item));
+                    },0);
+                }
+            });
         },
         on_focus : function () {
             var self = this;
@@ -1617,7 +1618,7 @@
 
             if ($parent.data("oe-field") === "image" && $parent.hasClass('o_editable')) {
                 this.$overlay.addClass("hidden");
-                new website.editor.MediaDialog(self.$target.closest('.o_editable'), self.$target[0]).appendTo(document.body);
+                self.edition('click', null);
                 self.BuildingBlock.make_active(false);
             }
         },

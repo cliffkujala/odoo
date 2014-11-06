@@ -53,7 +53,9 @@
         $imagePopover.find('button[data-event="removeMedia"]').parent().remove();
         $imagePopover.find('button[data-event="floatMe"][data-value="none"]').remove();
 
-        $imagePopover.find('.popover-content').prepend('<span><strong>Alt: </strong><span class="o_image_alt"></span></span>&nbsp;&nbsp;');
+        var $alt = $('<div class="btn-group"/>');
+        $alt.prependTo($imagePopover.find('.popover-content'));
+        $alt.append('<button class="btn btn-default btn-sm btn-small" data-event="alt"><strong>Alt: </strong><span class="o_image_alt"></span></button>');
 
         // padding button
         var $padding = $('<div class="btn-group"/>');
@@ -254,12 +256,15 @@
         editor.appendTo(document.body);
         return new $.Deferred().reject();
     };
+    eventHandler.editor.alt = function ($editable) {
+        new website.editor.alt($editable, range.create().sc).appendTo(document.body);
+    };
 
     dom.isImg = function (node) {
         return node && (node.nodeName === "IMG" ||
             (node.nodeName === "SPAN" && node.className.match(/(^|\s)fa(-|\s|$)/i)) ||
             (node.className && node.className.match(/(^|\s)media_iframe_video(\s|$)/i)) ||
-            (node.parentNode.className && node.parentNode.className.match(/(^|\s)media_iframe_video(\s|$)/i)) );
+            (node.parentNode && node.parentNode.className && node.parentNode.className.match(/(^|\s)media_iframe_video(\s|$)/i)) );
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1296,40 +1301,49 @@
         }
     });
 
-    website.editor.Media = openerp.Widget.extend({
-        init: function (parent, media) {
-            this._super();
-            this.parent = parent;
+    /**
+     * alt widget. Lets users change a alt & title on a media
+     */
+    website.editor.alt = website.editor.Dialog.extend({
+        template: 'website.editor.dialog.alt',
+        init: function ($editable, media) {
+            this.$editable = $editable;
             this.media = media;
-        },
-        start: function () {
-            this.$preview = this.$('.preview-container').detach();
+            this.alt = $(this.media).attr('alt') || "";
+            this.title = $(this.media).attr('title') || "";
             return this._super();
         },
-        search: function (needle) {
-        },
         save: function () {
-        },
-        clear: function () {
-        },
-        cancel: function () {
-        },
-        close: function () {
+            var self = this;
+            range.createFromNode(self.media).select();
+            this.$editable.data('NoteHistory').recordUndo(this.$editable);
+            $(this.media).attr('alt', this.$('#alt').val() || null).attr('title', this.$('#title').val() || null);
+            setTimeout(function () {
+                $(self.media).trigger("mouseup");
+            },0);
+            return this._super();
         },
     });
 
+    /**
+     * MediaDialog widget. Lets users change a media, including uploading a
+     * new image, font awsome or video and can change a media into an other
+     * media
+     */
     website.editor.MediaDialog = website.editor.Dialog.extend({
         template: 'website.editor.dialog.media',
         events : _.extend({}, website.editor.Dialog.prototype.events, {
             'input input#icon-search': 'search',
         }),
         init: function ($editable, media) {
+            var self = this;
             this._super();
             if ($editable) {
                 this.$editable = $editable;
                 this.rte = this.$editable.rte || this.$editable.data('rte');
             }
             this.media = media;
+            this.isNewMedia = !media;
         },
         start: function () {
             var self = this;
@@ -1353,7 +1367,7 @@
                 }
             }
 
-            this.imageDialog = new website.editor.RTEImageDialog(this, this.media);
+            this.imageDialog = new website.editor.ImageDialog(this, this.media);
             this.imageDialog.appendTo(this.$("#editor-media-image"));
             this.iconDialog = new website.editor.FontIconsDialog(this, this.media);
             this.iconDialog.appendTo(this.$("#editor-media-icon"));
@@ -1380,7 +1394,6 @@
         },
         save: function () {
             if(this.rte) this.rte.historyRecordUndo(this.$editable);
-            this.trigger("save");
 
             var self = this;
             if (self.media) {
@@ -1400,15 +1413,21 @@
                 this.active.media = this.media;
                 this.media.className = "img-responsive pull-left";
             }
-            var $el = $(self.active.media);
+
             this.active.save();
-            //this.media.className = this.media.className.replace(/\s+/g, ' ');
+
+            self.trigger("saved", self.active.media, self.media);
             setTimeout(function () {
-                $el.trigger("saved", self.active.media);
-                $(document.body).trigger("media-saved", [$el[0], self.active.media]);
-                range.create(self.active.media, 0, self.active.media.nextSibling || self.active.media, 0).select();
+                range.createFromNode(self.active.media).select();
                 $(self.active.media).trigger("mouseup");
+                if (self.isNewMedia) {
+                    setTimeout(function () {
+                        var e = jQuery.Event( "click", { srcElement: self.active.media } );
+                        $(self.active.media).trigger(e);
+                    },0);
+                }
             },0);
+
             this._super();
         },
         searchTimer: null,
@@ -1426,22 +1445,10 @@
      * ImageDialog widget. Lets users change an image, including uploading a
      * new image in OpenERP or selecting the image style (if supported by
      * the caller).
-     *
-     * Initialized as usual, but the caller can hook into two events:
-     *
-     * @event start({url, style}) called during dialog initialization and
-     *                            opening, the handler can *set* the ``url``
-     *                            and ``style`` properties on its parameter
-     *                            to provide these as default values to the
-     *                            dialog
-     * @event save({url, style}) called during dialog finalization, the handler
-     *                           is provided with the image url and style
-     *                           selected by the users (or possibly the ones
-     *                           originally passed in)
      */
     var IMAGES_PER_ROW = 6;
     var IMAGES_ROWS = 2;
-    website.editor.ImageDialog = website.editor.Media.extend({
+    website.editor.ImageDialog = openerp.Widget.extend({
         template: 'website.editor.dialog.image',
         events: _.extend({}, website.editor.Dialog.prototype.events, {
             'change .url-source': function (e) {
@@ -1469,16 +1476,24 @@
             'click .existing-attachment-remove': 'try_remove',
         }),
         init: function (parent, media) {
-            this.page = 0;
-            this._super(parent, media);
+            this._super();
+            this.parent = parent;
+            this.media = media;
+            this.search('');
         },
         start: function () {
+            this.$preview = this.$('.preview-container').detach();
             var self = this;
             var res = this._super();
             var o = { url: null, alt: null };
             // avoid typos, prevent addition of new properties to the object
             Object.preventExtensions(o);
-            this.trigger('start', o);
+
+            if (!this.media) { this.media = document.getElementsByClassName('insert-media')[0]; }
+            var el = this.media;
+            if (!el) { return; }
+            o.url = el.getAttribute('src');
+
             this.parent.$(".pager > li").click(function (e) {
                 e.preventDefault();
                 var $target = $(e.currentTarget);
@@ -1492,6 +1507,7 @@
             return res;
         },
         save: function () {
+            this.parent.trigger("save", this.media);
             if (!this.link) {
                 this.link = this.$(".existing-attachments img:first").attr('src');
                 this.alt = this.$(".existing-attachments img:first").attr('alt');
@@ -1503,13 +1519,26 @@
                 this.media = media;
             }
 
-            this.trigger('save', {
-                url: this.link,
-                alt: this.alt
-            });
-
             $(this.media).attr('src', this.link).attr('alt', this.alt);
-            return this._super();
+            
+            var res = this._super();
+
+            var element = document.getElementsByClassName('insert-media')[0];
+            $('p').removeClass('insert-media');
+            if (!(element = this.media)) {
+                element = document.createElement('img');
+                element.addClass('img');
+                element.addClass('img-responsive');
+                setTimeout(function () {
+                    editor.insertElement(element);
+                }, 0);
+                this.media = element;
+            }
+            var style = this.style;
+            element.setAttribute('src', this.link);
+            if (style) { element.addClass(style); }
+
+            return res;
         },
         clear: function () {
             this.media.className = this.media.className.replace(/(^|\s)(img(\s|$)|img-[^\s]*)/g, ' ');
@@ -1666,35 +1695,6 @@
         },
     });
 
-    website.editor.RTEImageDialog = website.editor.ImageDialog.extend({
-        init: function (parent, editor, media) {
-            this._super(parent, editor, media);
-            this.on('start', this, this.proxy('started'));
-            this.on('save', this, this.proxy('saved'));
-        },
-        started: function (holder) {
-            if (!this.media) { this.media = document.getElementsByClassName('insert-media')[0]; }
-            var el = this.media;
-            if (!el) { return; }
-            holder.url = el.getAttribute('src');
-        },
-        saved: function (data) {
-            var element = document.getElementsByClassName('insert-media')[0];
-            $('p').removeClass('insert-media');
-            if (!(element = this.media)) {
-                element = document.createElement('img');
-                element.addClass('img');
-                element.addClass('img-responsive');
-                setTimeout(function () {
-                    editor.insertElement(element);
-                }, 0);
-            }
-            var style = data.style;
-            element.setAttribute('src', data.url);
-            if (style) { element.addClass(style); }
-        },
-    });
-
     function getCssSelectors(filter) {
         var classes = [];
         var sheets = document.styleSheets;
@@ -1711,7 +1711,11 @@
         return classes;
     }
 
-    website.editor.FontIconsDialog = website.editor.Media.extend({
+    /**
+     * FontIconsDialog widget. Lets users change a font awsome, suport all
+     * font awsome loaded in the css files.
+     */
+    website.editor.FontIconsDialog = openerp.Widget.extend({
         template: 'website.editor.dialog.font-icons',
         events : _.extend({}, website.editor.Dialog.prototype.events, {
             change: 'update_preview',
@@ -1732,11 +1736,14 @@
         }),
         // extract list of FontAwesome from the cheatsheet.
         icons: getCssSelectors(/(?=^|\s)(\.fa-[0-9a-z_-]+)/i).splice(22, Infinity),
-        /*
-         * Initializes select2: in Chrome and Safari, <select> font apparently
-         * isn't customizable (?) and the fontawesome glyphs fail to appear.
-         */
+
+        init: function (parent, media) {
+            this._super();
+            this.parent = parent;
+            this.media = media;
+        },
         start: function () {
+            this.$preview = this.$('.preview-container').detach();
             return this._super().then(this.proxy('load_data'));
         },
         search: function (needle) {
@@ -1756,12 +1763,13 @@
          * all the new ones if necessary.
          */
         save: function () {
+            this.parent.trigger("save", this.media);
             if (! this.media){
                 var $image = this.$el.find('.font-icons-selected');
                 var rng = range.create()
                 if($('.insert-media').length){
                     rng = document.createRange();
-                    rng.selectNodeContents(document.getElementsByClassName('insert-media')[0])
+                    rng.selectNodeContents(document.getElementsByClassName('insert-media')[0]);
                     $('p').removeClass('insert-media');
                 }
                 rng.insertNode($image[0]);
@@ -1857,7 +1865,11 @@
         },
     });
 
-    website.editor.VideoDialog = website.editor.Media.extend({
+    /**
+     * VideoDialog widget. Lets users change a video, support all summernote
+     * video, and embled iframe
+     */
+    website.editor.VideoDialog = openerp.Widget.extend({
         template: 'website.editor.dialog.video',
         events : _.extend({}, website.editor.Dialog.prototype.events, {
             'click input#urlvideo ~ button': 'get_video',
@@ -1867,7 +1879,13 @@
             'change input#embedvideo': 'change_input',
             'keyup input#embedvideo': 'change_input'
         }),
+        init: function (parent, media) {
+            this._super();
+            this.parent = parent;
+            this.media = media;
+        },
         start: function () {
+            this.$preview = this.$('.preview-container').detach();
             this.$iframe = this.$("iframe");
             var $media = $(this.media);
             if ($media.hasClass("media_iframe_video")) {
@@ -1903,6 +1921,7 @@
             return false;
         },
         save: function () {
+            this.parent.trigger("save", this.media);
             var video_id = this.$("#video_id").val();
             if (!video_id) {
                 this.$("button.btn-primary").click();

@@ -160,7 +160,11 @@
     website.snippet.animationRegistry.media_video = website.snippet.Animation.extend({
         selector: ".media_iframe_video",
         start: function () {
-            this.$target.html('<div class="css_editable_mode_display">&nbsp;</div><div class="media_iframe_video_size">&nbsp;</div><iframe src="'+this.$target.data("src")+'" frameborder="0" allowfullscreen="allowfullscreen"></iframe>');
+            if (!this.$target.has('.media_iframe_video_size')) {
+                var editor = '<div class="css_editable_mode_display">&nbsp;</div>';
+                var size = '<div class="media_iframe_video_size">&nbsp;</div>';
+                this.$target.html(editor+size+'<iframe src="'+this.$target.data("src")+'" frameborder="0" allowfullscreen="allowfullscreen"></iframe>');
+            }
         },
     });
     

@@ -433,7 +433,6 @@
         var ancestor = dom.commonAncestor(sc, ec);
 
         if (ancestor.tagName) {
-
             var ancestor_sc = sc;
             var ancestor_ec = ec;
             while (ancestor !== ancestor_sc && ancestor !== ancestor_sc.parentNode) { ancestor_sc = ancestor_sc.parentNode; }
@@ -445,7 +444,7 @@
             var nodes = dom.listBetween(begin, last);
             sc = dom.lastChild(begin.previousSibling || begin);
             so = sc.textContent.length;
-            
+
             for (var i=0; i<nodes.length; i++) {
                 nodes[i].parentNode.removeChild(nodes[i]);
             }
@@ -459,7 +458,7 @@
         } else {
 
             var text = ancestor.textContent;
-            ancestor.textContent = text.slice(0, so) + text.slice(eo, Infinity);
+            ancestor.textContent = text.slice(0, so) + text.slice(eo-1, Infinity);
 
         }
         return {
@@ -842,7 +841,7 @@
         var isCollapsed = r.isCollapsed();
         if (!isCollapsed) {
             r = r.deleteContents().select();
-            return;
+            return false;
         }
 
         var node = r.ec;
@@ -885,9 +884,13 @@
             node.parentNode.removeChild(node);
         }
         // normal feature if same tag and not the end
-        else if (r.sc===r.ec && r.eo<content.length && content.length) return true;
+        else if (r.sc===r.ec && r.eo<content.length && content.length) {
+            return true;
+        }
         // merge with the next text node
-        else if (!r.ec.tagName && r.ec.nextSibling && (!r.sc.nextSibling.tagName || r.sc.nextSibling.tagName === "BR")) return true;
+        else if (!r.ec.tagName && r.ec.nextSibling && (!r.sc.nextSibling.tagName || r.sc.nextSibling.tagName === "BR")) {
+            return true;
+        }
         // jump to next node for delete
         else if ((temp = dom.ancestorHaveNextSibling(r.sc)) && temp.tagName  !== ((temp2 = dom.hasContentAfter(temp) || {}).tagName) ||
                 // ul in li check
@@ -952,7 +955,7 @@
         var r = range.create();
         if (!r.isCollapsed()) {
             r = r.deleteContents().select();
-            return;
+            return false;
         }
 
         var node = r.sc;
@@ -1000,9 +1003,13 @@
             node.parentNode.removeChild(node);
         }
         // normal feature if same tag and not the begin
-        else if (r.sc===r.ec && r.so || r.eo) return true;
+        else if (r.sc===r.ec && r.so || r.eo) {
+            return true;
+        }
         // merge with the previous text node
-        else if (!r.ec.tagName && r.ec.previousSibling && (!r.sc.previousSibling.tagName || r.sc.previousSibling.tagName === "BR")) return true;
+        else if (!r.ec.tagName && r.ec.previousSibling && (!r.sc.previousSibling.tagName || r.sc.previousSibling.tagName === "BR")) {
+            return true;
+        }
         // jump to previous node for delete
         else if ((temp = dom.ancestorHavePreviousSibling(r.sc)) && temp.tagName  !== ((temp2 = dom.hasContentBefore(temp) || {}).tagName) ||
                 // ul in li check

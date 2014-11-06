@@ -174,7 +174,7 @@ class Website(openerp.addons.web.controllers.main.Home):
 
         if noredirect:
             return werkzeug.wrappers.Response(url, mimetype='text/plain')
-        return werkzeug.utils.redirect(url)
+        return werkzeug.utils.redirect(url + "?enable_editor=1")
 
     @http.route(['/website/snippets'], type='json', auth="public", website=True)
     def snippets(self):
