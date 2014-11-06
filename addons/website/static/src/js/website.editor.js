@@ -1479,7 +1479,7 @@
             this._super();
             this.parent = parent;
             this.media = media;
-            this.search('');
+            this.page = 0;
         },
         start: function () {
             this.$preview = this.$('.preview-container').detach();
@@ -1504,6 +1504,7 @@
                 self.display_attachments();
             });
             this.set_image(o.url);
+            this.fetch_existing();
             return res;
         },
         save: function () {
@@ -1617,8 +1618,8 @@
                 method: 'search_read',
                 args: [],
                 kwargs: {
-                    fields: ['name', 'website_url'],
                     domain: domain,
+                    fields: ['name', 'website_url'],
                     order: 'id desc',
                     context: website.get_context(),
                 }
