@@ -23,7 +23,7 @@ import logging
 import time
 import uuid
 
-from openerp import tools
+from openerp import tools, models
 from openerp.osv import fields, osv
 from openerp.tools.translate import _
 
@@ -1446,6 +1446,15 @@ class res_partner(osv.osv):
         
         return partner_id
 
+class barcode_rule(models.Model):
+    _inherit = 'barcode.rule'
 
+    type = openerp.fields.Selection(selection_add=[
+                                                    ('weight','Weighted Product'),
+                                                    ('price','Priced Product'),
+                                                    ('discount','Discounted Product'),
+                                                    ('client','Client'),
+                                                    ('cashier','Cashier')
+                                                ])
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
