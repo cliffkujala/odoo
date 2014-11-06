@@ -70,7 +70,6 @@ instance.web.PivotView = instance.web.View.extend({
             }
         });
         var another_ctx = {fields: _.pairs(this.groupable_fields)};
-        console.log("anotherctx", another_ctx);
         this.$field_selection = this.$('.o-field-selection');
         this.$field_selection.html(QWeb.render('PivotView.FieldSelection', another_ctx));
         openerp.web.bus.on('click', self, function () {
@@ -326,11 +325,16 @@ instance.web.PivotView = instance.web.View.extend({
         }
         if (should_update) {
             this.update_tree(this.main_row.root, main_row_header);
+            var new_groupby_length = this.get_header_depth(main_row_header) - 1;
+            main_row_header.groupbys = this.main_row.root.groupbys.slice(0, new_groupby_length);
             this.update_tree(this.main_col.root, main_col_header);
+            new_groupby_length = this.get_header_depth(main_col_header) - 1;
+            main_col_header.groupbys = this.main_col.root.groupbys.slice(0, new_groupby_length);
+        } else {
+            main_row_header.groupbys = this.main_row.groupbys;
+            main_col_header.groupbys = this.main_col.groupbys;
         }
-        main_row_header.groupbys = this.main_row.groupbys;
         main_row_header.other_root = main_col_header;
-        main_col_header.groupbys = this.main_col.groupbys;
         main_col_header.other_root = main_row_header;
         this.main_row.root = main_row_header;
         this.main_col.root = main_col_header;
@@ -423,9 +427,9 @@ instance.web.PivotView = instance.web.View.extend({
         }
         this.draw_headers($thead, headers);
         this.draw_rows($tbody, rows);
-        // $table.on('hover', 'td', function () {
-        //     $table.find('col:eq(' + $(this).index()+')').toggleClass('hover');
-        // });
+        $table.on('hover', 'td', function () {
+            $table.find('col:eq(' + $(this).index()+')').toggleClass('hover');
+        });
         this.$table_container.empty().append($fragment);
         this.$table_container.find('.oe-opened,.oe-closed').tooltip();
     },

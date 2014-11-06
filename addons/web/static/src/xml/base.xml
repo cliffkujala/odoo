@@ -943,15 +943,15 @@
         <t t-foreach="fields" t-as="field">
             <t t-if="(field[1].type === 'date') || (field[1].type === 'datetime')">
                 <li class="pivot-dropdown-submenu" t-att-data-field="field[0]">
-                    <a class="field-selection" href="#">
+                    <a class="field-selection">
                         <t t-esc="field[1].string"/>
                     </a>
                     <ul class="dropdown-menu">
-                        <li t-att-data-field="field[0]"><a href="#" t-att-data-interval="'day'">Day</a></li>
-                        <li t-att-data-field="field[0]"><a href="#" t-att-data-interval="'week'">Week</a></li>
-                        <li t-att-data-field="field[0]"><a href="#" t-att-data-interval="'month'">Month</a></li>
-                        <li t-att-data-field="field[0]"><a href="#" t-att-data-interval="'quarter'">Quarter</a></li>
-                        <li t-att-data-field="field[0]"><a href="#" t-att-data-interval="'year'">Year</a></li>
+                        <li t-att-data-field="field[0]"><a t-att-data-interval="'day'">Day</a></li>
+                        <li t-att-data-field="field[0]"><a t-att-data-interval="'week'">Week</a></li>
+                        <li t-att-data-field="field[0]"><a t-att-data-interval="'month'">Month</a></li>
+                        <li t-att-data-field="field[0]"><a t-att-data-interval="'quarter'">Quarter</a></li>
+                        <li t-att-data-field="field[0]"><a t-att-data-interval="'year'">Year</a></li>
                     </ul>
                 </li>
             </t>
