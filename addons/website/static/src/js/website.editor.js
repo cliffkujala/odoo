@@ -276,26 +276,12 @@
     *  - display editor popover
     */
 
-    function reRangeSelect (event) {
+    function reRangeSelect (event, dx, dy) {
         var r = range.create();
         if (!r || r.isCollapsed()) return;
 
         // check if the user move the caret on up or down
-        var ref = false;
-        var node = r.sc;
-        var parent = r.ec.parentNode;
-        while (node) {
-            if (parent === node) {
-                break;
-            }
-            if(event.target === node || event.target.parentNode === node) { /*check parent node for image, iframe and tag without child text node*/
-                ref = true;
-                break;
-            }
-            node = node.parentNode;
-        }
-
-        var data = range.reRange(r.sc, r.so, r.ec, r.eo, ref);
+        var data = range.reRange(r.sc, r.so, r.ec, r.eo, dy < 0);
 
         if (data.sc !== r.sc || data.so !== r.so || data.ec !== r.ec || data.eo !== r.eo) {
             setTimeout(function () {
@@ -307,19 +293,25 @@
         return r;
     }
     var cursor_mousedown;
+    $(document).mousedown(function (event) {
+        cursor_mousedown = event;
+    });
     function summernote_mouseup (event) {
         if ($(event.target).closest("#website-top-navbar, .note-popover").length) {
             return;
         }
         // don't rerange if simple click
-        // if (!cursor_mousedown || 10 < Math.pow(cursor_mousedown.clientX-event.clientX, 2)+Math.pow(cursor_mousedown.clientY-event.clientY, 2) ) {
-        //     reRangeSelect(event);
-        // }
+        if (cursor_mousedown) {
+            var dx = event.clientX-cursor_mousedown.clientX;
+            var dy = event.clientY-cursor_mousedown.clientY;
+            if (10 < Math.pow(dx, 2)+Math.pow(cursor_mousedown.clientY-event.clientY, 2) ) {
+                reRangeSelect(event, dx, dy);
+            }
+        }
     }
     function summernote_mousedown (event) {
         history.splitNext();
 
-        cursor_mousedown = event;
         var $btn = $(event.target).closest('.note-popover');
         if ($btn.length) {
             var r = range.create();
