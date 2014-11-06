@@ -1522,8 +1522,6 @@
 
             $(this.media).attr('src', this.link).attr('alt', this.alt);
             
-            var res = this._super();
-
             var element = document.getElementsByClassName('insert-media')[0];
             $('p').removeClass('insert-media');
             if (!(element = this.media)) {
@@ -1538,8 +1536,6 @@
             var style = this.style;
             element.setAttribute('src', this.link);
             if (style) { element.addClass(style); }
-
-            return res;
         },
         clear: function () {
             this.media.className = this.media.className.replace(/(^|\s)(img(\s|$)|img-[^\s]*)/g, ' ');
