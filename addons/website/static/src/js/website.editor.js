@@ -166,7 +166,7 @@
                 oStyle.image = oStyle.image.parentNode;
             }
             var alt =  $(oStyle.image).attr("alt");
-            $imagePopover.find('.o_image_alt').text( alt || "" ).parent().toggle(!!alt);
+            $imagePopover.find('.o_image_alt').text( alt || "" ).parent().toggle(oStyle.image.tagName === "IMG");
             $imagePopover.show();
             range.create(oStyle.image, 0, dom.firstChild(dom.ancestorHaveNextSibling(oStyle.image).nextSibling), 0).select();
         }
@@ -1490,20 +1490,20 @@
             Object.preventExtensions(o);
 
             if (!this.media) { this.media = document.getElementsByClassName('insert-media')[0]; }
-            var el = this.media;
-            if (!el) { return; }
-            o.url = el.getAttribute('src');
+            if (this.media) {
+                o.url = this.media.getAttribute('src');
 
-            this.parent.$(".pager > li").click(function (e) {
-                e.preventDefault();
-                var $target = $(e.currentTarget);
-                if ($target.hasClass('disabled')) {
-                    return;
-                }
-                self.page += $target.hasClass('previous') ? -1 : 1;
-                self.display_attachments();
-            });
-            this.set_image(o.url);
+                this.parent.$(".pager > li").click(function (e) {
+                    e.preventDefault();
+                    var $target = $(e.currentTarget);
+                    if ($target.hasClass('disabled')) {
+                        return;
+                    }
+                    self.page += $target.hasClass('previous') ? -1 : 1;
+                    self.display_attachments();
+                });
+                this.set_image(o.url);
+            }
             this.fetch_existing();
             return res;
         },
@@ -1785,7 +1785,6 @@
                 }
                 $(this.media).attr("class", final_classes.join(' ')).attr("style", style);
             }
-            this._super();
         },
         /**
          * Looks up the various FontAwesome classes on the bound element and
@@ -1934,7 +1933,6 @@
             $('.insert-media').replaceWith($iframe);
             $(this.media).replaceWith($iframe);
             this.media = $iframe[0];
-            this._super();
         },
         clear: function () {
             delete this.media.dataset.src;
