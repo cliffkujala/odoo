@@ -643,21 +643,6 @@
     settings.options.keyMap.mac['CMD+BACKSPACE'] = 'delete';
     settings.options.keyMap.mac['ENTER'] = 'enter';
     settings.options.keyMap.mac['ESCAPE'] = 'cancel';
-
-    function clean_dom_onkeydown () {
-        setTimeout(function () {
-            var r = range.create();
-            if (!r) return;
-            var parent = r.sc.parentElement.parentElement;
-            r = r.clean();
-            if (r.ec.tagName === "BR") {
-                r.sc = r.ec = r.sc.previousSibling || r.sc.parentNode;
-            }
-            r.eo = r.eo > r.ec.textContent.length ? r.ec.textContent.length : r.eo;
-            if (r.so > r.eo) r.so = r.eo;
-            range.create(r.sc, r.so, r.ec, r.eo).select();
-        },0);
-    }
     
     settings.options.merge = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li a ul ol font".split(" ");
     settings.options.split = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li a font".split(" ");
@@ -954,7 +939,6 @@
                 }
             }
         }
-        clean_dom_onkeydown();
         return false;
     };
     eventHandler.editor.backspace = function ($editable, options) {
@@ -963,6 +947,12 @@
         var r = range.create();
         if (!r.isCollapsed()) {
             r = r.deleteContents().select();
+            return false;
+        }
+
+        // delete an image
+        if (r.sc.tagName === "IMG") {
+            this.delete($editable, options);
             return false;
         }
 
@@ -1066,8 +1056,6 @@
                 range.create(node, 0, node, 0).select();
             }
         }
-
-        clean_dom_onkeydown();
         return false;
     };
 

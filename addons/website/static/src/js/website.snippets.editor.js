@@ -1559,11 +1559,13 @@
             $(document).on('mouseup', function (event) {
                 if (self.$target[0] !== event.target && self.$overlay.hasClass('oe_active') && !$.contains(self.$overlay[0], event.target)) {
                     var summernote = self.$target.closest('.o_editable').data('summernote');
-                    summernote.popover.find('.note-air-popover, .note-link-popover').hide();
-                    summernote.popover.find('.note-image-popover').show();
-                    setTimeout(function () {
-                        summernote.handle.show();
-                    });
+                    if (summernote) {
+                        summernote.popover.find('.note-air-popover, .note-link-popover').hide();
+                        summernote.popover.find('.note-image-popover').show();
+                        setTimeout(function () {
+                            summernote.handle.show();
+                        });
+                    }
                 }
             });
         },
