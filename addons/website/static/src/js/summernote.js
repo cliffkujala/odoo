@@ -205,8 +205,8 @@
             eo = end.textContent.length-1;
         }
 
-        while (begin && begin.tagName && begin.firstChild) {begin = begin.firstChild;}
-        while (end && end.tagName && begin.firstChild) {end = end.firstChild;}
+        begin = dom.firstChild(begin);
+        end = dom.firstChild(end);
 
         function __merge (node) {
             var merged = false;
@@ -608,7 +608,7 @@
         );
     };
     range.WrappedRange.prototype.clean = function (mergeFilter) {
-        var node = this.sc === this.ec ? this.sc : this.commonAncestor();
+        var node = dom.node(this.sc === this.ec ? this.sc : this.commonAncestor());
         if (node.childNodes.length <=1) {
             return this;
         }
@@ -849,6 +849,9 @@
             return false;
         }
 
+        var data = dom.merge(r.sc.parentNode, r.sc, r.so, r.ec, r.eo, null, true);
+        r = range.create(data.sc, data.so).select();
+
         var node = r.ec;
         while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node) && !dom.isImg(node)) {node = node.parentNode;}
 
@@ -902,7 +905,7 @@
                 (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.lastElementChild && temp2.firstElementChild && temp.lastElementChild.tagName !== temp2.firstElementChild.tagName)) {
             temp2 = dom.firstChild(temp2);
             r = range.create(temp2, 0, temp2, 0).select();
-            return this.delete($editable, options);
+            return false;
         }
         //merge with the next block
         else if (r.isCollapsed() && r.eo>=content.length && settings.options.merge.indexOf(r.ec.parentNode.tagName.toLowerCase()) !== -1) {
@@ -963,6 +966,9 @@
             return false;
         }
 
+        var data = dom.merge(r.sc.parentNode, r.sc, r.so, r.ec, r.eo, null, true);
+        r = range.create(data.sc, data.so).select();
+
         var node = r.sc;
         while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node) && !dom.isImg(node)) {node = node.parentNode;}
 
@@ -1008,7 +1014,7 @@
             node.parentNode.removeChild(node);
         }
         // normal feature if same tag and not the begin
-        else if (r.sc===r.ec && r.so || r.eo) {
+        else if (r.sc===r.ec && r.so) {
             return true;
         }
         // merge with the previous text node
@@ -1021,7 +1027,7 @@
                 (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.firstElementChild && temp2.lastElementChild && temp.firstElementChild.tagName !== temp2.lastElementChild.tagName)) {
             temp2 = dom.lastChild(temp2);
             r = range.create(temp2, temp2.textContent.length, temp2, temp2.textContent.length).select();
-            return this.backspace($editable, options);
+            return false;
         }
         //merge with the previous block
         else if (r.isCollapsed() && !r.eo && settings.options.merge.indexOf(r.sc.parentNode.tagName.toLowerCase()) !== -1) {
