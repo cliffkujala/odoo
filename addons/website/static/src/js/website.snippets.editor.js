@@ -1566,6 +1566,7 @@
             this.resetTransfo();
         },
         move_summernote_select: function () {
+            var self = this;
             var transfo = this.$target.data("transfo");
             $('.note-handle')
                 .attr('style', transfo.$markup.attr('style'))

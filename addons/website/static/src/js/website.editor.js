@@ -186,7 +186,7 @@
             $imagePopover.find('.o_image_alt').text( alt || "" ).parent().toggle(oStyle.image.tagName === "IMG");
             $imagePopover.show();
 
-            range.createFromNode(oStyle.image).select();
+            range.createFromNode(dom.firstChild(oStyle.image)).select();
         }
 
         if (oStyle.anchor && (!oStyle.range.isCollapsed() || (oStyle.range.sc.tagName && !dom.isAnchor(oStyle.range.sc)) || (oStyle.image && !$(oStyle.image).closest('a').length))) {
@@ -212,6 +212,11 @@
         $selection.data('target', oStyle.image); // save current image element.
         var sSizing = szImage.w + 'x' + szImage.h;
         $selection.find('.note-control-selection-info').text(sSizing);
+
+        $selection.find('.note-control-sizing').toggleClass('note-control-sizing note-control-holder').css({
+                'border-top': 0,
+                'border-left': 0
+            });
     };
 
     $(document).on('click keyup', function () {
