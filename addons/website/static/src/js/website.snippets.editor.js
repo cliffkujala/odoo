@@ -1551,6 +1551,9 @@
                 .on("mousedown", function () {
                     self.$target.transfo("hide");
                 });
+            this.$target.on('attributes_change', function () {
+                self.resetTransfo();
+            });
         },
         style: function (type, value) {
             if (type !== 'click') return;
