@@ -2015,10 +2015,15 @@
         sLinkUrl = options.onCreateLink(sLinkUrl);
       }
 
-      rng = rng.deleteContents();
 
-      // Create a new link when there is no anchor on range.
-      var anchor = rng.insertNode($('<A>' + sLinkText + '</A>')[0]);
+      var anchor = dom.ancestor(rng.sc, dom.isAnchor); // fix odoo
+
+      if (!anchor) {
+        rng = rng.deleteContents();
+        // Create a new link when there is no anchor on range.
+        anchor = rng.insertNode($('<A>' + sLinkText + '</A>')[0]);
+      }
+
       $(anchor).attr({
         href: sLinkUrl,
         target: isNewWindow ? '_blank' : null // fix by odoo: don't have target in the dom if empty attribute
