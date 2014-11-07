@@ -1555,12 +1555,30 @@
         style: function (type, value) {
             if (type !== 'click') return;
             var settings = this.$target.data("transfo").settings;
-            this.$target.transfo({ hide: (settings.hide = !settings.hide) });
+            this.$target.transfo({ 'hide': (settings.hide = !settings.hide) });
         },
         clear_style: function (type, value) {
             if (type !== 'click') return;
             this.$target.removeClass("fa-spin").attr("style", "");
             this.resetTransfo();
+        },
+        move_summernote_select: function () {
+            var transfo = this.$target.data("transfo");
+            $('.note-handle')
+                .attr('style', transfo.$markup.attr('style'))
+                .css({
+                    'z-index': 0,
+                    'pointer-events': 'none'
+                })
+                .off('mousedown mouseup')
+                .on('mousedown mouseup', function (event) {
+                    self.$target.trigger( jQuery.Event( event.type, event ) );
+                })
+                .find('.note-control-selection').attr('style', transfo.$markup.find('.transfo-controls').attr('style'))
+                    .css({
+                        'display': 'block',
+                        'cursor': 'auto'
+                    });
         },
         resetTransfo: function () {
             var self = this;
@@ -1577,6 +1595,8 @@
                     });
                     self.$overlay.find(".oe_overlay_options").attr("style", "width:0; left:0!important; top:0;");
                     self.$overlay.find(".oe_overlay_options > .btn-group").attr("style", "width:160px; left:-80px;");
+
+                    self.move_summernote_select();
                 }});
             this.$target.data('transfo').$markup
                 .on("mouseover", function () {

@@ -197,6 +197,10 @@
         }
     };
 
+    eventHandler.handle.update = function ($handle, oStyle, isAirMode) {
+        $('.note-handle').toggle(!!oStyle.image);
+    };
+
     $(document).on('click keyup', function () {
         $('button[data-event="undo"]').attr('disabled', !history.hasUndo());
         $('button[data-event="redo"]').attr('disabled', !history.hasRedo());
