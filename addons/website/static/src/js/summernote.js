@@ -372,6 +372,9 @@
             eo: end && end.textContent.length > offsetEnd ? end.textContent.length - offsetEnd : 0
         };
     };
+    dom.node = function (node) {
+        return node.tagName ? node : node.parentNode;
+    };
     dom.pasteTextApply = "h1 h2 h3 h4 h5 h6 li".split(" ");
     dom.pasteTextClose = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li pre".split(" ");
     dom.pasteText = function (textNode, offset, text, isOnlyText) {
@@ -481,7 +484,7 @@
             node.scrollIntoViewIfNeeded(false);
             return;
         }
-        var node = node.tagName ? node : node.parentNode;
+        var node = dom.node(node);
         var offsetParent = node.offsetParent;
         while (offsetParent) {
             var elY = 0;
@@ -730,7 +733,7 @@
             return false;
         }
 
-        var node = !r.sc.tagName ? r.sc.parentNode : r.sc;
+        var node = dom.node(r.sc);
         var last = node;
         while (settings.options.split.indexOf(node.tagName.toLowerCase()) !== -1) {
             last = node;
@@ -913,7 +916,7 @@
 
             } else {
                 var check = false;
-                var node = r.sc.tagName ? dom.firstChild(r.sc) : r.sc;
+                var node = dom.firstChild(r.sc);
                 var nodes = [];
 
                 do {
@@ -938,7 +941,7 @@
                 range.create(r.ec, r.ec.textContent.length, r.ec, r.ec.textContent.length).select();
 
                 if (!merge) {
-                    var next = node.tagName ? node.nextElementSibling : node.parentNode.nextElementSibling;
+                    var next = dom.node(node).nextElementSibling;
                     while (next.firstElementChild) {
                         next = next.firstElementChild;
                     }
@@ -1032,7 +1035,7 @@
 
             } else {
                 var check = false;
-                var node = r.sc.tagName ? dom.firstChild(r.sc) : r.sc;
+                var node = dom.firstChild(r.sc);
                 var nodes = [];
 
                 do {
@@ -1322,7 +1325,7 @@
             document.execCommand('foreColor', false, "red");
             r = range.create();
         }
-        return $(dom.listBetween(r.sc, r.ec)).add(r.sc.tagName ? r.sc : r.sc.parentNode).add(r.sc.tagName ? r.sc : r.sc.parentNode).filter('font').removeAttr("color").get();
+        return $(dom.listBetween(r.sc, r.ec)).add(dom.node(r.sc)).add(dom.node(r.ec)).filter('font').removeAttr("color").get();
     }
     var color = {
         foreColor: function (nodes, sObjColor) {

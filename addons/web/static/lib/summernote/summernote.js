@@ -2424,8 +2424,7 @@
       }
 
       var $airPopover = $popover.find('.note-air-popover');
-      if (isAirMode && !oStyle.range.isCollapsed()) {
-        // if = Odoo fix for summernote if remove link with content = <br>
+      if (isAirMode && oStyle.range && !oStyle.range.isCollapsed()) { // Odoo fix for summernote if remove link with content = <br>
         var rect = list.last(oStyle.range.getClientRects());
         if (!rect) return;
         var bnd = func.rect2bnd(rect);
@@ -2957,6 +2956,7 @@
       setTimeout(function () {
         var oLayoutInfo = makeLayoutInfo(event.srcElement || event.target); // fix odoo
         var oStyle = editor.currentStyle(event.srcElement || event.target);
+
         if (!oStyle) { return; }
 
         var isAirMode = oLayoutInfo.editor().data('options').airMode;
