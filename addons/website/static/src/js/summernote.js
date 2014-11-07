@@ -764,11 +764,13 @@
             }
         }
 
-        node = dom.firstChild(node);
-        node = node.tagName === "BR" ? node.parentNode : node;
-        range.create(node,0).select();
+        if (node) {
+            node = dom.firstChild(node);
+            node = node.tagName === "BR" ? node.parentNode : node;
+            range.create(node,0).select();
 
-        dom.scrollIntoViewIfNeeded(node);
+            dom.scrollIntoViewIfNeeded(node);
+        }
 
         return false;
     };

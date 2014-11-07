@@ -327,7 +327,7 @@
                 setTimeout(function () {snipped_event_flag = false;}, 0);
                 var $target = $(srcElement);
 
-                if ($target.parents(".oe_overlay").length) {
+                if (!$target.is(':o_editable') || $target.parents(".oe_overlay").length) {
                     return;
                 }
 
@@ -1554,6 +1554,18 @@
             this.$target.on('attributes_change', function () {
                 self.resetTransfo();
             });
+
+            // don't unactive transform if rotation and mouseup on an other container
+            $(document).on('mouseup', function (event) {
+                if (self.$target[0] !== event.target && self.$overlay.hasClass('oe_active') && !$.contains(self.$overlay[0], event.target)) {
+                    var summernote = self.$target.closest('.o_editable').data('summernote');
+                    summernote.popover.find('.note-air-popover, .note-link-popover').hide();
+                    summernote.popover.find('.note-image-popover').show();
+                    setTimeout(function () {
+                        summernote.handle.show();
+                    });
+                }
+            });
         },
         style: function (type, value) {
             if (type !== 'click') return;
@@ -1613,6 +1625,7 @@
         },
         on_blur : function () {
             this.$target.transfo("hide");
+            $('.note-handle').hide(); // hide selection of summernote
         },
     });
 

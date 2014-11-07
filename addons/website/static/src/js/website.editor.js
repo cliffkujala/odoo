@@ -293,7 +293,8 @@
         return new $.Deferred().reject();
     };
     eventHandler.editor.alt = function ($editable) {
-        new website.editor.alt($editable, range.create().sc).appendTo(document.body);
+        var media = $editable.data('summernote').handle.find('.note-control-selection').data('target');
+        new website.editor.alt($editable, media).appendTo(document.body);
     };
 
     dom.isImg = function (node) {
@@ -861,8 +862,6 @@
                         document.execCommand('enableInlineTableEditing', false, false);
                         document.execCommand( '2D-position', false, false);
                     } catch (e) {}
-                    document.body.addEventListener('mscontrolselect', function (evt) {evt.preventDefault(); return false;});
-                    document.body.addEventListener('controlselect', function (evt) {evt.preventDefault(); return false;});
                     document.body.addEventListener('resizestart', function (evt) {evt.preventDefault(); return false;});
                     document.body.addEventListener('movestart', function (evt) {evt.preventDefault(); return false;});
                     document.body.addEventListener('dragstart', function (evt) {evt.preventDefault(); return false;});
