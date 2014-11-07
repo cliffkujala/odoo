@@ -742,6 +742,9 @@
 
         if (last === node) {
             node = r.insertNode($('<br/>')[0]).nextSibling;
+        } else if (!r.so && r.isOnList() && !r.sc.textContent.length && !dom.ancestor(r.sc, function (node) { return node.tagName === 'LI'; }).nextElementSibling) {
+            // double enter on the end of a list = new line out of the list
+            node = $('<p><br/></p>').insertAfter(dom.ancestor(r.sc, dom.isList))[0];
         } else if (last === r.sc) {
             var $node = $(last);
             var $clone = $node.clone().text("");
@@ -752,10 +755,7 @@
             if (!node.textContent.match(/\S/)) {
                 $(node).html('<br/>');
             }
-        } else if (!r.so && r.isOnList() && !r.sc.textContent.length && !dom.ancestor(r.sc, function (node) { return node.tagName === 'LI'; }).nextElementSibling) {
-            // double enter on the end of a list = new line out of the list
-            node = $('<p><br/></p>').insertAfter(dom.ancestor(r.sc, dom.isList))[0];
-        }  else {
+        } else {
             var totalOffset = dom.makeOffsetPath(last, r.sc).reduce(function(pv, cv) { return pv + cv; }, 0);
             node = dom.splitTree(last, r.sc, r.so);
             if (!totalOffset) {
