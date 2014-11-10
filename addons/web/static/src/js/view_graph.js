@@ -24,39 +24,26 @@ instance.web.GraphView = instance.web.View.extend({
         this.model = new instance.web.Model(dataset.model, {group_by_no_leaf: true});
 
         this.ready = false;
-        
+        this.mode = "bar";
         this.measures = [];
         this.active_measure = '__count__';
         this.groupbys = [];
+        this.data = [];
         this.$buttons = options.$buttons;
     },
     start: function () {
-        // this.$table_container = this.$('.o-pivot-table');
-
         var load_fields = this.model.call('fields_get', [])
                 .then(this.prepare_fields.bind(this));
 
         return $.when(this._super(), load_fields).then(this.render_buttons.bind(this));
     },
     render_buttons: function () {
-        // var self = this;
         var context = {measures: _.pairs(_.omit(this.measures, '__count__'))};
         this.$buttons.html(QWeb.render('GraphView.buttons', context));
         this.$measure_list = this.$buttons.find('.oe-measure-list');
         this.update_measure();
         this.$buttons.find('button').tooltip();
-        // this.$buttons.click(this.on_button_click.bind(this));
-        // context.measures.forEach(function (kv, index) {
-        //     if (_.contains(self.active_measures, kv[0])) {
-        //         self.$buttons.find('.oe-measure-list li').eq(index).addClass('selected');
-        //     }
-        // });
-        // var another_ctx = {fields: _.pairs(this.groupable_fields)};
-        // this.$field_selection = this.$('.o-field-selection');
-        // this.$field_selection.html(QWeb.render('PivotView.FieldSelection', another_ctx));
-        // openerp.web.bus.on('click', self, function () {
-        //     self.$field_selection.find('ul').first().hide();
-        // });
+        this.$buttons.click(this.on_button_click.bind(this));
     },
     update_measure: function () {
         var self = this;
@@ -99,161 +86,65 @@ instance.web.GraphView = instance.web.View.extend({
     do_search: function (domain, context, group_by) {
         // if (_.isEqual(domain, this.domain)) return;
         this.domain = domain;
+        this.context = context;
+        if (!this.ready) {
+            this.data_loaded = this.load_data();
+            this.ready = true;
+            return;
+        }
+        this.groupbys = group_by;
         this.data_loaded = this.load_data();
-        // this.context = context;
-        // if (!this.ready) {
-        //     this.data_loaded = this.load_data(true);
-        //     this.ready = true;
-        //     return;
-        // }
-        // this.data_loaded = this.load_data(true);
-        // return this.do_show();
-
-        // var col_groupbys = []; // to do: extract properly from context
-        // if (!this.ready) {
-        //     this.row_groupbys = group_by.length ? group_by : this.row_groupbys;
-        //     this.col_groupbys = col_groupbys.length ? col_groupbys : this.col_groupbys;
-        //     this.ready = true;
-        //     this.data_loaded = this.load_data();
-        // } else {
-        //     this.row_groupbys = group_by;
-        //     this.data_loaded = this.load_data();
-        //     this.do_show();
-        // }
+        return this.do_show();
     },
     do_show: function () {
         this.data_loaded.done(this.display_graph.bind(this));
     },
     on_button_click: function (event) {
         var $target = $(event.target);
-        if ($target.hasClass('oe-pivot-flip')) {this.flip();}
-        if ($target.hasClass('oe-pivot-expand-all')) {this.expand_all();}
+        if ($target.hasClass('oe-bar-mode')) {this.switch_mode('bar');}
+        if ($target.hasClass('oe-line-mode')) {this.switch_mode('line');}
+        if ($target.hasClass('oe-pie-mode')) {this.switch_mode('pie');}
         if ($target.parents('.oe-measure-list').length) {
             var parent = $target.parent(),
                 field = parent.data('field');
+            this.active_measure = field;
             parent.toggleClass('selected');
             event.stopPropagation();
-            this.toggle_measure(field);
+            this.update_measure();
+            this.load_data().then(this.proxy('display_graph'));
         }
     },
-    on_open_header_click: function (event) {
-        var id = $(event.target).data('id'),
-            header = this.headers[id];
-        header.expanded = false;        
-        header.children = [];
-        var new_groupby_length = this.get_header_depth(header.root) - 1;
-        header.root.groupbys.splice(new_groupby_length);
-        this.display_table();
-    },
-    on_closed_header_click: function (event) {
-        var id = $(event.target).data('id'),
-            header = this.headers[id],
-            groupbys = header.root.groupbys;
-        if (header.path.length - 1 < groupbys.length) {
-            this.expand_header(header, groupbys[header.path.length - 1])
-                .then(this.proxy('display_table'));
-        } else {
-            var $test = $(event.target);
-            var pos = $test.position();
-            this.last_header_selected = id;
-            var $menu = this.$field_selection.find('ul').first();
-            $menu.css('top', pos.top + $test.parent().height() - 2);
-            $menu.css('left', pos.left + event.offsetX);
-            $menu.show();
-            event.stopPropagation();            
-        }
-    },
-
     // returns a deferred that resolve when the data is loaded.
     load_data: function () {
-        return $.when();
-        // var should_update = (update && this.main_row.root && this.main_col.root);
-        // var self = this,
-        //     i, j, 
-        //     groupbys = [],
-        //     row_gbs = this.main_row.groupbys,
-        //     col_gbs = this.main_col.groupbys,
-        //     fields = [].concat(row_gbs, col_gbs, this.active_measures);
-        // for (i = 0; i < row_gbs.length + 1; i++) {
-        //     for (j = 0; j < col_gbs.length + 1; j++) {
-        //         groupbys.push(row_gbs.slice(0,i).concat(col_gbs.slice(0,j)));
-        //     }
-        // }
-        // return $.when.apply(null, groupbys.map(function (groupby) {
-        //     return self.model.query(fields)
-        //         .filter(self.domain)
-        //         .context(self.context)
-        //         .lazy(false)
-        //         .group_by(groupby);
-        // })).then(function () {
-        //     var data = Array.prototype.slice.call(arguments);
-        //     self.prepare_data(data, should_update);
-        // });
+        console.log('loading_data', this.groupbys, this.active_measure);
+        var fields = this.groupbys.concat(this.active_measure);
+        return this.model
+                    .query(fields)
+                    .filter(this.domain)
+                    .context(this.context)
+                    .lazy(false)
+                    .group_by(this.groupbys)
+                    .then(this.proxy('prepare_data'));
     },
-    prepare_data: function (data, should_update) {
-        var i, j, k, l, m,
-            index = 0,
-            row_gbs = this.main_row.groupbys,
-            col_gbs = this.main_col.groupbys,
-            main_row_header, main_col_header,
-            row, col, attrs, datapt, cell_value,
-            field;
+    prepare_data: function () {
+        console.log('prepare_data', arguments[0]);
+        var raw_data = arguments[0];
+        var data_pt, j, values;
 
-        for (i = 0; i < row_gbs.length + 1; i++) {
-            for (j = 0; j < col_gbs.length + 1; j++) {
-                for (k = 0; k < data[index].length; k++) {
-                    datapt = data[index][k];
-                    attrs = datapt.attributes;
-                    if (i + j === 1) {
-                        attrs.value = [attrs.value];
-                    }
-                    for (l = 0; l < attrs.value.length; l++) {
-                        if (l < i) field = row_gbs[l];
-                        else field = col_gbs[l - i];
-                        attrs.value[l] = this.sanitize_value(attrs.value[l], field);
-                    }
-                    if (j === 0) {
-                        row = this.make_header(datapt, main_row_header, 0, i);
-                    } else {
-                        row = this.get_header(datapt, main_row_header, 0, i);
-                    }
-                    if (i === 0) {
-                        col = this.make_header(datapt, main_col_header, i, i+j);
-                    } else {
-                        col = this.get_header(datapt, main_col_header, i, i+j);
-                    }
-                    if (i + j === 0) {
-                        this.has_data = attrs.length > 0;
-                        main_row_header = row;
-                        main_col_header = col;
-                    }
-                    if (!this.cells[row.id]) this.cells[row.id] = [];
-                    for (cell_value = {}, m=0; m < this.active_measures.length; m++) {
-                        cell_value[this.active_measures[m]] = attrs.aggregates[this.active_measures[m]];
-                    }
-                    cell_value.__count__ = attrs.length;
-                    this.cells[row.id][col.id] = cell_value;
-                }
-                index++;
+        this.data = [];
+        for (var i = 0; i < raw_data.length; i++) {
+            data_pt = raw_data[i].attributes;
+            console.log(data_pt);
+            values = [];
+            for (j = 0; j < data_pt.value.length; j++) {
+                values[j] = this.sanitize_value(data_pt.value[j], data_pt.grouped_on[j]);
             }
+            this.data.push({
+                labels: values,
+                value: data_pt.aggregates[this.active_measure]
+            });
         }
-        if (should_update) {
-            this.update_tree(this.main_row.root, main_row_header);
-            var new_groupby_length = this.get_header_depth(main_row_header) - 1;
-            main_row_header.groupbys = this.main_row.root.groupbys.slice(0, new_groupby_length);
-            this.update_tree(this.main_col.root, main_col_header);
-            new_groupby_length = this.get_header_depth(main_col_header) - 1;
-            main_col_header.groupbys = this.main_col.root.groupbys.slice(0, new_groupby_length);
-        } else {
-            main_row_header.groupbys = this.main_row.groupbys;
-            main_col_header.groupbys = this.main_col.groupbys;
-        }
-        main_row_header.other_root = main_col_header;
-        main_col_header.other_root = main_row_header;
-        this.main_row.root = main_row_header;
-        this.main_col.root = main_col_header;
     },
-
     sanitize_value: function (value, field) {
         if (value === false) return _t("Undefined");
         if (value instanceof Array) return value[1];
@@ -272,16 +163,14 @@ instance.web.GraphView = instance.web.View.extend({
             this.load_data().then(this.display_table.bind(this));
         }
     },
+    switch_mode: function (mode) {
+        this.mode = mode;
+        console.log('switch_mode', mode);
+    },
     display_graph: function () {
-
+        console.log('display_graph');
     },
 });
 
-// helpers
-var id = -1;
-
-function generate_id () {
-    return ++id;
-}
 
 })();
