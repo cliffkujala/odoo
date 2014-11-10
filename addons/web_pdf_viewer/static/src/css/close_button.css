@@ -6,7 +6,8 @@ div.close_print{
     width:50px;
     position:absolute;
     right:2%;
-    top:8%;
+    top: 12%;
+    z-index: 501;
     color:#C3C3C3;
     background: #3f3f3f; /* Old browsers */
     background: -moz-linear-gradient(top,  #3f3f3f 0%, #0e0e0e 100%); /* FF3.6+ */
