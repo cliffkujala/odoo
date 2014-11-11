@@ -70,8 +70,9 @@ class event_ticket(models.Model):
         #        be considered in the timezone of the event, not the timezone of the user!
         #        Until we add a TZ on the event we'll use the context's current date, more accurate
         #        than using UTC all the time.
-        current_date = fields.Date.context_today(self.with_context({'tz': self.event_id.date_tz}))
-        self.is_expired = self.deadline < current_date
+        if self.deadline:
+            current_date = fields.Date.context_today(self.with_context({'tz': self.event_id.date_tz}))
+            self.is_expired = self.deadline < current_date
 
     # FIXME non-stored fields wont ends up in _columns (and thus _all_columns), which forbid them
     #       to be used in qweb views. Waiting a fix, we create an old function field directly.

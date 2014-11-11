@@ -7,9 +7,10 @@
             <field name="model">report.event.registration</field>
             <field name="arch" type="xml">
                 <graph string="Event on Registration"  type="pivot" >
-                    <field name="event_type" type="row"/>
+                    <field name="event_id" type="row"/>
                     <field name="event_date" interval="month" type="col"/>
                     <field name="confirm_state" type="measure"/>
+                    <field name="cancel_state" type="measure"/>
                 </graph>
             </field>
         </record>

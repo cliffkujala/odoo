@@ -195,9 +195,17 @@ class event_event(models.Model):
     @api.model
     def create(self, vals):
         res = super(event_event, self).create(vals)
+        if res.organizer_id not in res.message_follower_ids:
+            res.message_subscribe([res.organizer_id.id])
         if res.auto_confirm:
             res.button_confirm()
         return res
+
+    @api.multi
+    def write(self, vals):
+        if 'organizer_id' in vals:
+            self.message_subscribe([vals.get('organizer_id')])
+        return super(event_event, self).write(vals)
 
     @api.one
     def button_draft(self):
@@ -281,14 +289,14 @@ class event_registration(models.Model):
     def _check_auto_confirmation(self):
         if self._context.get('registration_force_draft'):
             return False
-        if self.event_id and self.event_id.state == 'confirm' and self.event_id.auto_confirm and self.event_id.seats_available:
+        if self.event_id and self.event_id.state == 'confirm' and self.event_id.auto_confirm and (self.event_id.seats_available or self.event_id.seats_availability == 'unlimited'):
             return True
         return False
 
     @api.model
     def create(self, vals):
         registration = super(event_registration, self).create(vals)
-        if registration._check_auto_confirmation():
+        if registration._check_auto_confirmation()[0]:
             registration.sudo().confirm_registration()
         return registration
 

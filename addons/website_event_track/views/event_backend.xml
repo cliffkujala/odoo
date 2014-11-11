@@ -11,12 +11,13 @@
                     <templates>
                         <field name="color"/>
                         <field name="speaker_ids"/>
+                        <field name="website_url"/>
                         <t t-name="kanban-box">
                             <div t-attf-class="oe_kanban_color_#{kanban_getcolor(record.color.raw_value)} oe_kanban_card oe_kanban_global_click">
                                 <div class="oe_dropdown_toggle oe_dropdown_kanban" groups="base.group_user">
                                     <span class="oe_e">i</span>
                                     <ul class="oe_dropdown_menu">
-                                        <li><a href="/event/1/track/2">View Track</a></li>
+                                        <li><a t-att-href="record.website_url.value" type="url">View Track</a></li>
                                         <t t-if="widget.view.is_action_enabled('edit')"><li><a type="edit">Edit Track</a></li></t>
                                         <t t-if="widget.view.is_action_enabled('delete')"><li><a type="delete">Delete</a></li></t>
                                         <li><ul class="oe_kanban_colorpicker" data-field="color"/></li>
@@ -115,7 +116,6 @@
                                     <field name="duration" class="oe_inline" widget="float_time"/> hours
                                 </div>
                                 <field name="tag_ids" widget="many2many_tags"/>
-                                <field name="color"/>
                             </group>
                         </group>
                     </sheet>
@@ -214,8 +214,12 @@ Tracks define the agenda of your event. These can be a talk, a round table, a me
             <field name="model">event.sponsor.type</field>
             <field name="arch" type="xml">
                 <form string="Event Sponsor Types">
-                    <field name="sequence" widget="handle"/>
-                    <field name="name"/>
+                    <sheet>
+                        <group>
+                            <field name="sequence" widget="handle"/>
+                            <field name="name"/>
+                        </group>
+                    </sheet>
                 </form>
             </field>
         </record>
@@ -272,7 +276,11 @@ Tracks define the agenda of your event. These can be a talk, a round table, a me
             <field name="model">event.track.tag</field>
             <field name="arch" type="xml">
                 <form string="Event Track Tag">
-                    <field name="name"/>
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                    </sheet>
                 </form>
             </field>
         </record>

@@ -23,7 +23,7 @@ class event_track_location(models.Model):
 
 class event_track(models.Model):
     _name = "event.track"
-    _description = 'Event Tracks'
+    _description = 'Event Track'
     _order = 'priority, date'
     _inherit = ['mail.thread', 'ir.needaction_mixin', 'website.seo.metadata']
 
@@ -42,7 +42,7 @@ class event_track(models.Model):
     description = fields.Html('Track Description', translate=True)
     date = fields.Datetime('Track Date')
     duration = fields.Float('Duration', digits=(16, 2), default=1.5)
-    location_id = fields.Many2one('event.track.location', 'Location')
+    location_id = fields.Many2one('event.track.location', 'Room')
     event_id = fields.Many2one('event.event', 'Event', required=True)
     color = fields.Integer('Color Index')
     priority = fields.Selection([
@@ -99,6 +99,22 @@ class event_track(models.Model):
             'type': 'ir.actions.act_window',
         }
 
+    @api.model
+    def create(self, vals):
+        res = super(event_track, self).create(vals)
+        if res.user_id.partner_id not in res.message_follower_ids:
+            res.message_subscribe_users([res.user_id.id])
+        if res.speaker_ids not in res.message_follower_ids:
+            res.message_subscribe(res.speaker_ids.ids)
+        return res
+
+    @api.multi
+    def write(self, vals):
+        if vals.get('user_id'):
+            self.message_subscribe_users([vals.get('user_id')])
+        if vals.get('speaker_ids'):
+            self.message_subscribe([speaker['id'] for speaker in self.resolve_2many_commands('speaker_ids', vals.get('speaker_ids'), ['id'])])
+        return super(event_track, self).write(vals)
 
 class event_event(models.Model):
     _inherit = "event.event"
@@ -114,7 +130,7 @@ class event_event(models.Model):
     @api.one
     @api.depends('track_ids.tag_ids')
     def _get_tracks_tag_ids(self):
-        track_tags = set(tag for track in self.track_ids for tag in track.tag_ids)
+        track_tags = set(tag.id for track in self.track_ids for tag in track.tag_ids)
         self.tracks_tag_ids = track_tags and list(track_tags) or False
 
     track_ids = fields.One2many('event.track', 'event_id', 'Tracks', copy=True)

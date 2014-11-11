@@ -2385,7 +2385,7 @@
   text-align: right;
 }
 .openerp .oe_list.oe_list_editable.oe_editing .oe_form_field.oe_form_field_datetime input.oe_datepicker_master, .openerp .oe_list.oe_list_editable.oe_editing .oe_form_field.oe_form_field_date input.oe_datepicker_master {
-  width: 100% !important;
+  width: calc(100% - 20px) !important;
 }
 .openerp .oe_list.oe_list_editable.oe_editing .oe_form_field.oe_form_field_reference {
   display: table;

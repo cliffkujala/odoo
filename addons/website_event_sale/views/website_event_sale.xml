@@ -19,7 +19,7 @@
     </xpath>
 </template>
 
-<template id="registration_template" inherit_id="website_event.registration_template" customize_show="True" name="Event's Ticket form">
+<template id="registration_template" inherit_id="website_event.registration_template">
     <xpath expr="//tbody" position="replace">
         <tbody>
             <t t-foreach="event.event_ticket_ids" t-as="ticket">
