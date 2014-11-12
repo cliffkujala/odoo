@@ -332,9 +332,9 @@ class Website(openerp.addons.web.controllers.main.Home):
                         }, request.context)
                         attachment_ids.append(attachment_id)
 
-                    uploads = Attachments.read(
-                        request.cr, request.uid, attachment_ids, ['website_url'],
-                        context=request.context)
+                uploads = Attachments.read(
+                    request.cr, request.uid, attachment_ids, ['website_url'],
+                    context=request.context)
             except Exception, e:
                 logger.exception("Failed to upload image to attachment")
                 message = unicode(e)
