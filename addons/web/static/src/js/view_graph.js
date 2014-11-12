@@ -12,6 +12,8 @@ var instance = openerp,
     format_value = instance.web.format_value,
     total = _t("Total");
 
+nv.dev = false;  // sets nvd3 library in production mode
+
 instance.web.views.add('graph', 'instance.web.GraphView');
 
 instance.web.GraphView = instance.web.View.extend({
@@ -69,7 +71,6 @@ instance.web.GraphView = instance.web.View.extend({
                 break;
             }
         });
-        console.log(self.groupbys);
     },
     prepare_fields: function (fields) {
         var self = this;
@@ -123,19 +124,18 @@ instance.web.GraphView = instance.web.View.extend({
                     .filter(this.domain)
                     .context(this.context)
                     .lazy(false)
-                    .group_by(this.groupbys)
+                    .group_by(this.groupbys.slice(0,2))
                     .then(this.proxy('prepare_data'));
     },
     prepare_data: function () {
-        console.log('prepare_data', arguments[0]);
         var raw_data = arguments[0];
         var data_pt, j, values;
 
         this.data = [];
         for (var i = 0; i < raw_data.length; i++) {
             data_pt = raw_data[i].attributes;
-            console.log(data_pt);
             values = [];
+            if (this.groupbys.length === 1) data_pt.value = [data_pt.value];
             for (j = 0; j < data_pt.value.length; j++) {
                 values[j] = this.sanitize_value(data_pt.value[j], data_pt.grouped_on[j]);
             }
@@ -144,6 +144,8 @@ instance.web.GraphView = instance.web.View.extend({
                 value: data_pt.aggregates[this.active_measure]
             });
         }
+        console.log(raw_data);
+        console.table(this.data);
     },
     sanitize_value: function (value, field) {
         if (value === false) return _t("Undefined");
@@ -165,12 +167,123 @@ instance.web.GraphView = instance.web.View.extend({
     },
     switch_mode: function (mode) {
         this.mode = mode;
-        console.log('switch_mode', mode);
+        this.display_graph();
     },
     display_graph: function () {
-        console.log('display_graph');
+        if (this.to_remove) {
+            nv.utils.offWindowResize(this.to_remove);
+        }
+        this.$el.empty();
+        this['display_' + this.mode]();
     },
+    display_bar: function () {
+        // prepare data for bar chart
+        var data,
+            measure = this.measures[this.active_measure].string;
+        // zero groupbys
+        if (this.groupbys.length === 0) {
+            data = [{
+                values: [{
+                    x: this.ViewManager.title, 
+                    y: this.data[0].value}],
+                key: measure
+            }];
+        } 
+        // one groupby
+        if (this.groupbys.length === 1) {
+            var values = this.data.map(function (datapt) {
+                console.log(datapt);
+                return {x: datapt.labels, y: datapt.value};
+            });
+            data = [
+                {
+                    values: values,
+                    key: measure,
+                }
+            ];
+        }
+        var xlabels = [],
+            series = [],
+            values = {},
+            label, serie, value;
+        for (var i = 0; i < this.data.length; i++) {
+            console.log(this.data[i]);
+            label = this.data[i].labels[0];
+            serie = this.data[i].labels[1];
+            value = this.data[i].value;
+            if ((!xlabels.length) || (xlabels[xlabels.length-1] !== label)) {
+                xlabels.push(label);
+            }
+            series.push(this.data[i].labels[1]);
+            if (!(serie in values)) {values[serie] = {};}
+            values[serie][label] = this.data[i].value;
+        }
+        series = _.uniq(series);
+        data = [];
+        var current_serie, j;
+        for (i = 0; i < series.length; i++) {
+            current_serie = {values: [], key: series[i]};
+            for (j = 0; j < xlabels.length; j++) {
+                current_serie.values.push({
+                    x: xlabels[j],
+                    y: values[series[i]][xlabels[j]] || 0,
+                });
+            }
+            data.push(current_serie);
+        }
+        console.log('data', data);
+        var svg = d3.select(this.$el[0]).append('svg');
+        svg.datum(data);
+
+        svg.transition().duration(0);
+
+        var chart = nv.models.multiBarChart();
+        chart.options({
+          delay: 250,
+          transitionDuration: 10,
+          showLegend: true,
+          showXAxis: true,
+          showYAxis: true,
+          rightAlignYAxis: false,
+          stacked: true,
+          reduceXTicks: false,
+          // rotateLabels: 40,
+          showControls: (this.groupbys.length > 1)
+        });
+
+        chart(svg);
+        this.to_remove = chart.update;
+        nv.utils.onWindowResize(chart.update);
+    },
+    display_pie: function () {
+        // to do
+    },
+    display_line: function () {
+        // to do
+    },
+    destroy: function () {
+        nv.utils.offWindowResize(this.to_remove);
+        return this._super();
+    }
 });
 
+
+// monkey path nvd3 to allow removing eventhandler on windowresize events
+// see https://github.com/novus/nvd3/pull/396 for more details
+
+// Adds a resize listener to the window.
+nv.utils.onWindowResize = function(fun) {
+    if (fun == null) return;
+    window.addEventListener('resize', fun);
+};
+
+// Backwards compatibility with current API.
+nv.utils.windowResize = nv.utils.onWindowResize;
+
+// Removes a resize listener from the window.
+nv.utils.offWindowResize = function(fun) {
+    if (fun == null) return;
+    window.removeEventListener('resize', fun);
+};
 
 })();

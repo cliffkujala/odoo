@@ -1583,6 +1583,9 @@
 .openerp .oe_pivot .dropdown-menu .pivot-dropdown-submenu:hover > .dropdown-menu {
   display: block;
 }
+.openerp .oe_graph {
+  height: 100%;
+}
 .openerp .oe_formview {
   background: white;
 }
