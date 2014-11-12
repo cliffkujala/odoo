@@ -351,12 +351,14 @@
     }
     var remember_range;
     function summernote_mousedown (event) {
-        remember_range = range.create();
+        if (!$(event.srcElement).closest('.note-editable, .note-popover, .note-link-dialog, .note-image-dialog, .note-air-dialog').length) {
+            remember_range = range.create();
+        }
         history.splitNext();
     }
     function summernote_click (event) {
-        if (!$(event.srcElement).closest('.note-editable, .note-popover, .note-link-dialog, .note-image-dialog, .note-air-dialog').length) {
-            if (remember_range) {
+        if (remember_range) {
+            if (!$(event.srcElement).closest('.note-editable, .note-popover, .note-link-dialog, .note-image-dialog, .note-air-dialog').length) {
                 setTimeout(function () {
                     remember_range.select();
                     remember_range = false;
