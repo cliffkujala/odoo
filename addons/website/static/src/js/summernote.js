@@ -137,7 +137,7 @@
         }
         return false;
     };
-    dom.mergeFilter = function (prev, cur) {
+    dom.mergeFilter = function (prev, cur, parent) {
         // merge text nodes
         if (prev && !prev.tagName && !cur.tagName) {
             return true;
@@ -150,7 +150,12 @@
               cur.tagName && window.getComputedStyle(cur).display === "inline"))) {
             return true;
         }
-        if (cur.tagName === "FONT" && !cur.attributes.getNamedItem('style')) {
+        if (dom.isEqual(parent, cur) &&
+            ((parent.tagName && window.getComputedStyle(parent).display === "inline" &&
+              cur.tagName && window.getComputedStyle(cur).display === "inline"))) {
+            return true;
+        }
+        if (parent && cur.tagName === "FONT" && (!cur.firstChild || (!cur.attributes.getNamedItem('style') && !cur.className.length))) {
             return true;
         }
         // On backspace, webkit browsers create a <span> with a bunch of
@@ -160,7 +165,7 @@
         //  <p>bar</p>
         // merged the lines getting this in webkit
         //  <p>foo<span>bar</span></p>
-        if (cur.tagName === "SPAN" && dom.has_only_style(cur) && !dom.has_programmatic_style(cur)) {
+        if (parent && cur.tagName === "SPAN" && dom.has_only_style(cur) && !dom.has_programmatic_style(cur)) {
             return true;
         }
     };
@@ -228,19 +233,26 @@
 
                 // create the first prev value
                 if (!prev) {
-                    if (mergeFilter.call(dom, prev, cur)) {
-                        for (var i=0; i<cur.childNodes.length; i++) {
-                            cur.parentNode.insertBefore(cur.childNodes[i], cur);
-                            k--;
-                        }
-                        cur.parentNode.removeChild(cur);
+                    if (mergeFilter.call(dom, prev, cur, node)) {
+                        prev = prev || cur.previousSibling;
+                        dom.moveTo(cur, cur.parentNode, cur);
+                        k--;
+                    } else {
+                        prev = cur;
                     }
-                    prev = cur;
+                    continue;
+                }
+
+                // merge with parent
+                if (mergeFilter.call(dom, null, cur, node)) {
+                    prev = prev || cur.previousSibling;
+                    dom.moveTo(cur, cur.parentNode, cur);
+                    k--;
                     continue;
                 }
 
                 // merge nodes
-                if (mergeFilter.call(dom, prev, cur)) {
+                if (mergeFilter.call(dom, prev, cur, node)) {
                     var p = prev;
                     var c = cur;
                     // compute prev/end and offset
@@ -516,6 +528,101 @@
             }
         }
     };
+    dom.moveTo = function (node, target, before) {
+        var nodes = [];
+        while (node.firstChild) {
+            nodes.push(node.firstChild);
+            if (before) {
+                target.insertBefore(node.firstChild, before);
+            } else {
+                target.appendChild(node.firstChild);
+            }
+        }
+        node.parentNode.removeChild(node);
+        return nodes;
+    };
+    dom.applyFont = function (sc, so, ec, eo, color, bgcolor) {
+        var start = dom.ancestor(sc, dom.isFont);
+        var end = dom.ancestor(ec, dom.isFont);
+
+        dom.splitTree(end || ec, ec, eo);
+
+        var first = dom.firstChild(dom.splitTree(start || sc, sc, so));
+        var last = ec === sc ? first : ec;
+        var nodes = dom.listBetween(first || sc, last);
+
+        var regText = new RegExp('(^|\\s+)text-[^\\s]+(\\s+|$)', 'gi');
+        var regBg = new RegExp('(^|\\s+)bg-[^\\s]+(\\s+|$)', 'gi');
+
+        for (var i=0; i<nodes.length; i++) {
+            var font = nodes[i];
+            if (!font.tagName) {
+                continue;
+            }
+
+            if (color) {
+                font.className = (font.className || '').replace(regText, '');
+                font.style.color = '';
+            }
+            if (bgcolor) {
+                font.className = (font.className || '').replace(regBg, '');
+                font.style.backgroundColor = '';
+            }
+
+            if (!font.style.color && !font.style.backgroundColor) {
+                font.removeAttribute('style');
+            }
+            if (!font.className.length) {
+                font.removeAttribute('class');
+            }
+
+            if (!font.attributes.style && !font.className.length && font.parentNode) {
+                nodes.splice(font);
+                nodes.push.apply(nodes, dom.moveTo(font, font.parentNode, font));
+                i--;
+            }
+        }
+
+        if (!(color && color !== "inherit") && !(bgcolor && bgcolor !== "inherit")) {
+            return;
+        }
+
+        for (var i=0; i<nodes.length; i++) {
+            var node = nodes[i];
+
+            var font = dom.ancestor(node, dom.isFont);
+
+            if (!font) {
+                font = document.createElement("font");
+                node.parentNode.insertBefore(font, node);
+                font.appendChild(node);
+            }
+
+            if (color) {
+                if (color.indexOf('text-') !== -1) {
+                    font.className += ' ' + color;
+                } else if (color !== 'inherit') {
+                    font.style.color = color;
+                }
+            }
+            if (bgcolor) {
+                if (bgcolor.indexOf('bg-') !== -1) {
+                    font.className += ' ' + bgcolor;
+                } else if (bgcolor !== 'inherit') {
+                    font.style.backgroundColor = bgcolor;
+                }
+            }
+        }
+
+        return dom.merge(dom.commonAncestor(sc, ec), first, 0, last, last.textContent.length, null, true);
+    };
+
+    dom.isFont = function (node) {
+        return node && (node.nodeName === "FONT" ||
+            (node.nodeName === "SPAN" &&
+                (node.className.match(/(^|\s)(text|bg)-/i) ||
+                (node.attributes.style && node.attributes.style.value.match(/(^|\s)(color|background-color):/i)))) );
+    };
 
     range.reRangeFilter = function () { return true; };
     range.reRange = function (sc, so, ec, eo, keep_end) {
@@ -607,17 +714,17 @@
           prevBP.offset
         );
     };
-    range.WrappedRange.prototype.clean = function (mergeFilter) {
+    range.WrappedRange.prototype.clean = function (mergeFilter, all) {
         var node = dom.node(this.sc === this.ec ? this.sc : this.commonAncestor());
         if (node.childNodes.length <=1) {
             return this;
         }
 
-        var merge = dom.merge(node, this.sc, this.so, this.ec, this.eo, mergeFilter);
-        var rem = dom.removeSpace(node, this.sc, merge.so, this.ec, merge.eo);
+        var merge = dom.merge(node, this.sc, this.so, this.ec, this.eo, mergeFilter, all);
+        var rem = dom.removeSpace(node, merge.sc, merge.so, merge.ec, merge.eo);
 
         if (merge.merged || rem.removed) {
-            return range.create(rem.sc, rem.so, merge.ec, rem.eo);
+            return range.create(rem.sc, rem.so, rem.ec, rem.eo);
         }
         return this;
     };
@@ -1315,61 +1422,33 @@
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     
-    function createFontNode() {
-        var r = range.create();
-        if (r.sc !== r.ec || r.so || r.eo !== r.sc.textContent.length) {
-            document.execCommand('foreColor', false, "red");
-            r = range.create();
-        }
-        return $(dom.listBetween(r.sc, r.ec)).add(dom.node(r.sc)).add(dom.node(r.ec)).filter('font').removeAttr("color").get();
-    }
-    var color = {
-        foreColor: function (nodes, sObjColor) {
-            for (var i=0; i<nodes.length; i++) {
-                var node = nodes[i];
-                node.className = (node.className || '').replace(/\s*text-[^\s]+/, '');
-                node.removeAttribute('color');
-                node.style.color = '';
-                if (!sObjColor.indexOf('text-')) {
-                    node.className = (node.className || '').replace(/\s*text-[^\s]+\s*/, '') + ' ' + sObjColor;
-                } else {
-                    node.setAttribute('color', sObjColor);
-                }
-            }
-        },
-        backColor: function (nodes, sObjColor) {
-            for (var i=0; i<nodes.length; i++) {
-                var node = nodes[i];
-                node.className = (node.className || '').replace(/\s*bg-[^\s]+/, '');
-                node.style.backgroundColor = "";
-                if (!sObjColor.indexOf('bg-')) {
-                    node.className = (node.className || '').replace(/\s*bg-[^\s]+\s*/, '') + ' ' + sObjColor;
-                } else if (sObjColor !== 'inherit') {
-                    node.style.backgroundColor = sObjColor;
-                }
-                if (!node.className.length) {
-                    node.removeAttribute('class');
-                }
-            }
-        }
-    };
     eventHandler.editor.foreColor = function ($editable, sObjColor) {
-        var nodes = createFontNode();
-        color.foreColor(nodes, sObjColor);
+        $editable.data('NoteHistory').recordUndo($editable);
+        var r = range.create();
+        var data = dom.applyFont(r.sc, r.so, r.ec, r.eo, sObjColor, null);
+        range.create(data.sc, data.so, data.ec, data.eo).select();
         return false;
     };
     eventHandler.editor.backColor = function ($editable, sObjColor) {
+        $editable.data('NoteHistory').recordUndo($editable);
         var r = range.create();
         if (r.isCollapsed() && r.isOnCell()) {
             var cell = dom.ancestor(r.sc, dom.isCell);
-            color.backColor([cell], sObjColor);
+            cell.className = cell.className.replace(new RegExp('(^|\\s+)bg-[^\\s]+(\\s+|$)', 'gi'), '');
+            cell.style.backgroundColor = "";
+            if (sObjColor.indexOf('bg-') !== -1) {
+                cell.className += ' ' + sObjColor;
+            } else if (sObjColor !== 'inherit') {
+                cell.style.backgroundColor = sObjColor;
+            }
             return false;
         }
-        var nodes = createFontNode();
-        color.backColor(nodes, sObjColor);
+        var data = dom.applyFont(r.sc, r.so, r.ec, r.eo, null, sObjColor);
+        range.create(data.sc, data.so, data.ec, data.eo).select();
         return false;
     };
     eventHandler.editor.removeFormat = function ($editable) {
+        $editable.data('NoteHistory').recordUndo($editable);
         var node = range.create().sc.parentNode;
         document.execCommand('removeFormat');
         document.execCommand('removeFormat');
@@ -1381,7 +1460,21 @@
     var fn_boutton_updateRecentColor = eventHandler.toolbar.button.updateRecentColor;
     eventHandler.toolbar.button.updateRecentColor = function (elBtn, sEvent, sValue) {
         fn_boutton_updateRecentColor.call(this, elBtn, sEvent, sValue);
-        color[sEvent]($(elBtn).closest('.note-color').find('.note-recent-color i')[0], sValue);
+        var font = $(elBtn).closest('.note-color').find('.note-recent-color i')[0];
+
+        if (sEvent === "foreColor") {
+            if (sValue.indexOf('text-') !== -1) {
+                font.className += ' ' + sValue;
+            } else {
+                font.style.color = sValue !== 'inherit' ? sValue : "";
+            }
+        } else {
+            if (sValue.indexOf('bg-') !== -1) {
+                font.className += ' ' + sValue;
+            } else {
+                font.style.backgroundColor = sValue !== 'inherit' ? sValue : "";
+            }
+        }
         return false;
     };
 

@@ -89,12 +89,8 @@
         </section>
     </div>
 
-    <div name="Image-Text" class="o_block_image_float">
-        <div class="oe_snippet_thumbnail">
-            <img class="oe_snippet_thumbnail_img" src="/website/static/src/img/blocks/block_text_image.png"/>
-            <span class="oe_snippet_thumbnail_title">Image-Floating</span>
-        </div>
-        <section class="oe_snippet_body para_large">
+    <div name="Image-Floating" class="o_block_image_float">
+        <section class="para_large">
             <div class="container">
                 <div class="row">
                     <div class="col-md-12 mb16 mt16">
@@ -298,8 +294,10 @@
 
     <div name="Well" class="o_block_well">
         <div class="well">
-            Explain the benefits you offer. Don't write about products or
-            services here, write about solutions.
+            <p>
+                Explain the benefits you offer. Don't write about products or
+                services here, write about solutions.
+            </p>
         </div>
     </div>
 
@@ -310,7 +308,7 @@
                 Write a quote here from one of your customers. Quotes are a
                 great way to build confidence in your products or services.
             </p>
-            <small>Author of this quote</small>
+            <p><small>Author of this quote</small></p>
         </blockquote>
     </div>
 
@@ -321,8 +319,10 @@
                 <h3 class="panel-title">Feature Title</h3>
             </div>
             <div class="panel-body">
-                Panels are a great tool to compare offers or to emphasize on
-                key features. To compare products, use the inside columns.
+                <p>
+                    Panels are a great tool to compare offers or to emphasize on
+                    key features. To compare products, use the inside columns.
+                </p>
             </div>
         </div>
     </div>
