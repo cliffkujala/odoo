@@ -187,6 +187,8 @@
             $imagePopover.show();
 
             range.createFromNode(dom.firstChild(oStyle.image)).select();
+        } else {
+            $(".note-control-selection").hide();
         }
 
         if (oStyle.image || (!oStyle.range.isCollapsed() || (oStyle.range.sc.tagName && !dom.isAnchor(oStyle.range.sc)) || (oStyle.image && !$(oStyle.image).closest('a').length))) {
@@ -347,12 +349,19 @@
             }
         }
     }
+    var remember_range;
     function summernote_mousedown (event) {
+        remember_range = range.create();
         history.splitNext();
     }
     function summernote_click (event) {
         if (!$(event.srcElement).closest('.note-editable, .note-popover, .note-link-dialog, .note-image-dialog, .note-air-dialog').length) {
-            $(".note-popover > *:not(#note-undo-popover)").hide();
+            if (remember_range) {
+                setTimeout(function () {
+                    remember_range.select();
+                    remember_range = false;
+                },0);
+            }
         }
     }
     var fn_attach = eventHandler.attach;
@@ -846,7 +855,8 @@
                 }
 
                 if ($last && (!$editable.size() || $last[0] != $editable[0])) {
-                    $last.destroy();
+                    var $destroy = $last;
+                    setTimeout(function () {$destroy.destroy();},150); // setTimeout to remove flickering when change to editable zone (re-create an editor)
                     $last = null;
                 }
                 if ($editable.size() && (!$last || $last[0] != $editable[0]) &&
