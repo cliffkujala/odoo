@@ -201,6 +201,7 @@ class WebRequest(object):
 
     @lazy_property
     def lang(self):
+        self.session._fix_lang(self.context)
         return self.context["lang"]
 
     @lazy_property
@@ -945,7 +946,7 @@ class OpenERPSession(werkzeug.contrib.sessions.Session):
 
         :param dict context: context to fix
         """
-        lang = context['lang']
+        lang = context.get('lang')
 
         # inane OpenERP locale
         if lang == 'ar_AR':
