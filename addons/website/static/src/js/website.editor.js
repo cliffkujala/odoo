@@ -356,7 +356,7 @@
     function summernote_click (event) {
         var r = range.create();
         if (!r || !$(r.sc).closest('.note-editable').length) {
-            if (remember_selection) {
+            if (remember_selection && !$(event.target).is('input, select')) {
                 setTimeout(function () {
                     remember_selection.select();
                 },0);
@@ -1306,7 +1306,7 @@
 
             var done = $.when();
             if ($e.hasClass('email-address') && $e.val().indexOf("@") !== -1) {
-                def.resolve('mailto:' + val, isNewWindow, label, classes);
+                def.resolve(val.indexOf("mailto:") === 0 ? val : 'mailto:' + val, isNewWindow, label, classes);
             } else if ($e.val() && $e.val().length && $e.hasClass('page')) {
                 var data = $e.select2('data');
                 if (test || !data.create) {

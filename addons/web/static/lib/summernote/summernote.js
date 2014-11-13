@@ -897,10 +897,12 @@
        * @return {String}
        */
       onCreateLink: function (sLinkUrl) {
-        if (sLinkUrl.indexOf('@') !== -1 && sLinkUrl.indexOf(':') === -1) {
-          sLinkUrl =  'mailto:' + sLinkUrl;
-        } else if (sLinkUrl.indexOf('://') === -1 && sLinkUrl.indexOf('/') !== 0 && sLinkUrl.indexOf('#') !== 0) { // fix by odoo
-          sLinkUrl = 'http://' + sLinkUrl;
+        if (sLinkUrl.indexOf('mailto:') !== 0) { // fix by odoo
+          if (sLinkUrl.indexOf('@') !== -1 && sLinkUrl.indexOf(':') === -1) {
+            sLinkUrl =  'mailto:' + sLinkUrl;
+          } else if (sLinkUrl.indexOf('://') === -1 && sLinkUrl.indexOf('/') !== 0 && sLinkUrl.indexOf('#') !== 0) { // fix by odoo
+            sLinkUrl = 'http://' + sLinkUrl;
+          }
         }
 
         return sLinkUrl;
