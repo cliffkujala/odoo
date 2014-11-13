@@ -118,7 +118,7 @@
     /**
      * Checks that the node only has a @style, not e.g. @class or whatever
      */
-    dom.has_only_style = function (node) {
+    dom.hasOnlyStyle = function (node) {
         for (var i = 0; i < node.attributes.length; i++) {
             var attr = node.attributes[i];
             if (attr.attributeName !== 'style') {
@@ -127,7 +127,7 @@
         }
         return true;
     };
-    dom.has_programmatic_style = function (node) {
+    dom.hasProgrammaticStyle = function (node) {
         var styles = ["float", "display", "position", "top", "left", "right", "bottom"];
         for (var i = 0; i < node.style.length; i++) {
           var style = node.style[i];
@@ -165,7 +165,7 @@
         //  <p>bar</p>
         // merged the lines getting this in webkit
         //  <p>foo<span>bar</span></p>
-        if (parent && cur.tagName === "SPAN" && dom.has_only_style(cur) && !dom.has_programmatic_style(cur)) {
+        if (parent && cur.tagName === "SPAN" && dom.hasOnlyStyle(cur) && !dom.hasProgrammaticStyle(cur)) {
             return true;
         }
     };

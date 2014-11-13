@@ -352,13 +352,15 @@
     function summernote_mousedown (event) {
         history.splitNext();
     }
+    var remember_selection;
     function summernote_click (event) {
         var r = range.create();
-        if (!$(r.sc).closest('.note-editable, .note-popover, .note-link-dialog, .note-image-dialog, .note-air-dialog').length) {
+        if (!$(r.sc).closest('.note-editable').length) {
             setTimeout(function () {
-                r.select();
-                r = false;
+                remember_selection.select();
             },0);
+        } else {
+            remember_selection = r;
         }
     }
     var fn_attach = eventHandler.attach;
