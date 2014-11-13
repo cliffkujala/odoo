@@ -355,10 +355,12 @@
     var remember_selection;
     function summernote_click (event) {
         var r = range.create();
-        if (!$(r.sc).closest('.note-editable').length) {
-            setTimeout(function () {
-                remember_selection.select();
-            },0);
+        if (!r || !$(r.sc).closest('.note-editable').length) {
+            if (remember_selection) {
+                setTimeout(function () {
+                    remember_selection.select();
+                },0);
+            }
         } else {
             remember_selection = r;
         }

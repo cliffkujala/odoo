@@ -45,7 +45,7 @@
         start : function(type, value, $li) {
             this._super();
             this.src = this.$target.css("background-image").replace(/url\(|\)|"|'/g,'');
-            this.$image = $('<image src="'+this.src+'">');
+            this.$image = $('<image src="'+(this.src !== "none" ? this.src : "")+'">');
         },
         clear : function(type, value, $li) {
             if (type !== 'click') return;
