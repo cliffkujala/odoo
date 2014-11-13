@@ -298,15 +298,24 @@
             var pos = $target.offset();
             var mt = parseInt($target.css("margin-top") || 0);
             var mb = parseInt($target.css("margin-bottom") || 0);
+            var width = $target.outerWidth();
+            var bigger = pos.left+width > $("body").outerWidth()-8;
             $el.css({
-                'width': $target.outerWidth(),
+                'width': width,
                 'top': pos.top - mt - 5,
-                'left': pos.left
+                'left': pos.left-1
             });
             $el.find(".oe_handle.e,.oe_handle.w").css({'height': $target.outerHeight() + mt + mb+1});
+            if (bigger) {
+                $el.find(".oe_handle.e").css({right: 0, margin: 0})
+                    .find("div").css({right: 0, left: 'auto'});
+            } else {
+                $el.find(".oe_handle.e").css({right: "", margin: ""})
+                    .find("div").css({right: "", left: ""});
+            }
             $el.find(".oe_handle.s").css({'top': $target.outerHeight() + mt + mb});
             $el.find(".oe_handle.size").css({'top': $target.outerHeight() + mt});
-            $el.find(".oe_handle.s,.oe_handle.n").css({'width': $target.outerWidth()-2});
+            $el.find(".oe_handle.s,.oe_handle.n").css({'width': width-2});
         },
         show: function () {
             this.$el.removeClass("hidden");
