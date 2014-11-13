@@ -506,6 +506,113 @@
     var history = new History();
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /* Translation for odoo */
+
+    settings.lang.odoo = {
+        font: {
+          bold: _t('Bold'),
+          italic: _t('Italic'),
+          underline: _t('Underline'),
+          strikethrough: _t('Strikethrough'),
+          subscript: _t('Subscript'),
+          superscript: _t('Superscript'),
+          clear: _t('Remove Font Style'),
+          height: _t('Line Height'),
+          name: _t('Font Family'),
+          size: _t('Font Size')
+        },
+        image: {
+          image: _t('Picture'),
+          insert: _t('Insert Image'),
+          resizeFull: _t('Resize Full'),
+          resizeHalf: _t('Resize Half'),
+          resizeQuarter: _t('Resize Quarter'),
+          floatLeft: _t('Float Left'),
+          floatRight: _t('Float Right'),
+          floatNone: _t('Float None'),
+          dragImageHere: _t('Drag an image here'),
+          selectFromFiles: _t('Select from files'),
+          url: _t('Image URL'),
+          remove: _t('Remove Image')
+        },
+        link: {
+          link: _t('Link'),
+          insert: _t('Insert Link'),
+          unlink: _t('Unlink'),
+          edit: _t('Edit'),
+          textToDisplay: _t('Text to display'),
+          url: _t('To what URL should this link go?'),
+          openInNewWindow: _t('Open in new window')
+        },
+        video: {
+          video: _t('Video'),
+          videoLink: _t('Video Link'),
+          insert: _t('Insert Video'),
+          url: _t('Video URL?'),
+          providers: _t('(YouTube, Vimeo, Vine, Instagram, DailyMotion or Youku)')
+        },
+        table: {
+          table: _t('Table')
+        },
+        hr: {
+          insert: _t('Insert Horizontal Rule')
+        },
+        style: {
+          style: _t('Style'),
+          normal: _t('Normal'),
+          blockquote: _t('Quote'),
+          pre: _t('Code'),
+          h1: _t('Header 1'),
+          h2: _t('Header 2'),
+          h3: _t('Header 3'),
+          h4: _t('Header 4'),
+          h5: _t('Header 5'),
+          h6: _t('Header 6')
+        },
+        lists: {
+          unordered: _t('Unordered list'),
+          ordered: _t('Ordered list')
+        },
+        options: {
+          help: _t('Help'),
+          fullscreen: _t('Full Screen'),
+          codeview: _t('Code View')
+        },
+        paragraph: {
+          paragraph: _t('Paragraph'),
+          outdent: _t('Outdent'),
+          indent: _t('Indent'),
+          left: _t('Align left'),
+          center: _t('Align center'),
+          right: _t('Align right'),
+          justify: _t('Justify full')
+        },
+        color: {
+          recent: _t('Recent Color'),
+          more: _t('More Color'),
+          background: _t('Background Color'),
+          foreground: _t('Foreground Color'),
+          transparent: _t('Transparent'),
+          setTransparent: _t('Set transparent'),
+          reset: _t('Reset'),
+          resetToDefault: _t('Reset to default')
+        },
+        shortcut: {
+          shortcuts: _t('Keyboard shortcuts'),
+          close: _t('Close'),
+          textFormatting: _t('Text formatting'),
+          action: _t('Action'),
+          paragraphFormatting: _t('Paragraph formatting'),
+          documentStyle: _t('Document Style')
+        },
+        history: {
+          undo: _t('Undo'),
+          redo: _t('Redo')
+        }
+    };
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
     // add focusIn to jQuery to allow to move caret into a div of a contentEditable area
 
     $.fn.extend({
@@ -925,7 +1032,8 @@
                 oninit: function() {
                 },
                 styleWithSpan: false,
-                inlinemedia : ['p']
+                inlinemedia : ['p'],
+                lang: "odoo"
             };
         }
     });
