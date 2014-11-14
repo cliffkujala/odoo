@@ -42,7 +42,7 @@
     *  - Close the dom.pasteTextClose list for the parent node of the caret
     *  - All line are converted as 'p' tag by default or by parent node of the caret if the tag is a dom.pasteTextApply
     * reRange:
-    *  - change the selected range in function off the reRangeFilter to don't break the dom items
+    *  - change the selected range in function off the dontBreak to don't break the dom items
     */
 
     dom.hasContentAfter = function (node) {
@@ -636,12 +636,12 @@
         return node && node.tagName === 'LI';
     };
 
-    range.reRangeFilter = function () { return true; };
+    range.dontBreak = function (node) { return true; };
     range.reRange = function (sc, so, ec, eo, keep_end) {
         // search the first snippet editable node
         var start = keep_end ? ec : sc;
         while (start) {
-            if ($(start).filter(range.reRangeFilter).length) {
+            if ($(start).filter(range.dontBreak).length) {
                 break;
             }
             start = start.parentNode;
@@ -654,7 +654,7 @@
             if (start === end) {
                 break;
             }
-            if ($(end).filter(range.reRangeFilter).length) {
+            if ($(end).filter(range.dontBreak).length) {
                 lastFilterEnd = end;
             }
             end = end.parentNode;
@@ -671,7 +671,7 @@
             return range.create(sc, so, ec, eo);
         }
 
-        // reduce or extend the range to don't break a reRangeFilter area
+        // reduce or extend the range to don't break a dontBreak area
         if ($.contains(start, end)) {
 
             if (keep_end) {
@@ -1013,7 +1013,9 @@
             return false;
         }
         //merge with the next block
-        else if (!contentAfter && settings.options.merge.indexOf(r.ec.parentNode.tagName.toLowerCase()) !== -1) {
+        else if (!contentAfter && settings.options.merge.indexOf(r.ec.parentNode.tagName.toLowerCase()) !== -1 &&
+            !range.dontBreak(r.ec.parentNode) &&
+            !range.dontBreak(r.ec.parentNode.nextElementSibling)) {
 
             summernote_keydown_clean("ec");
             var next = r.ec.parentNode.nextElementSibling;
@@ -1040,23 +1042,14 @@
                     }
                 }  while (node && settings.options.merge.indexOf(node.tagName.toLowerCase()) !== -1);
 
-                var merge = false;
                 while (nodes.length) {
                     node = nodes.pop();
-                    if (node && node.nextElementSibling && node.nextElementSibling.tagName === node.tagName) {
+                    if (node && node.nextElementSibling && node.nextElementSibling.tagName === node.tagName && !range.dontBreak(node) && !range.dontBreak(node.nextElementSibling)) {
                         dom.doMerge(node, node.nextElementSibling);
-                        merge = true;
                     }
                 }
-                range.create(r.ec, r.ec.textContent.length, r.ec, r.ec.textContent.length).select();
-
-                if (!merge) {
-                    var next = dom.node(node).nextElementSibling;
-                    while (next.firstElementChild) {
-                        next = next.firstElementChild;
-                    }
-                    range.create(next.firstChild || next, 0, next.firstChild || next, 0).select();
-                }
+                next = dom.firstChild(dom.hasContentAfter(dom.ancestorHaveNextSibling(r.sc)));
+                range.create(next, 0, next, 0).select();
             }
         }
         return false;
@@ -1171,11 +1164,12 @@
 
                 while (nodes.length) {
                     node = nodes.pop();
-                    if (node && node.previousElementSibling && node.previousElementSibling.tagName === node.tagName) {
+                    if (node && node.previousElementSibling && node.previousElementSibling.tagName === node.tagName && !range.dontBreak(node) && !range.dontBreak(node.previousElementSibling)) {
                         dom.doMerge(node.previousElementSibling, node);
                     }
                 }
-                range.create(node, 0, node, 0).select();
+                prev = dom.firstChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(r.sc)));
+                range.create(prev, prev.textContent.length, prev, prev.textContent.length).select();
             }
         }
         return false;

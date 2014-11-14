@@ -90,7 +90,7 @@
     </div>
 
     <div name="Image-Floating" class="o_block_image_float">
-        <section class="para_large">
+        <section>
             <div class="container">
                 <div class="row">
                     <div class="col-md-12 mb16 mt16">
@@ -1058,11 +1058,11 @@
         <li class="dropdown-submenu">
             <a tabindex="-1" href="#">Style</a>
             <ul class="dropdown-menu" name="parallax-scroll">
-                <li data-select_class="img-rounded"><a>Rounded corners</a></li>
-                <li data-select_class="img-thumbnail"><a>Box</a></li>
-                <li data-select_class="img-circle"><a>Circle</a></li>
-                <li data-select_class="shadow"><a>Shadow</a></li>
-                <li data-select_class="fa-spin"><a>Spin</a></li>
+                <li data-toggle_class="img-rounded"><a>Rounded corners</a></li>
+                <li data-toggle_class="img-thumbnail"><a>Box</a></li>
+                <li data-toggle_class="img-circle"><a>Circle</a></li>
+                <li data-toggle_class="shadow"><a>Shadow</a></li>
+                <li data-toggle_class="fa-spin"><a>Spin</a></li>
             </ul>
         </li>
         <li data-style=""><a>Transform</a></li>
@@ -1070,7 +1070,7 @@
     </div>
 
     <div data-js='ul'
-         data-selector=":not(li) > ul">
+         data-selector=":not(li) > ul:has(ul)">
         <li data-toggle_class="o_ul_folded"> <a href="#">Folded list</a> </li>
     </div>
 

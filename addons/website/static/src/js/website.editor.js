@@ -1542,7 +1542,6 @@
                 this.media = document.createElement("img");
                 this.range.insertNode(this.media);
                 this.active.media = this.media;
-                this.media.className = "img-responsive pull-left";
             }
 
             this.active.save();
