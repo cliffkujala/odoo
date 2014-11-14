@@ -126,7 +126,7 @@
             });
             this.$el.css('top', this.parent.get('height'));
 
-            $.summernote.objects.range.dontBreak = function (node) { return website.snippet.globalSelector.is($(node)); };
+            $.summernote.objects.dom.dontBreak = function (node) { return website.snippet.globalSelector.is($(node)); };
         },
 
         show_blocks: function () {
