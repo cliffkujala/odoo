@@ -139,10 +139,13 @@
     };
     dom.mergeFilter = function (prev, cur, parent) {
         // merge text nodes
-        if (prev && !prev.tagName && !cur.tagName) {
+        if (prev && (dom.isText(prev) || (dom.pasteTextApply.indexOf(prev.tagName) !== -1 && prev !== cur.parentNode)) && dom.isText(cur)) {
             return true;
         }
-        if (prev && !cur.tagName && !cur.textContent.match(/\S/) && (!prev.tagName || prev.textContent.match(/\S/))) {
+        if (prev && prev.tagName === "P" && dom.isText(cur)) {
+            return true;
+        }
+        if (prev && dom.isText(cur) && !cur.textContent.match(/\S/) && (dom.isText(prev) || prev.textContent.match(/\S/))) {
             return true;
         }
         if (prev && dom.isEqual(prev, cur) &&
@@ -211,7 +214,13 @@
         }
 
         begin = dom.firstChild(begin);
+        if (dom.isText(begin) && so > begin.textContent.length) {
+            so = 0;
+        }
         end = dom.firstChild(end);
+        if (dom.isText(end) && eo > end.textContent.length) {
+            eo = 0;
+        }
 
         function __merge (node) {
             var merged = false;
@@ -334,7 +343,7 @@
                 if (cur === end) add = false;
 
                 // remove begin empty text node
-                if (node.childNodes.length > 1 && !cur.tagName && !cur.textContent.match(/\S/)) {
+                if (node.childNodes.length > 1 && dom.isText(cur) && !cur.textContent.match(/\S/)) {
                     removed = true;
                     if (cur === begin) {
                         so = 0;
@@ -343,7 +352,7 @@
                     if (cur === end) {
                         eo = 1;
                         end = dom.lastChild(cur.previousSibling ? cur.previousSibling : cur.parentNode);
-                        if (!end.tagName) {
+                        if (dom.isText(end)) {
                             eo = end.textContent.length;
                         }
                     }
@@ -355,7 +364,7 @@
                 }
 
                 // convert HTML space
-                if (!cur.tagName) {
+                if (dom.isText(cur)) {
                     var text;
                     var exp1 = /[\t\n\r ]+/g;
                     var exp2 = /(?!([ ]|\u00A0)|^)\u00A0(?!([ ]|\u00A0)|$)/g;
@@ -387,14 +396,14 @@
     dom.node = function (node) {
         return node.tagName ? node : node.parentNode;
     };
-    dom.pasteTextApply = "h1 h2 h3 h4 h5 h6 li".split(" ");
+    dom.pasteTextApply = "h1 h2 h3 h4 h5 h6 li p".split(" ");
     dom.pasteTextClose = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li pre".split(" ");
     dom.pasteText = function (textNode, offset, text, isOnlyText) {
         // clean the node
         var data = dom.merge(textNode.parentElement.parentElement, textNode, offset, textNode, offset, null, true);
         var node = textNode.parentNode;
         data = dom.removeSpace(textNode.parentElement.parentElement, data.sc, data.so, data.ec, data.eo);
-        while(!node.tagName) {node = node.parentNode;}
+        while(dom.isText(node)) {node = node.parentNode;}
         // Break the text node up
         if (data.sc.tagName) {
             if (data.sc.tagName.toLowerCase() === "br") {
@@ -417,7 +426,7 @@
             // tag to close and open
             var tag = node.tagName.toLowerCase();
             if(dom.pasteTextApply.indexOf(tag) === -1) {
-                text = "<p>"+text.split('\n').join("</p><p>")+"</p>";
+                text = text.split('\n').join("<br/>");
             } else {
                 text = "<"+tag+">"+text.split('\n').join("</"+tag+"><"+tag+">")+"</"+tag+">";
             }
@@ -556,7 +565,7 @@
 
         for (var i=0; i<nodes.length; i++) {
             var font = nodes[i];
-            if (!font.tagName) {
+            if (dom.isText(font)) {
                 continue;
             }
 
@@ -569,7 +578,7 @@
                 font.style.backgroundColor = '';
             }
 
-            if (!font.style.color && !font.style.backgroundColor) {
+            if (!font.style.color && !font.style.backgroundColor && font.style.fontSize) {
                 font.removeAttribute('style');
             }
             if (!font.className.length) {
@@ -622,6 +631,9 @@
             (node.nodeName === "SPAN" &&
                 (node.className.match(/(^|\s)(text|bg)-/i) ||
                 (node.attributes.style && node.attributes.style.value.match(/(^|\s)(color|background-color):/i)))) );
+    };
+    dom.isLi = function (node) {
+        return node && node.tagName === 'LI';
     };
 
     range.reRangeFilter = function () { return true; };
@@ -753,7 +765,7 @@
     
     settings.options.merge = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li a ul ol font".split(" ");
     settings.options.split = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li a font".split(" ");
-    settings.options.deleteEmpty = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li a ul ol font span".split(" ");
+    settings.options.deleteEmpty = "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li a ul ol font span br".split(" ");
     settings.options.forbiddenWrite = ".media_iframe_video .fa img".split(" ");
 
     eventHandler.editor.tab = function ($editable, options, outdent) {
@@ -834,7 +846,7 @@
 
         if (last === node) {
             node = r.insertNode($('<br/>')[0]).nextSibling;
-        } else if (!r.so && r.isOnList() && !r.sc.textContent.length && !dom.ancestor(r.sc, function (node) { return node.tagName === 'LI'; }).nextElementSibling) {
+        } else if (!r.so && r.isOnList() && !r.sc.textContent.length && !dom.ancestor(r.sc, dom.isLi).nextElementSibling) {
             // double enter on the end of a list = new line out of the list
             node = $('<p><br/></p>').insertAfter(dom.ancestor(r.sc, dom.isList))[0];
         } else if (last === r.sc) {
@@ -845,7 +857,7 @@
         } else if (r.so) {
             node = dom.splitTree(last, r.sc, r.so);
             if (!node.textContent.match(/\S/)) {
-                $(node).html('<br/>');
+                $(dom.firstChild(node)).html('<br/>');
             }
         } else {
             var totalOffset = dom.makeOffsetPath(last, r.sc).reduce(function(pv, cv) { return pv + cv; }, 0);
@@ -879,7 +891,7 @@
         while (node.parentNode) {
             if ($(node).is(settings.options.forbiddenWrite.join(","))) {
                 var text = node.previousSibling;
-                if (text && !text.tagName && text.textContent.match(/\S/)) {
+                if (text && dom.isText(text) && text.textContent.match(/\S/)) {
                     range.create(text, text.textContent.length, text, text.textContent.length).select();
                 } else {
                     text = node.parentNode.insertBefore(document.createTextNode( "_" ), node);
@@ -923,7 +935,7 @@
             var r = range.create();
             if (!r) return;
             var node = r[field];
-            while (!node.tagName) {node = node.parentNode;}
+            while (dom.isText(node)) {node = node.parentNode;}
             node = node.parentNode;
             var data = dom.merge(node, r.sc, r.so, r.ec, r.eo, null, true);
             data = dom.removeSpace(node, data.sc, data.so, data.sc, data.so);
@@ -947,12 +959,13 @@
         var node = r.ec;
         while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node) && !dom.isImg(node)) {node = node.parentNode;}
 
+        var contentAfter = r.sc.textContent.slice(r.so,Infinity).match(/\S/);
         var content = r.ec.textContent.replace(/\s+$/, '');
         var temp;
         var temp2;
 
         // media
-        if (r.sc===r.ec && dom.isImg(node) && dom.isImg(node)) {
+        if (dom.isImg(node) && dom.isImg(node)) {
             var parent;
             var index;
             while (dom.isImg(node)) {
@@ -968,7 +981,7 @@
             }
         }
         // empty tag
-        else if (r.sc===r.ec && !content.length && (node.nextSibling || node.previousSibling) && r.sc.tagName && settings.options.deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
+        else if (!content.length && (node.nextSibling || node.previousSibling) && r.sc.tagName && settings.options.deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
             if (node === $editable[0] || $.contains(node, $editable[0])) {
                 return false;
             }
@@ -984,23 +997,23 @@
             node.parentNode.removeChild(node);
         }
         // normal feature if same tag and not the end
-        else if (r.sc===r.ec && r.eo<content.length && content.length) {
+        else if (contentAfter) {
             return true;
         }
         // merge with the next text node
-        else if (!r.ec.tagName && r.ec.nextSibling && (!r.sc.nextSibling.tagName || r.sc.nextSibling.tagName === "BR")) {
+        else if (dom.isText(r.ec) && r.ec.nextSibling && (dom.isText(r.sc.nextSibling) || r.sc.nextSibling.tagName === "BR")) {
             return true;
         }
         // jump to next node for delete
         else if ((temp = dom.ancestorHaveNextSibling(r.sc)) && temp.tagName  !== ((temp2 = dom.hasContentAfter(temp) || {}).tagName) ||
                 // ul in li check
-                (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.lastElementChild && temp2.firstElementChild && temp.lastElementChild.tagName !== temp2.firstElementChild.tagName)) {
+                (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp2.firstElementChild && temp2.firstElementChild.tagName.match(/UL|OL/))) {
             temp2 = dom.firstChild(temp2);
             r = range.create(temp2, 0, temp2, 0).select();
             return false;
         }
         //merge with the next block
-        else if (r.isCollapsed() && r.eo>=content.length && settings.options.merge.indexOf(r.ec.parentNode.tagName.toLowerCase()) !== -1) {
+        else if (!contentAfter && settings.options.merge.indexOf(r.ec.parentNode.tagName.toLowerCase()) !== -1) {
 
             summernote_keydown_clean("ec");
             var next = r.ec.parentNode.nextElementSibling;
@@ -1064,17 +1077,19 @@
         }
 
         var data = dom.merge(r.sc.parentNode, r.sc, r.so, r.ec, r.eo, null, true);
+        data = dom.removeSpace(r.sc.parentNode, data.sc, data.so, data.ec, data.eo);
         r = range.create(data.sc, data.so).select();
 
         var node = r.sc;
         while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node) && !dom.isImg(node)) {node = node.parentNode;}
 
+        var contentBefore = r.sc.textContent.slice(0,r.so).match(/\S/);
         var content = r.ec.textContent.replace(/\s+$/, '');
         var temp;
         var temp2;
 
         // table tr td
-        if (r.sc===r.ec && r.isOnCell() && !r.so && (r.sc === (temp = dom.ancestor(r.sc, dom.isCell)) || r.sc === temp.firstChild)) {
+        if (r.isOnCell() && !r.so && (r.sc === (temp = dom.ancestor(r.sc, dom.isCell)) || r.sc === temp.firstChild)) {
             if (temp.previousElementSibling) {
                 var td = temp.previousElementSibling;
                 node = td.lastChild || td;
@@ -1095,7 +1110,7 @@
             }
         }
         // empty tag
-        else if (r.sc===r.ec && !content.length && (node.nextSibling || node.previousSibling) && r.sc.tagName && settings.options.deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
+        else if (!content.length && (node.nextSibling || node.previousSibling) && r.sc.tagName && settings.options.deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
             if (node === $editable[0] || $.contains(node, $editable[0])) {
                 return false;
             }
@@ -1111,23 +1126,23 @@
             node.parentNode.removeChild(node);
         }
         // normal feature if same tag and not the begin
-        else if (r.sc===r.ec && r.so) {
+        else if (contentBefore) {
             return true;
         }
         // merge with the previous text node
-        else if (!r.ec.tagName && r.ec.previousSibling && (!r.sc.previousSibling.tagName || r.sc.previousSibling.tagName === "BR")) {
+        else if (dom.isText(r.ec) && r.ec.previousSibling && (dom.isText(r.sc.previousSibling) || r.sc.previousSibling.tagName === "BR")) {
             return true;
         }
         // jump to previous node for delete
         else if ((temp = dom.ancestorHavePreviousSibling(r.sc)) && temp.tagName  !== ((temp2 = dom.hasContentBefore(temp) || {}).tagName) ||
                 // ul in li check
-                (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.firstElementChild && temp2.lastElementChild && temp.firstElementChild.tagName !== temp2.lastElementChild.tagName)) {
+                (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.firstElementChild && temp.firstElementChild.tagName.match(/UL|OL/))) {
             temp2 = dom.lastChild(temp2);
             r = range.create(temp2, temp2.textContent.length, temp2, temp2.textContent.length).select();
             return false;
         }
         //merge with the previous block
-        else if (r.isCollapsed() && !r.eo && settings.options.merge.indexOf(r.sc.parentNode.tagName.toLowerCase()) !== -1) {
+        else if (!contentBefore && settings.options.merge.indexOf(r.sc.parentNode.tagName.toLowerCase()) !== -1) {
 
             summernote_keydown_clean("sc");
             var prev = r.sc.parentNode.previousElementSibling;
@@ -1420,8 +1435,30 @@
         return this.indent($editable, true);
     };
 
+
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     
+    eventHandler.editor.formatBlock = function ($editable, sTagName) {
+      $editable.data('NoteHistory').recordUndo($editable);
+
+      // fix by odoo because if you select a style in a li with no p tag all the ul is wrapped by the style tag
+      var r = range.create();
+      var nodes = dom.listBetween(r.sc, r.ec);
+      var textnodes = [];
+      for (var i=0; i<nodes.length; i++) {
+        if (dom.isText(nodes[i]) || nodes[i].tagName === "BR") {
+          if (settings.options.styleTags.indexOf(nodes[i].parentNode.tagName.toLowerCase()) === -1) {
+            dom.wrap(nodes[i], 'p');
+          }
+        } else if (nodes[i].childNodes.length === 1 && nodes[i].firstChild.tagName === "BR") {
+          dom.wrap(nodes[i].firstChild, 'p');
+        }
+      }
+      // end
+
+      sTagName = agent.isMSIE ? '<' + sTagName + '>' : sTagName;
+      document.execCommand('FormatBlock', false, sTagName);
+    };
     eventHandler.editor.foreColor = function ($editable, sObjColor) {
         $editable.data('NoteHistory').recordUndo($editable);
         var r = range.create();

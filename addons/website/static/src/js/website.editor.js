@@ -123,7 +123,7 @@
                 node = node.parentNode;
             }
             $format.parent().removeClass('active');
-            $format.filter('[data-value="'+node.tagName.toLowerCase()+'"]')
+            $format.filter('[data-value="'+(node ? node.tagName.toLowerCase() : "p")+'"]')
                 .parent().addClass("active");
         });
 
