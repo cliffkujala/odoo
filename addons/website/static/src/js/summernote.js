@@ -1576,9 +1576,9 @@
             if ($(td).siblings().length) {
                 var eq = $(td).index();
                 $table.find('tr').each(function () {
-                    $('td:eq('+eq+')', this).remove();
+                    $('> td:eq('+eq+')', this).remove();
                 });
-                newTd = $table.find('tr:first td:eq('+eq+'), tr:first td:last').first();
+                newTd = $table.find('tr:first > td:eq('+eq+'), tr:first > td:last').first();
             } else {
                 var r = range.create($table[0], 0, $table[0], 1);
                 r.select();
