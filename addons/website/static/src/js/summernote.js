@@ -837,6 +837,7 @@
             return false;
         }
 
+        var contentBefore = r.sc.textContent.slice(0,r.so).match(/\S/);
         var node = dom.node(r.sc);
         var last = node;
         while (settings.options.split.indexOf(node.tagName.toLowerCase()) !== -1) {
@@ -854,17 +855,14 @@
             var $clone = $node.clone().text("");
             $node.after($clone);
             node = $clone[0].firstElementChild || $clone[0];
-        } else if (r.so) {
-            node = dom.splitTree(last, r.sc, r.so);
-            if (!node.textContent.match(/\S/)) {
-                $(dom.firstChild(node)).html('<br/>');
-            }
+            $(dom.node(dom.firstChild(node))).html('<br/>');
         } else {
-            var totalOffset = dom.makeOffsetPath(last, r.sc).reduce(function(pv, cv) { return pv + cv; }, 0);
             node = dom.splitTree(last, r.sc, r.so);
-            if (!totalOffset) {
-                var prev = dom.hasContentBefore(dom.ancestorHavePreviousSibling(r.sc));
-                $(dom.lastChild(prev)).html('<br/>');
+            if (!contentBefore) {
+                $(dom.node(dom.lastChild(node.previousSibling))).html('<br/>');
+            }
+            if (!node.textContent.match(/\S/)) {
+                $(dom.node(dom.firstChild(node))).html('<br/>');
             }
         }
 
@@ -965,14 +963,19 @@
         var temp2;
 
         // media
-        if (dom.isImg(node) && dom.isImg(node)) {
+        if (dom.isImg(node) || (!contentAfter && dom.isImg(dom.hasContentAfter(node)))) {
             var parent;
             var index;
+            if (!dom.isImg(node)) {
+                node = dom.hasContentAfter(node);
+            }
             while (dom.isImg(node)) {
                 parent = node.parentNode;
                 index = dom.makeOffsetPath(parent, node)[0];
-                if (index>0)
-                range.create(node.previousSibling,0,node.previousSibling,0).select();
+                if (index>0) {
+                    var next = node.previousSibling;
+                    range.create(next,next.textContent.length).select();
+                }
                 if (!dom.hasContentAfter(node) && !dom.hasContentBefore(node)) {
                     parent.appendChild($('<br/>')[0]);
                 }
@@ -1010,6 +1013,14 @@
                 (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp2.firstElementChild && temp2.firstElementChild.tagName.match(/UL|OL/))) {
             temp2 = dom.firstChild(temp2);
             r = range.create(temp2, 0, temp2, 0).select();
+
+            if ((dom.isText(temp) || window.getComputedStyle(temp).display === "inline") && (dom.isText(temp2) || window.getComputedStyle(temp2).display === "inline")) {
+                if (dom.isText(temp2)) {
+                    temp2.textContent = temp2.textContent.replace(/^\s*\S/, '');
+                } else {
+                    this.delete($editable, options);
+                }
+            }
             return false;
         }
         //merge with the next block
@@ -1063,12 +1074,6 @@
             return false;
         }
 
-        // delete an image
-        if (r.sc.tagName === "IMG") {
-            this.delete($editable, options);
-            return false;
-        }
-
         var data = dom.merge(r.sc.parentNode, r.sc, r.so, r.ec, r.eo, null, true);
         data = dom.removeSpace(r.sc.parentNode, data.sc, data.so, data.ec, data.eo);
         r = range.create(data.sc, data.so).select();
@@ -1081,8 +1086,17 @@
         var temp;
         var temp2;
 
+        // delete media
+        if (dom.isImg(node) || (!contentBefore && dom.isImg(dom.hasContentBefore(node)))) {
+            if (!dom.isImg(node)) {
+                node = dom.hasContentBefore(node);
+            }
+            range.createFromNode(node).select();
+            this.delete($editable, options);
+            return false;
+        }
         // table tr td
-        if (r.isOnCell() && !r.so && (r.sc === (temp = dom.ancestor(r.sc, dom.isCell)) || r.sc === temp.firstChild)) {
+        else if (r.isOnCell() && !r.so && (r.sc === (temp = dom.ancestor(r.sc, dom.isCell)) || r.sc === temp.firstChild)) {
             if (temp.previousElementSibling) {
                 var td = temp.previousElementSibling;
                 node = td.lastChild || td;
@@ -1132,6 +1146,14 @@
                 (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.firstElementChild && temp.firstElementChild.tagName.match(/UL|OL/))) {
             temp2 = dom.lastChild(temp2);
             r = range.create(temp2, temp2.textContent.length, temp2, temp2.textContent.length).select();
+
+            if ((dom.isText(temp) || window.getComputedStyle(temp).display === "inline") && (dom.isText(temp2) || window.getComputedStyle(temp2).display === "inline")) {
+                if (dom.isText(temp2)) {
+                    temp2.textContent = temp2.textContent.replace(/\S\s*$/, '');
+                } else {
+                    this.delete($editable, options);
+                }
+            }
             return false;
         }
         //merge with the previous block
@@ -1150,22 +1172,28 @@
                 var check = false;
                 var node = dom.firstChild(r.sc);
                 var nodes = [];
+                var temp;
 
-                do {
+                while (node) {
                     nodes.push(node);
-                    node = node.parentNode;
-                    if (node.previousElementSibling) {
-                        if (node.previousElementSibling.tagName === node.tagName) {
-                            nodes.push(node);
+                    if (temp = dom.hasContentBefore(temp)) {
+                        if (!dom.isText(node) && settings.options.merge.indexOf(node.tagName.toLowerCase()) === -1 && temp.tagName !== node.tagName) {
+                            nodes = [];
                         }
                         break;
                     }
-                }  while (node && settings.options.merge.indexOf(node.tagName.toLowerCase()) !== -1);
+                    node = node.parentNode;
+                }
 
                 while (nodes.length) {
                     node = nodes.pop();
-                    if (node && node.previousElementSibling && node.previousElementSibling.tagName === node.tagName && !range.dontBreak(node) && !range.dontBreak(node.previousElementSibling)) {
+                    if (node && (temp = dom.hasContentBefore(temp)) &&
+                        temp.tagName === node.tagName &&
+                        settings.options.merge.indexOf(node.tagName.toLowerCase()) !== -1 &&
+                        !range.dontBreak(node) && !range.dontBreak(node.previousElementSibling)) {
+
                         dom.doMerge(node.previousElementSibling, node);
+
                     }
                 }
                 prev = dom.firstChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(r.sc)));

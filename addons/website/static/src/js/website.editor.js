@@ -81,7 +81,7 @@
         $ul.append('<li><a data-event="padding" href="#" data-value="small">'+_t('Small')+'</a></li>');
         $ul.append('<li><a data-event="padding" href="#" data-value="medium">'+_t('Medium')+'</a></li>');
         $ul.append('<li><a data-event="padding" href="#" data-value="large">'+_t('Large')+'</a></li>');
-        $ul.append('<li><a data-event="padding" href="#" data-value="xl">'+_t('xl')+'</a></li>');
+        $ul.append('<li><a data-event="padding" href="#" data-value="xl">'+_t('Xl')+'</a></li>');
 
         // padding button
         var $imageprop = $('<div class="btn-group"/>');
