@@ -96,6 +96,8 @@
             })).appendTo($imageprop);
 
         $imagePopover.find('.popover-content').append($airPopover.find(".note-history").clone());
+
+        $imagePopover.find('[data-event="showImageDialog"]').before($linkPopover.find('[data-event="showLinkDialog"]').clone());
         
         //////////////// link popover
 
@@ -271,6 +273,11 @@
     };
 
     eventHandler.dialog.showLinkDialog = function ($editable, $dialog, linkInfo) {
+        var r = range.create();
+        if (r.isCollapsed() && dom.isImg(r.sc)) {
+            var index = Array.prototype.indexOf.call(r.sc.parentNode.childNodes, r.sc);
+            range.create(r.sc.parentNode, index, r.sc.parentNode, index+1).select();
+        }
         var editor = new website.editor.LinkDialog($editable, linkInfo);
         editor.appendTo(document.body);
 
@@ -1219,7 +1226,7 @@
                     nodes = dom.ancestor(r.sc, dom.isAnchor).childNodes;
                 }
 
-                if (nodes.length > 1) {
+                if (nodes.length > 1 || dom.isImg(nodes[0])) {
                     var text = "";
                     this.data.images = [];
                     for (var i=0; i<nodes.length; i++) {
