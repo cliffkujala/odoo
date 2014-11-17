@@ -1053,7 +1053,9 @@ function openerp_pos_widgets(instance, module){ //module is instance.point_of_sa
                     });
 
                     return ret;
-                } 
+                } else {
+                    return user;
+                }
             });
         },
 
