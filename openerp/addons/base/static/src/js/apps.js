@@ -126,6 +126,49 @@ openerp.base = function(instance) {
                         this.$ifr.height(m.height);
                     });
 
+                    self.on('message:update_count', self, function(m) {
+                        var count = m.count
+                        var get_upd_menu_id = function() {
+                            if (_.isUndefined(self._upd_menu_id)) {
+                                var IMD = new instance.web.Model('ir.model.data');
+                                return IMD.call('get_object_reference', ['base', 'menu_module_updates']).then(function(r) {
+                                    var mid = r[1];
+                                    if(r[0] !== 'ir.ui.menu') {
+                                        // invalid reference, return null
+                                        mid = null;
+                                    }
+                                    self._upd_menu_id = mid;
+                                    return mid;
+                                });
+                            } else {
+                                return $.Deferred().resolve(self._upd_menu_id).promise();
+                            }
+                        };
+
+                        $.when(get_upd_menu_id()).done(function(menu_id) {
+                            if (_.isNull(menu_id)) {
+                                return;
+                            }
+                            var $menu = instance.webclient.menu.$secondary_menus.find(_.str.sprintf('a[data-menu=%s]', menu_id));
+                            if ($menu.length === 0) {
+                                return;
+                            }
+                            if (_.isUndefined(count)) {
+                                count = 0;
+                            }
+                            var needupdate = $menu.find('#menu_counter');
+                            if (needupdate && needupdate.length !== 0) {
+                                if (count > 0) {
+                                    needupdate.text(count);
+                                } else {
+                                    needupdate.remove();
+                                }
+                            } else if (count > 0) {
+                                $menu.append(instance.web.qweb.render("Menu.needaction_counter", {widget: {needaction_counter: count}}));
+                            }
+                        });
+                    });
+
                     self.on('message:blockUI', self, function() { instance.web.blockUI(); });
                     self.on('message:unblockUI', self, function() { instance.web.unblockUI(); });
 
