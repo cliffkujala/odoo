@@ -253,6 +253,20 @@ class ManyToOne(orm.AbstractModel):
     _name = 'website.qweb.field.many2one'
     _inherit = ['website.qweb.field', 'ir.qweb.field.many2one']
 
+    def attributes(self, cr, uid, field_name, record, options,
+                   source_element, g_att, t_att, qweb_context,
+                   context=None):
+        attrs = super(ManyToOne, self).attributes(
+            cr, uid, field_name, record, options, source_element, g_att, t_att,
+            qweb_context, context=context)
+        many2one = getattr(record, field_name)
+        if many2one:
+            return itertools.chain(attrs, [
+                    ('data-oe-many2one-id', many2one.id),
+                    ('data-oe-many2one-model', many2one._name)])
+        else:
+            return attrs
+
     def from_html(self, cr, uid, model, field, element, context=None):
         # FIXME: layering violations all the things
         Model = self.pool[element.get('data-oe-model')]

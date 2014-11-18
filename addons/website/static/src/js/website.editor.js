@@ -172,6 +172,13 @@
 
         fn_popover_update.call(this, $popover, oStyle, isAirMode);
 
+        if ($(oStyle.range.sc).closest('[data-oe-model]:not([data-oe-model="ir.ui.view"]):not([data-oe-type="html"])')) {
+            $imagePopover.hide();
+            $linkPopover.hide();
+            $airPopover.hide();
+            return;
+        }
+
         if (!$popover.data('loaded')) {
             summernote_popover_update ($popover);
             $popover.data('loaded', true);
@@ -986,7 +993,7 @@
 
                 if ($last && (!$editable.size() || $last[0] != $editable[0])) {
                     var $destroy = $last;
-                    setTimeout(function () {$destroy.destroy();},150); // setTimeout to remove flickering when change to editable zone (re-create an editor)
+                    setTimeout(function () {$destroy.destroy();},50); // setTimeout to remove flickering when change to editable zone (re-create an editor)
                     $last = null;
                 }
                 if ($editable.size() && (!$last || $last[0] != $editable[0]) &&
@@ -1016,6 +1023,7 @@
 
             $('#wrapwrap [data-oe-model]')
                 .not('link, script')
+                .not('[data-oe-readonly]')
                 .not('img[data-oe-field="arch"], br[data-oe-field="arch"], input[data-oe-field="arch"]')
                 .not('.oe_snippet_editor')
                 .addClass('o_editable');

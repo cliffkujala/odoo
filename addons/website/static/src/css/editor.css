@@ -68,6 +68,11 @@
   display: none;
 }
 
+.o_editable[data-oe-model][data-oe-type]:hover {
+    -moz-box-shadow: 0 0 10px 3px rgba(94, 255, 0, 0.8);
+    -webkit-box-shadow: 0 0 10px 3px rgba(94, 255, 0, 0.8);
+    box-shadow: 0 0 10px 3px rgba(94, 255, 0, 0.8);
+}
 /* Prevent the text contents of draggable elements from being selectable. */
 [draggable] {
   -moz-user-select: none;

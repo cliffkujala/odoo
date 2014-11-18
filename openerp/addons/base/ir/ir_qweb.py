@@ -546,6 +546,7 @@ class FieldConverter(osv.AbstractModel):
           ``type``, may not be any Field subclass name)
         * ``translate``, a boolean flag (``0`` or ``1``) denoting whether the
           field is translatable
+        * ``readonly``, has this attribute if the field is readonly
         * ``expression``, the original expression
 
         :returns: iterable of (attribute name, attribute value) pairs.
@@ -559,14 +560,8 @@ class FieldConverter(osv.AbstractModel):
             ('data-oe-type', field_type),
             ('data-oe-expression', t_att['field']),
         ]
-        if field_type == 'many2one':
-            many2one = getattr(record, field_name)
-            if many2one:
-                data += [
-                    ('data-oe-many2one-id', many2one.id),
-                    ('data-oe-many2one-model', many2one._name)
-                ]
-
+        if record._all_columns[field_name].column.readonly:
+            data.append(('data-oe-readonly', 1))
         return data
 
     def value_to_html(self, cr, uid, value, field, options=None, context=None):
