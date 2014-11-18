@@ -387,6 +387,8 @@
         var clone_data = false;
         var $node = oLayoutInfo.editor;
         if ($node.data('oe-model')) {
+            $node.on('content_changed', function () {
+
             var $nodes = $('[data-oe-model]')
                 .filter(function () { return this != $node[0];})
                 .filter('[data-oe-model="'+$node.data('oe-model')+'"]')
@@ -396,15 +398,28 @@
             if ($node.data('oe-expression')) $nodes = $nodes.filter('[data-oe-expression="'+$node.data('oe-expression')+'"]');
             if ($node.data('oe-xpath')) $nodes = $nodes.filter('[data-oe-xpath="'+$node.data('oe-xpath')+'"]');
 
-            if ($nodes.length) {
-                $node.on('content_changed', function () {
-                    if (!clone_data) {
-                        clone_data = true;
-                        $nodes.html(this.innerHTML);
-                        clone_data = false;
-                    }
-                });
+            var nodes = $node.get();
+
+            if ($node.data('oe-type') === "many2one") {
+                $nodes = $nodes.add($('[data-oe-model]')
+                    .filter(function () { return this != $node[0] && nodes.indexOf(this) === -1; })
+                    .filter('[data-oe-many2one-model="'+$node.data('oe-many2one-model')+'"]')
+                    .filter('[data-oe-many2one-id="'+$node.data('oe-many2one-id')+'"]')
+                    .filter('[data-oe-type="many2one"]'));
+
+                $nodes = $nodes.add($('[data-oe-model]')
+                    .filter(function () { return this != $node[0] && nodes.indexOf(this) === -1; })
+                    .filter('[data-oe-model="'+$node.data('oe-many2one-model')+'"]')
+                    .filter('[data-oe-id="'+$node.data('oe-many2one-id')+'"]')
+                    .filter('[data-oe-field="name"]'));
             }
+
+                if (!clone_data) {
+                    clone_data = true;
+                    $nodes.html(this.innerHTML);
+                    clone_data = false;
+                }
+            });
         }
     };
     var fn_dettach = eventHandler.dettach;

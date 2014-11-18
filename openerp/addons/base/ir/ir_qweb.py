@@ -552,13 +552,22 @@ class FieldConverter(osv.AbstractModel):
         """
         field = record._fields[field_name]
         field_type = get_field_type(field, options)
-        return [
+        data = [
             ('data-oe-model', record._name),
             ('data-oe-id', record.id),
             ('data-oe-field', field_name),
             ('data-oe-type', field_type),
             ('data-oe-expression', t_att['field']),
         ]
+        if field_type == 'many2one':
+            many2one = getattr(record, field_name)
+            if many2one:
+                data += [
+                    ('data-oe-many2one-id', many2one.id),
+                    ('data-oe-many2one-model', many2one._name)
+                ]
+
+        return data
 
     def value_to_html(self, cr, uid, value, field, options=None, context=None):
         """ value_to_html(cr, uid, value, field, options=None, context=None)
