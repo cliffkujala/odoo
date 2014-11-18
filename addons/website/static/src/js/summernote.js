@@ -569,12 +569,12 @@
         var start = dom.ancestor(sc, dom.isFont);
         var end = dom.ancestor(ec, dom.isFont);
 
-        if (!dom.isText(ec) || ec.textContent.slice(eo, Infinity).match(/\S/)) {
+        if (!dom.isText(ec) || ec.textContent.length !== eo) {
             dom.splitTree(end || ec, ec, eo);
         }
 
         var first;
-        if (!dom.isText(sc) || sc.textContent.slice(0, so).match(/\S/)) {
+        if (!dom.isText(sc) || so !== 0) {
             first = dom.firstChild(dom.splitTree(start || sc, sc, so));
         } else {
             first = sc;
@@ -1500,6 +1500,18 @@
       // fix by odoo because if you select a style in a li with no p tag all the ul is wrapped by the style tag
       var r = range.create();
       var nodes = dom.listBetween(r.sc, r.ec);
+
+      // avoid triple click => crappy dom
+      if (!dom.isText(r.ec) && r.eo === 0) {
+        nodes.pop();
+        var last = dom.lastChild(list.last(nodes));
+        if (!last.textContent.match(/\S/)) {
+            nodes.pop();
+            last = dom.lastChild(list.last(nodes));
+        }
+        range.create(r.sc, r.so, last, last.textContent.length).select();
+      }
+
       var textnodes = [];
       for (var i=0; i<nodes.length; i++) {
         if (dom.isText(nodes[i]) || nodes[i].tagName === "BR") {
