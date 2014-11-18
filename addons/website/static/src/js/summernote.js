@@ -569,11 +569,26 @@
         var start = dom.ancestor(sc, dom.isFont);
         var end = dom.ancestor(ec, dom.isFont);
 
-        dom.splitTree(end || ec, ec, eo);
+        if (!dom.isText(ec) || ec.textContent.slice(eo, Infinity).match(/\S/)) {
+            dom.splitTree(end || ec, ec, eo);
+        }
 
-        var first = dom.firstChild(dom.splitTree(start || sc, sc, so));
+        var first;
+        if (!dom.isText(sc) || sc.textContent.slice(0, so).match(/\S/)) {
+            first = dom.firstChild(dom.splitTree(start || sc, sc, so));
+        } else {
+            first = sc;
+        }
+
         var last = ec === sc ? first : ec;
         var nodes = dom.listBetween(first || sc, last);
+
+        var font = dom.ancestor(list.head(nodes), dom.isFont);
+        if (font) {nodes.unshift(font);}
+        font = dom.ancestor(list.last(nodes), dom.isFont);
+        if (font) {nodes.push(font);}
+
+        nodes = _.uniq(nodes);
 
         var regText = new RegExp('(^|\\s+)text-[^\\s]+(\\s+|$)', 'gi');
         var regBg = new RegExp('(^|\\s+)bg-[^\\s]+(\\s+|$)', 'gi');
@@ -600,40 +615,38 @@
                 font.removeAttribute('class');
             }
 
-            if (!font.attributes.style && !font.className.length && font.parentNode) {
-                nodes.splice(font);
+            if (!font.attributes.style && !font.className.length && font.parentNode && font.tagName === "FONT") {
+                nodes.splice(nodes.indexOf(font));
                 nodes.push.apply(nodes, dom.moveTo(font, font.parentNode, font));
                 i--;
             }
         }
 
-        if (!(color && color !== "inherit") && !(bgcolor && bgcolor !== "inherit")) {
-            return;
-        }
+        var node;
+        if ((color && color !== "inherit") || (bgcolor && bgcolor !== "inherit")) {
+            for (var i=0; i<nodes.length; i++) {
+                node = nodes[i];
+                font = dom.ancestor(node, dom.isFont);
 
-        for (var i=0; i<nodes.length; i++) {
-            var node = nodes[i];
-
-            var font = dom.ancestor(node, dom.isFont);
-
-            if (!font) {
-                font = document.createElement("font");
-                node.parentNode.insertBefore(font, node);
-                font.appendChild(node);
-            }
-
-            if (color) {
-                if (color.indexOf('text-') !== -1) {
-                    font.className += ' ' + color;
-                } else if (color !== 'inherit') {
-                    font.style.color = color;
+                if (!font) {
+                    font = document.createElement("font");
+                    node.parentNode.insertBefore(font, node);
+                    font.appendChild(node);
                 }
-            }
-            if (bgcolor) {
-                if (bgcolor.indexOf('bg-') !== -1) {
-                    font.className += ' ' + bgcolor;
-                } else if (bgcolor !== 'inherit') {
-                    font.style.backgroundColor = bgcolor;
+
+                if (color) {
+                    if (color.indexOf('text-') !== -1) {
+                        font.className += ' ' + color;
+                    } else if (color !== 'inherit') {
+                        font.style.color = color;
+                    }
+                }
+                if (bgcolor) {
+                    if (bgcolor.indexOf('bg-') !== -1) {
+                        font.className += ' ' + bgcolor;
+                    } else if (bgcolor !== 'inherit') {
+                        font.style.backgroundColor = bgcolor;
+                    }
                 }
             }
         }
