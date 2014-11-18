@@ -663,13 +663,22 @@
     dom.isLi = function (node) {
         return node && node.tagName === 'LI';
     };
-    dom.dontBreak = function (node) { return true; };
+    dom.dontBreak = function (node, sc, so, ec, eo) {
+        // avoid triple click => crappy dom
+        return eo === 0 && node === ec && !dom.isText(ec);
+    };
 
-    range.reRange = function (sc, so, ec, eo, keep_end) {
+    range.WrappedRange.prototype.reRange = function (keep_end, dontBreak) {
+        var sc = this.sc;
+        var so = this.so;
+        var ec = this.ec;
+        var eo = this.eo;
+        dontBreak = dontBreak || dom.dontBreak;
+
         // search the first snippet editable node
         var start = keep_end ? ec : sc;
         while (start) {
-            if ($(start).filter(dom.dontBreak).length) {
+            if (dontBreak(start, sc, so, ec, eo)) {
                 break;
             }
             start = start.parentNode;
@@ -682,7 +691,7 @@
             if (start === end) {
                 break;
             }
-            if ($(end).filter(dom.dontBreak).length) {
+            if (dontBreak(end, sc, so, ec, eo)) {
                 lastFilterEnd = end;
             }
             end = end.parentNode;
@@ -703,42 +712,27 @@
         if ($.contains(start, end)) {
 
             if (keep_end) {
-                while (!end.previousElementSibling) {
-                    end = end.parentNode;
-                }
-                sc = end.previousElementSibling;
-                while (sc.lastChild) {
-                    sc = sc.lastChild;
-                }
+                sc = dom.lastChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(end)));
                 so = sc.textContent.length;
+            } else if (!eo) {
+                ec = dom.lastChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(end)));
+                eo = ec.textContent.length;
             } else {
-                while (!end.nextElementSibling) {
-                    end = end.parentNode;
-                }
-                ec = end.nextElementSibling;
-                while (ec.firstChild) {
-                    ec = ec.firstChild;
-                }
+                ec = dom.firstChild(dom.hasContentAfter(dom.ancestorHaveNextSibling(end)));
                 eo = 0;
             }
         } else {
 
             if (keep_end) {
-                sc = start;
-                while (sc.firstChild) {
-                    sc = sc.firstChild;
-                }
+                sc = dom.firstChild(start);
                 so = 0;
             } else {
-                ec = start;
-                while (ec.lastChild) {
-                    ec = ec.lastChild;
-                }
+                ec = dom.lastChild(start);
                 eo = ec.textContent.length;
             }
         }
 
-        return range.create(sc, so, ec, eo);
+        return new range.WrappedRange(sc, so, ec, eo);
     };
     range.WrappedRange.prototype.deleteContents = function () {
         if (this.isCollapsed()) {
@@ -1496,23 +1490,11 @@
     
     eventHandler.editor.formatBlock = function ($editable, sTagName) {
       $editable.data('NoteHistory').recordUndo($editable);
+      
+      var r = range.create().reRange().select();
 
       // fix by odoo because if you select a style in a li with no p tag all the ul is wrapped by the style tag
-      var r = range.create();
       var nodes = dom.listBetween(r.sc, r.ec);
-
-      // avoid triple click => crappy dom
-      if (!dom.isText(r.ec) && r.eo === 0) {
-        nodes.pop();
-        var last = dom.lastChild(list.last(nodes));
-        if (!last.textContent.match(/\S/)) {
-            nodes.pop();
-            last = dom.lastChild(list.last(nodes));
-        }
-        range.create(r.sc, r.so, last, last.textContent.length).select();
-      }
-
-      var textnodes = [];
       for (var i=0; i<nodes.length; i++) {
         if (dom.isText(nodes[i]) || nodes[i].tagName === "BR") {
           if (settings.options.styleTags.indexOf(nodes[i].parentNode.tagName.toLowerCase()) === -1) {

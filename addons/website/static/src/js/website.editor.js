@@ -327,7 +327,7 @@
         if (!r || r.isCollapsed()) return;
 
         // check if the user move the caret on up or down
-        var data = range.reRange(r.sc, r.so, r.ec, r.eo, dy < 0);
+        var data = r.reRange(dy < 0);
 
         if (data.sc !== r.sc || data.so !== r.so || data.ec !== r.ec || data.eo !== r.eo) {
             setTimeout(function () {

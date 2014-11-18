@@ -126,7 +126,10 @@
             });
             this.$el.css('top', this.parent.get('height'));
 
-            $.summernote.objects.dom.dontBreak = function (node) { return website.snippet.globalSelector.is($(node)); };
+            var _dontBreak = $.summernote.objects.dom.dontBreak;
+            $.summernote.objects.dom.dontBreak = function (node, sc, so, ec, eo) {
+                return _dontBreak(node, sc, so, ec, eo) || website.snippet.globalSelector.is($(node));
+            };
         },
 
         show_blocks: function () {
