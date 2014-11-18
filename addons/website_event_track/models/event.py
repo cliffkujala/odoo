@@ -110,11 +110,12 @@ class event_track(models.Model):
 
     @api.multi
     def write(self, vals):
+        res = super(event_track, self).write(vals)
         if vals.get('user_id'):
             self.message_subscribe_users([vals.get('user_id')])
         if vals.get('speaker_ids'):
             self.message_subscribe([speaker['id'] for speaker in self.resolve_2many_commands('speaker_ids', vals.get('speaker_ids'), ['id'])])
-        return super(event_track, self).write(vals)
+        return res
 
 class event_event(models.Model):
     _inherit = "event.event"

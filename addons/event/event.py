@@ -203,9 +203,10 @@ class event_event(models.Model):
 
     @api.multi
     def write(self, vals):
+        res = super(event_event, self).write(vals)
         if 'organizer_id' in vals:
             self.message_subscribe([vals.get('organizer_id')])
-        return super(event_event, self).write(vals)
+        return res
 
     @api.one
     def button_draft(self):

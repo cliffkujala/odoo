@@ -41,7 +41,7 @@ class EventMailScheduler(models.Model):
     mail_registration_ids = fields.One2many('event.mail.registration', 'scheduler_id')
     mail_sent = fields.Boolean('Mail Sent on Event')
     done = fields.Boolean('Sent', compute='_compute_done', store=True)
-    sequence = fields.Integer('Sequence', help="Gives the sequence when displaying a list of mail schedule lines.")
+    sequence = fields.Integer('Sequence', help="Gives sequence when displaying a list of mail schedule lines.")
 
     @api.one
     @api.depends('mail_sent', 'interval_type', 'event_id.registration_ids', 'mail_registration_ids')

@@ -21,6 +21,7 @@ class event_event(models.Model):
     badge_back = fields.Html('Badge Back', translate=True, states={'done': [('readonly', True)]})
     badge_innerleft = fields.Html('Badge Innner Left', translate=True, states={'done': [('readonly', True)]})
     badge_innerright = fields.Html('Badge Inner Right', translate=True, states={'done': [('readonly', True)]})
+    is_unlimited = fields.Boolean('Unlimited Tickets', compute='_compute_seats_availability')
 
     @api.model
     def _default_tickets(self):
@@ -39,6 +40,20 @@ class event_event(models.Model):
     def _compute_seats_max(self):
         self.seats_max = sum(ticket.seats_max for ticket in self.event_ticket_ids)
 
+    @api.one
+    @api.depends('event_ticket_ids.seats_max')
+    def _compute_seats_availability(self):
+        # set unlimited if any tickets has maximum seats as 0(unlimited) to check constrains
+        for ticket in self.event_ticket_ids:
+            if not ticket.seats_max:
+                self.is_unlimited = True
+
+    @api.one
+    @api.constrains('seats_max', 'seats_available')
+    def _check_seats_limit(self):
+        # override event constrains for check 0 tickets as unlimited.
+        if self.seats_availability == 'limited' and self.seats_max and self.seats_available < 0 and not self.is_unlimited:
+            raise Warning(_('No more available seats.'))
 
 class event_ticket(models.Model):
     _name = 'event.event.ticket'
@@ -157,6 +172,13 @@ class event_registration(models.Model):
     def _check_ticket_seats_limit(self):
         if self.event_ticket_id.seats_max and self.event_ticket_id.seats_available < 0:
             raise Warning('No more available seats for this ticket')
+
+    @api.one
+    @api.constrains('event_id', 'state')
+    def _check_seats_limit(self):
+        # override event constrains for check 0 tickets as unlimited.
+        if self.event_id.seats_availability == 'limited' and self.event_id.seats_max and self.event_id.seats_available < (1 if self.state == 'draft' else 0) and not self.event_id.is_unlimited:
+            raise Warning(_('No more seats available for this event.'))
 
     @api.one
     def _check_auto_confirmation(self):
