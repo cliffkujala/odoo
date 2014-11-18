@@ -339,7 +339,7 @@
                 setTimeout(function () {snipped_event_flag = false;}, 0);
                 var $target = $(srcElement);
 
-                if (!$target.is(':o_editable') || $target.parents(".oe_overlay").length) {
+                if ($target.closest(".oe_overlay, .note-popover").length) {
                     return;
                 }
 

@@ -513,7 +513,7 @@
 
 <!-- Edition: post a reply -->
 <template id="post_reply">
-    <div class="css_editable_mode_hidden">
+    <div class="css_editable_mode_hidden" groups="base.group_user">
         <form t-attf-id="reply#{ object._name.replace('.','') + '-' + str(object.id) }" class="collapse oe_comment_grey"
             t-attf-action="/forum/#{ slug(forum) }/#{slug(object)}/reply" method="post" role="form">
             <h3 class="mt10">Your Reply</h3>
@@ -700,7 +700,7 @@
                 <t t-set="answer" t-value="post_answer"/>
             </t>
         </div>
-        <div t-if="question.post_type != 'question' or question.post_type == 'question' and not question.uid_has_answered and question.state != 'close' and question.active != False">
+        <div groups="base.group_user" t-if="question.post_type != 'question' or question.post_type == 'question' and not question.uid_has_answered and question.state != 'close' and question.active != False">
             <t t-call="website_forum.post_answer"/>
         </div>
         <div t-if="question.post_type == 'question' and question.uid_has_answered" class="mb16">
