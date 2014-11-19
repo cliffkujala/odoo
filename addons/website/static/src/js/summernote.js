@@ -608,7 +608,7 @@
                 font.style.backgroundColor = '';
             }
 
-            if (!font.style.color && !font.style.backgroundColor && font.style.fontSize) {
+            if (!font.style.color && !font.style.backgroundColor && !font.style.fontSize) {
                 font.removeAttribute('style');
             }
             if (!font.className.length) {
