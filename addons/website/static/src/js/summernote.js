@@ -1011,15 +1011,8 @@
             if (node === $editable[0] || $.contains(node, $editable[0])) {
                 return false;
             }
-            if (node.nextSibling) {
-                var next = node.nextSibling;
-                next = dom.firstChild(next);
-                range.create(next, 0, next, 0).select();
-            } else {
-                var prev = node.previousSibling;
-                prev = dom.lastChild(prev);
-                range.create(prev, prev.textContent.length, prev, prev.textContent.length).select();
-            }
+            var next = dom.lastChild(dom.hasContentAfter(dom.ancestorHaveNextSibling(node)));
+            range.create(next, next.textContent.length, next, next.textContent.length).select();
             node.parentNode.removeChild(node);
         }
         // normal feature if same tag and not the end
@@ -1146,19 +1139,12 @@
             }
         }
         // empty tag
-        else if (!content.length && (node.nextSibling || node.previousSibling) && r.sc.tagName && settings.options.deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
+        else if (!content.length && r.sc.tagName && settings.options.deleteEmpty.indexOf(r.sc.tagName.toLowerCase()) !== -1) {
             if (node === $editable[0] || $.contains(node, $editable[0])) {
                 return false;
             }
-            if (node.previousSibling) {
-                var prev = node.previousSibling;
-                prev = dom.lastChild(prev);
-                range.create(prev, prev.textContent.length, prev, prev.textContent.length).select();
-            } else {
-                var next = node.nextSibling;
-                next = dom.firstChild(next);
-                range.create(next, 0, next, 0).select();
-            }
+            var prev = dom.lastChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(node)));
+            range.create(prev, prev.textContent.length, prev, prev.textContent.length).select();
             node.parentNode.removeChild(node);
         }
         // normal feature if same tag and not the begin

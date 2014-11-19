@@ -1665,18 +1665,17 @@
             if (!this.media) { this.media = document.getElementsByClassName('insert-media')[0]; }
             if (this.media) {
                 o.url = this.media.getAttribute('src');
-
-                this.parent.$(".pager > li").click(function (e) {
-                    e.preventDefault();
-                    var $target = $(e.currentTarget);
-                    if ($target.hasClass('disabled')) {
-                        return;
-                    }
-                    self.page += $target.hasClass('previous') ? -1 : 1;
-                    self.display_attachments();
-                });
-                this.set_image(o.url, o.alt);
             }
+            this.parent.$(".pager > li").click(function (e) {
+                e.preventDefault();
+                var $target = $(e.currentTarget);
+                if ($target.hasClass('disabled')) {
+                    return;
+                }
+                self.page += $target.hasClass('previous') ? -1 : 1;
+                self.display_attachments();
+            });
+            this.set_image(o.url, o.alt);
             this.fetch_existing();
             return res;
         },
@@ -1770,10 +1769,14 @@
                     return false;
                 }
             }
+            $form.find('.well > div').hide().last().after('<span class="fa fa-spin fa-3x fa-refresh"/>');
+
             var callback = _.uniqueId('func_');
             this.$('input[name=func]').val(callback);
             window[callback] = function (attachments, error) {
                 delete window[callback];
+                $form.find('.well > span').remove();
+                $form.find('.well > div').show();
                 if (error || !attachments.length) {
                     self.file_selected(null, error || !attachments.length);
                 }
@@ -1819,7 +1822,7 @@
                     domain: domain,
                     fields: ['name', 'website_url'],
                     order: 'id desc',
-                    context: website.get_context(),
+                    context: website.get_context()
                 }
             }).then(this.proxy('fetched_existing'));
         },
