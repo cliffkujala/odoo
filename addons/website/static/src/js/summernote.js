@@ -665,7 +665,7 @@
     };
     dom.dontBreak = function (node, sc, so, ec, eo) {
         // avoid triple click => crappy dom
-        return eo === 0 && node === ec && !dom.isText(ec);
+        return node === ec && !dom.isText(ec);
     };
 
     range.WrappedRange.prototype.reRange = function (keep_end, dontBreak) {
@@ -1711,6 +1711,11 @@
         dom.pasteText(r.sc, r.so, clipboardData.getData("text/plain"));
         return false;
     }
+    function summernote_rerange (event) {
+        if (!event.keyCode || event.shiftKey) {
+            range.create().reRange().select();
+        }
+    }
 
     var fn_attach = eventHandler.attach;
     eventHandler.attach = function (oLayoutInfo, options) {
@@ -1718,6 +1723,7 @@
         fn_attach.call(this, oLayoutInfo, options);
         oLayoutInfo.editor.on("paste", summernote_paste);
         $editable.on("scroll", summernote_table_scroll);
+        $editable.on("mouseup keydown keyup", summernote_rerange);
     };
     var fn_dettach = eventHandler.dettach;
     eventHandler.dettach = function (oLayoutInfo, options) {
@@ -1725,6 +1731,7 @@
         fn_dettach.call(this, oLayoutInfo, options);
         oLayoutInfo.editor.off("paste", summernote_paste);
         $editable.off("scroll", summernote_table_scroll);
+        $editable.off("mouseup keydown keyup", summernote_rerange);
     };
 
 })();
