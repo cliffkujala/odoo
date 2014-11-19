@@ -51,6 +51,20 @@ openerp.account = function (instance) {
             var mod = new instance.web.Model("account.move.line", context, domain);
             return mod.call("list_partners_to_reconcile", []).then(function(result) {
                 var current = self.current_partner !== null ? self.partners[self.current_partner][0] : null;
+                for(var id in domain)
+                {
+                    if("partner_id" == domain[id][0])
+                    {
+                        for (var partner_id in self.partners)
+                        {
+                            if(domain[id][2] == self.partners[partner_id][0])
+                            {
+                                current = self.partners[partner_id][0];
+                                break;
+                            }
+                        }
+                    }
+                }
                 self.partners = result;
                 var index = _.find(_.range(self.partners.length), function(el) {
                     if (current === self.partners[el][0])
