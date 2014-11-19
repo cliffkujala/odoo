@@ -31,9 +31,10 @@
                 var res = this._super();
                 var $cover = $('#title.cover');
                 if ($cover.length) {
+                    var src = $cover.css("background-image").replace(/url\(|\)|"|'/g,'').replace(/.*none$/,'');
                     openerp.jsonRpc("/blogpost/change_background", 'call', {
                         'post_id' : +$('[data-oe-model="blog.post"]').attr('data-oe-id'),
-                        'image' : $cover.css('background-image').replace(/url\(|\)|"|'/g,''),
+                        'image' : src,
                     });
                 }
                 return res;
@@ -44,13 +45,13 @@
     website.snippet.options.website_blog = website.snippet.Option.extend({
         start : function(type, value, $li) {
             this._super();
-            this.src = this.$target.css("background-image").replace(/url\(|\)|"|'/g,'');
-            this.$image = $('<image src="'+(this.src !== "none" ? this.src : "")+'">');
+            this.src = this.$target.css("background-image").replace(/url\(|\)|"|'/g,'').replace(/.*none$/,'');
+            this.$image = $('<image src="'+this.src+'">');
         },
         clear : function(type, value, $li) {
             if (type !== 'click') return;
             this.src = null;
-            this.$target.css({"background-image":'', 'min-height': $(window).height()});
+            this.$target.css({"background-image": '', 'min-height': $(window).height()});
             this.$image.removeAttr("src");
         },
         change : function(type, value, $li) {
@@ -58,9 +59,9 @@
             var self = this;
             var editor  = new website.editor.MediaDialog(this.$image, this.$image[0]);
             editor.appendTo('body');
-            this.$image.on('saved', self, function (event, img) {
+            editor.on('saved', self, function (event, img) {
                 var url = self.$image.attr('src');
-                self.$target.css({"background-image": !_.isUndefined(url) ? 'url(' + url + ')' : "", 'min-height': $(window).height()});
+                self.$target.css({"background-image": url ? 'url(' + url + ')' : "", 'min-height': $(window).height()});
             });
         },
     });
