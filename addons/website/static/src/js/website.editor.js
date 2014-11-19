@@ -767,8 +767,11 @@
             this.rte.start_edition();
             this.trigger('rte:called');
 
+            var flag = false;
             window.onbeforeunload = function(event) {
-                if ($('.o_editable.o_dirty').length) {
+                if ($('.o_editable.o_dirty').length && flag) {
+                    flag = true;
+                    setTimeout(function () {flag=false;},0);
                     return _t('This document is not saved!');
                 }
             };
@@ -993,7 +996,7 @@
 
                 if ($last && (!$editable.size() || $last[0] != $editable[0])) {
                     var $destroy = $last;
-                    setTimeout(function () {$destroy.destroy();},50); // setTimeout to remove flickering when change to editable zone (re-create an editor)
+                    setTimeout(function () {$destroy.destroy();},150); // setTimeout to remove flickering when change to editable zone (re-create an editor)
                     $last = null;
                 }
                 if ($editable.size() && (!$last || $last[0] != $editable[0]) &&
