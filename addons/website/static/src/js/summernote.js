@@ -1476,25 +1476,29 @@
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     
     eventHandler.editor.formatBlock = function ($editable, sTagName) {
-      $editable.data('NoteHistory').recordUndo($editable);
-      
-      var r = range.create().reRange().select();
+        $editable.data('NoteHistory').recordUndo($editable);
 
-      // fix by odoo because if you select a style in a li with no p tag all the ul is wrapped by the style tag
-      var nodes = dom.listBetween(r.sc, r.ec);
-      for (var i=0; i<nodes.length; i++) {
-        if (dom.isText(nodes[i]) || dom.isBR(nodes[i])) {
-          if (settings.options.styleTags.indexOf(nodes[i].parentNode.tagName.toLowerCase()) === -1) {
-            dom.wrap(nodes[i], 'p');
-          }
-        } else if (nodes[i].childNodes.length === 1 && dom.isBR(nodes[i].firstChild)) {
-          dom.wrap(nodes[i].firstChild, 'p');
+        var r = range.create();
+        if (!r) {
+            return;
         }
-      }
-      // end
+        r.reRange().select();
 
-      sTagName = agent.isMSIE ? '<' + sTagName + '>' : sTagName;
-      document.execCommand('FormatBlock', false, sTagName);
+        // fix by odoo because if you select a style in a li with no p tag all the ul is wrapped by the style tag
+        var nodes = dom.listBetween(r.sc, r.ec);
+        for (var i=0; i<nodes.length; i++) {
+            if (dom.isText(nodes[i]) || dom.isBR(nodes[i])) {
+                if (settings.options.styleTags.indexOf(nodes[i].parentNode.tagName.toLowerCase()) === -1) {
+                    dom.wrap(nodes[i], 'p');
+                }
+            } else if (nodes[i].childNodes.length === 1 && dom.isBR(nodes[i].firstChild)) {
+                dom.wrap(nodes[i].firstChild, 'p');
+            }
+        }
+        // end
+
+        sTagName = agent.isMSIE ? '<' + sTagName + '>' : sTagName;
+        document.execCommand('FormatBlock', false, sTagName);
     };
     eventHandler.editor.foreColor = function ($editable, sObjColor) {
         $editable.data('NoteHistory').recordUndo($editable);
@@ -1700,7 +1704,10 @@
     }
     function summernote_rerange (event) {
         if (!event.keyCode || event.shiftKey) {
-            range.create().reRange().select();
+            var r = range.create();
+            if (r) {
+                r.reRange().select();
+            }
         }
     }
 
