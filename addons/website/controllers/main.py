@@ -324,13 +324,13 @@ class Website(openerp.addons.web.controllers.main.Home):
                     if not disable_optimization and image.format in ('PNG', 'JPEG'):
                         image_data = image_save_for_web(image)
 
-                        attachment_id = Attachments.create(request.cr, request.uid, {
-                            'name': c_file.filename,
-                            'datas': image_data.encode('base64'),
-                            'datas_fname': c_file.filename,
-                            'res_model': 'ir.ui.view',
-                        }, request.context)
-                        attachment_ids.append(attachment_id)
+                    attachment_id = Attachments.create(request.cr, request.uid, {
+                        'name': c_file.filename,
+                        'datas': image_data.encode('base64'),
+                        'datas_fname': c_file.filename,
+                        'res_model': 'ir.ui.view',
+                    }, request.context)
+                    attachment_ids.append(attachment_id)
 
                 uploads = Attachments.read(
                     request.cr, request.uid, attachment_ids, ['website_url'],

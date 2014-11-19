@@ -172,7 +172,7 @@
 
         fn_popover_update.call(this, $popover, oStyle, isAirMode);
 
-        if ($(oStyle.range.sc).closest('[data-oe-model]:not([data-oe-model="ir.ui.view"]):not([data-oe-type="html"])')) {
+        if ($(oStyle.range.sc).closest('[data-oe-model]:not([data-oe-model="ir.ui.view"]):not([data-oe-type="html"])').length) {
             $imagePopover.hide();
             $linkPopover.hide();
             $airPopover.hide();
@@ -1490,19 +1490,21 @@
      * MediaDialog widget. Lets users change a media, including uploading a
      * new image, font awsome or video and can change a media into an other
      * media
+     *
+     * options: select_images: allow the selection of more of one image
      */
     website.editor.MediaDialog = website.editor.Dialog.extend({
         template: 'website.editor.dialog.media',
         events : _.extend({}, website.editor.Dialog.prototype.events, {
             'input input#icon-search': 'search',
         }),
-        init: function ($editable, media) {
-            var self = this;
+        init: function ($editable, media, options) {
             this._super();
             if ($editable) {
                 this.$editable = $editable;
                 this.rte = this.$editable.rte || this.$editable.data('rte');
             }
+            this.options = options || {};
             this.media = media;
             this.isNewMedia = !media;
         },
@@ -1510,6 +1512,11 @@
             var self = this;
 
             this.range = range.create();
+
+            var only_images = this.options.select_images || (this.media && $(this.media).parent().data("oe-field") === "image");
+            if (only_images) {
+                this.$('[href="#editor-media-video"], [href="#editor-media-icon"]').addClass('hidden');
+            }
 
             if (this.media) {
                 if (this.media.nodeName === "IMG") {
@@ -1522,17 +1529,13 @@
                 } else if (this.media.className.match(/(^|\s)fa($|\s)/)) {
                     this.$('[href="#editor-media-icon"]').tab('show');
                 }
-
-                if ($(this.media).parent().data("oe-field") === "image") {
-                    this.$('[href="#editor-media-video"], [href="#editor-media-icon"]').addClass('hidden');
-                }
             }
 
-            this.imageDialog = new website.editor.ImageDialog(this, this.media);
+            this.imageDialog = new website.editor.ImageDialog(this, this.media, this.options);
             this.imageDialog.appendTo(this.$("#editor-media-image"));
-            this.iconDialog = new website.editor.FontIconsDialog(this, this.media);
+            this.iconDialog = new website.editor.FontIconsDialog(this, this.media, this.options);
             this.iconDialog.appendTo(this.$("#editor-media-icon"));
-            this.videoDialog = new website.editor.VideoDialog(this, this.media);
+            this.videoDialog = new website.editor.VideoDialog(this, this.media, this.options);
             this.videoDialog.appendTo(this.$("#editor-media-video"));
 
             this.active = this.imageDialog;
@@ -1554,6 +1557,11 @@
             return this._super();
         },
         save: function () {
+            if (this.options.select_images) {
+                this.trigger("saved", this.active.save());
+                this.close();
+                return;
+            }
             if(this.rte) this.rte.historyRecordUndo(this.$editable);
 
             var self = this;
@@ -1588,7 +1596,7 @@
                 }
             },0);
 
-            this._super();
+            this.close();
         },
         searchTimer: null,
         search: function () {
@@ -1635,10 +1643,12 @@
             'click .existing-attachments img': 'select_existing',
             'click .existing-attachment-remove': 'try_remove',
         }),
-        init: function (parent, media) {
+        init: function (parent, media, options) {
             this._super();
+            this.options = options || {};
             this.parent = parent;
             this.media = media;
+            this.images = [];
             this.page = 0;
         },
         start: function () {
@@ -1662,17 +1672,34 @@
                     self.page += $target.hasClass('previous') ? -1 : 1;
                     self.display_attachments();
                 });
-                this.set_image(o.url);
+                this.set_image(o.url, o.alt);
             }
             this.fetch_existing();
             return res;
         },
-        save: function () {
-            this.parent.trigger("save", this.media);
-            if (!this.link) {
-                this.link = this.$(".existing-attachments img:first").attr('src');
-                this.alt = this.$(".existing-attachments img:first").attr('alt');
+        push: function (url, alt, id) {
+            if (this.options.select_images) {
+                var img = _.select(this.images, function (v) { return v.url == url;});
+                if (img.length) {
+                    this.images.splice(this.images.indexOf(img[0]),1);
+                    return;
+                }
+            } else {
+                this.images = [];
             }
+            this.images.push({'url': url, 'alt': alt, 'id': id});
+        },
+        save: function () {
+            if (this.options.select_images) {
+                this.parent.trigger("save", this.images);
+                return this.images;
+            }
+            this.parent.trigger("save", this.media);
+
+            var img = this.images[0] || {
+                    'url': this.$(".existing-attachments img:first").attr('src'),
+                    'alt': this.$(".existing-attachments img:first").attr('alt')
+                };
 
             if (this.media.tagName !== "IMG") {
                 var media = document.createElement('img');
@@ -1680,7 +1707,7 @@
                 this.media = media;
             }
 
-            $(this.media).attr('src', this.link).attr('alt', this.alt);
+            $(this.media).attr('src', img.url).attr('alt', img.alt);
             
             var element = document.getElementsByClassName('insert-media')[0];
             $('p').removeClass('insert-media');
@@ -1694,8 +1721,10 @@
                 this.media = element;
             }
             var style = this.style;
-            element.setAttribute('src', this.link);
+            element.setAttribute('src', img.url);
             if (style) { element.addClass(style); }
+
+            return this.media;
         },
         clear: function () {
             this.media.className = this.media.className.replace(/(^|\s)(img(\s|$)|img-[^\s]*)/g, ' ');
@@ -1715,15 +1744,17 @@
         search: function (needle) {
             var self = this;
             this.fetch_existing(needle).then(function () {
-                self.selected_existing(self.$('input.url').val());
+                self.selected_existing();
             });
         },
-        set_image: function (url, error) {
+        set_image: function (url, alt, error) {
             var self = this;
-            if (url) this.link = url;
+            if (url) {
+                this.push(url, alt);
+            }
             this.$('input.url').val('');
             this.fetch_existing().then(function () {
-                self.selected_existing(url);
+                self.selected_existing();
             });
         },
         form_submit: function (event) {
@@ -1731,7 +1762,7 @@
             var $form = this.$('form[action="/website/attach"]');
             if (!$form.find('input[name="upload"]').val().length) {
                 var url = $form.find('input[name="url"]').val();
-                if (this.selected_existing(url).size()) {
+                if (this.selected_existing().size()) {
                     event.preventDefault();
                     return false;
                 }
@@ -1740,7 +1771,12 @@
             this.$('input[name=func]').val(callback);
             window[callback] = function (attachments, error) {
                 delete window[callback];
-                self.file_selected(attachments[0]['website_url'], error);
+                if (error || !attachments.length) {
+                    self.file_selected(null, error || !attachments.length);
+                }
+                for (var i=0; i<attachments.length; i++) {
+                    self.file_selected(attachments[i]['website_url'], error);
+                }
             };
         },
         file_selection: function () {
@@ -1759,9 +1795,12 @@
                     .find('.help-block').text(error);
                 $button.addClass('btn-danger');
             }
-            this.set_image(url, error);
-            // auto save and close popup
-            this.parent.save();
+            this.set_image(url, null, error);
+
+            if (!this.options.select_images) {
+                // auto save and close popup
+                this.parent.save();
+            }
         },
         fetch_existing: function (needle) {
             var domain = [['res_model', '=', 'ir.ui.view'], '|',
@@ -1804,17 +1843,30 @@
             this.parent.$('.pager')
                 .find('li.previous').toggleClass('disabled', (from === 0)).end()
                 .find('li.next').toggleClass('disabled', (from + per_screen >= records.length));
+
+            this.selected_existing();
         },
         select_existing: function (e) {
-            this.link = $(e.currentTarget).attr('src');
-            this.alt = $(e.currentTarget).attr('alt');
-            this.selected_existing(this.link);
+            var $img = $(e.currentTarget);
+            this.push($img.attr('src'), $img.attr('alt'), $img.data('id'));
+            this.selected_existing();
         },
-        selected_existing: function (link) {
+        selected_existing: function () {
+            var self = this;
             this.$('.existing-attachment-cell.media_selected').removeClass("media_selected");
             var $select = this.$('.existing-attachment-cell img').filter(function () {
-                return $(this).attr("src") == link;
-            }).first();
+                var $img = $(this);
+                var url = $img.attr("src");
+                return !!_.select(self.images, function (v) {
+                    if (v.url === url) {
+                        if (!v.id) {
+                            v.id = $img.data('id');
+                            v.alt = $img.attr('alt');
+                        }
+                        return true;
+                    }
+                }).length;
+            });
             $select.parent().addClass("media_selected");
             return $select;
         },

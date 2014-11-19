@@ -364,7 +364,7 @@
 
         <section class="o_gallery o_spc-medium o_slideshow" data-columns="3" style="height: 500px; overflow: hidden;">
             <div class="container">
-                <div class="alert alert-info css_editable_mode_display" style="display: none;">Add Images from the 'Customize' menu</div>
+                <div class="alert alert-info css_editable_mode_display">Add Images from the 'Customize' menu</div>
             </div>
         </section>
 
@@ -859,8 +859,8 @@
            <a tabindex="-2" href="#">Album</a>
            
            <ul class="dropdown-menu">
-               <li data-albumimages="images_add"> <a>Add images</a></li>
-               <li data-albumimages="images_rm"><a>Remove all images</a></li>
+               <li data-images_add="true"> <a>Add images</a></li>
+               <li data-images_rm="true"><a>Remove all images</a></li>
            </ul>
         </li>
         <li class="dropdown-submenu">
@@ -901,71 +901,6 @@
     <div data-js='media'
         data-selector="img, .media_iframe_video, span.fa, i.fa, .glyphicon">
         <li data-edition="edition"><a>Change...</a></li>
-    </div>
-
-    <div data-js='gallery' data-selector=".gallery">
-        <li class="dropdown-submenu">
-            <a tabindex="-2" href="#">Mode</a>
-            
-            <ul class="dropdown-menu">
-                <li data-mode="nomode"   > <a>None</a></li>
-                <li data-mode="masonry"  > <a>Masonry</a> </li>
-                <li data-mode="grid"     > <a>Grid</a> </li>
-                <li data-mode="slideshow"> <a>Slideshow</a> </li>
-            </ul>
-        </li>
-        <li class="dropdown-submenu">
-            <a tabindex="-2" href="#">Slideshow speed</a>
-            <ul class="dropdown-menu">
-                 <li data-interval="1000"> <a>1s</a> </li>
-                 <li data-interval="2000"> <a>2s</a> </li>
-                 <li data-interval="3000"> <a>3s</a> </li>
-                 <li data-interval="5000"> <a>5s</a> </li>
-                 <li data-interval="10000"> <a>10s</a></li>
-                 <li data-interval="0"   > <a>Disable autoplay</a> </li>
-            </ul>
-        </li>
-        <li class="dropdown-submenu">
-            <a tabindex="-2" href="#">Columns</a>
-            
-            <ul class="dropdown-menu">
-                <li data-columns="1"  > <a>1</a> </li>
-                <li data-columns="2"  > <a>2</a> </li>
-                <li data-columns="3"  > <a>3</a> </li>
-                <li data-columns="4"  > <a>4</a> </li>
-                <li data-columns="6"  > <a>6</a> </li>
-                <li data-columns="12" > <a>12</a> </li>
-            </ul>
-        </li>
-        <li class="dropdown-submenu">
-            <a tabindex="-2" href="#">Images spacing</a>
-
-            <ul class="dropdown-menu">
-                <li data-select_class="spc-none"  > <a>None</a>   </li>
-                <li data-select_class="spc-small" > <a>Small</a>  </li>
-                <li data-select_class="spc-medium"> <a>Medium</a> </li>
-                <li data-select_class="spc-big"   > <a>Big</a>    </li>
-            </ul>
-        </li>
-        <li class="dropdown-submenu">
-           <a tabindex="-2" href="#">Album</a>
-           
-           <ul class="dropdown-menu">
-               <li data-albumimages="images_add"> <a>Add images</a></li>
-               <li data-albumimages="images_rm"><a>Remove all images</a></li>
-           </ul>
-        </li>
-        <li class="dropdown-submenu">
-           <a tabindex="-2" href="#">Styling</a>
-           
-           <ul class="dropdown-menu">
-               <li data-styling="img-rounded"   ><a>Rounded corners</a></li>
-               <li data-styling="img-thumbnail" ><a>Thumbnails</a></li>
-               <li data-styling="img-circle"    ><a>Circle</a></li>
-               <li data-styling="shadow"        ><a>Shadows</a></li>
-               <li data-styling="fa-spin"       ><a>Spinning</a></li>
-           </ul>
-        </li>
     </div>
 
     <div data-js='carousel'

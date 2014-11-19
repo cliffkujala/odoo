@@ -199,105 +199,26 @@
             this.$target.attr("data-columns", value);
             if (type === "over") this.reapply();
         },
-        albumimages : function(type, value) {
-            if(type === "click") this[value]();
-        },
-        images_add : function() {
-            /* will be moved in ImageDialog from MediaManager */
-            var self = this,
-                $container = this.$target.find(".container:first"),
-                $upload_form = $(openerp.qweb.render('website.gallery.dialog.upload')),
-                $progress = $upload_form.find(".fa");
-
-            $upload_form.appendTo(document.body);
-            
-            $upload_form.on('modal.bs.hide', function() { $(this).remove(); } );
-            
-            $upload_form.find(".alert-success").hide();
-            $upload_form.find(".alert-danger").hide();
-
-            $upload_form.on("change", 'input[name="upload"]', function(event) {
-                $upload_form.find('input[type="submit"]').parent().removeClass("hidden");
-                $upload_form.find(".alert").hide();
-            });
-
-            $upload_form.find("form").on("submit", function(event) {
-                event.preventDefault();
-                var files = $(this).find('input[type="file"]')[0].files;
-                var formData = new FormData();
-                for (var i = 0; i < files.length; i++ ) {
-                    var file = files[i];
-                    formData.append('upload', file, file.name);
+        images_add : function(type) {
+            if(type !== "click") return;
+            var self = this;
+            var $container = this.$target.find(".container:first");
+            var editor = new website.editor.MediaDialog(this.$target.closest('.o_editable'), null, {select_images: true});
+            editor.appendTo(document.body);
+            editor.on('saved', this, function (attachments) {
+                for (var i = 0 ; i < attachments.length; i++) {
+                    var img = $('<img class="img img-thumbnail img-responsive mb8 mt8"/>')
+                        .attr("src", attachments[i].url)
+                        .attr('data-index', i)
+                        .data('index', i)
+                        .appendTo($container);
                 }
-
-                /* 
-                 * hide submit button
-                 */
-                $('input[name="upload"], input[type="submit"]', this).parent().addClass("hidden");
-
-                /* 
-                 * show progress
-                 */
-                $progress.removeClass("hidden");
-
-                /* 
-                 * Images upload callback
-                 */
-                var callback = _.uniqueId('func_');
-                formData.append("func", callback);
-                window[callback] = function (attachments, error) {
-                    delete window[callback];
-
-                    $('input[name="upload"]', this).parent().removeClass("hidden");
-
-                    if (error) { /* failure */
-
-                        $upload_form.find(".alert-danger").show();
-
-                    } else { /* success */
-
-                        var imgs = self.get_imgs();
-
-                        $upload_form.find(".alert-success").show();
-                        for (var i = 0 ; i < attachments.length; i++) {
-                            var img = $('<img class="img img-thumbnail img-responsive mb8 mt8"/>')
-                                .attr("src", attachments[i].website_url)[0];
-                            imgs.push(img);
-                        }
-
-                        $(imgs).each(function (index) {
-                            $(this).attr('data-index', index).data('index', index).appendTo($container);
-                        });
-                        $progress.addClass("hidden");
-                        $upload_form.remove();
-                        self.reapply(); // refresh the $target
-                    }
-                };
-
-                /* 
-                 * Images upload : don't change order of contentType & processData
-                 * and don't change their values, otherwise the XHR will be 
-                 * wrongly conceived by jQuery. 
-                 * 
-                 * (missing boundary in the content-type header field)
-                 * Leading to an upload failure.
-                 */
-                $.ajax('/website/attach', {
-                    type: 'POST',
-                    data: formData,
-                    contentType: false,  /* multipart/form-data for files */
-                    processData: false,
-                    dataType: 'text'
-                    }).done(function (script) {
-                        $(script).appendTo('head').remove();
-                    });
+                self.reapply(); // refresh the $target
             });
-            $upload_form.modal({ backdrop : false });
-
-            $upload_form.find('input[name="upload"]').click();
         },
         images_rm   : function() {
-            this.replace($('<div class="alert alert-info css_editable_mode_display" style="display: none;"/>').text(_t("Add Images from the 'Customize' menu")));
+            if(type !== "click") return;
+            this.replace($('<div class="alert alert-info css_editable_mode_display"/>').text(_t("Add Images from the 'Customize' menu")));
         },
         sizing : function() { // done via css, keep it to avoid undefined error
         },
