@@ -202,34 +202,36 @@ instance.web.GraphView = instance.web.View.extend({
                 }
             ];
         }
-        var xlabels = [],
-            series = [],
-            values = {},
-            label, serie, value;
-        for (var i = 0; i < this.data.length; i++) {
-            console.log(this.data[i]);
-            label = this.data[i].labels[0];
-            serie = this.data[i].labels[1];
-            value = this.data[i].value;
-            if ((!xlabels.length) || (xlabels[xlabels.length-1] !== label)) {
-                xlabels.push(label);
+        if (this.groupbys.length > 1) {
+            var xlabels = [],
+                series = [],
+                values = {},
+                label, serie, value;
+            for (var i = 0; i < this.data.length; i++) {
+                console.log(this.data[i]);
+                label = this.data[i].labels[0];
+                serie = this.data[i].labels[1];
+                value = this.data[i].value;
+                if ((!xlabels.length) || (xlabels[xlabels.length-1] !== label)) {
+                    xlabels.push(label);
+                }
+                series.push(this.data[i].labels[1]);
+                if (!(serie in values)) {values[serie] = {};}
+                values[serie][label] = this.data[i].value;
             }
-            series.push(this.data[i].labels[1]);
-            if (!(serie in values)) {values[serie] = {};}
-            values[serie][label] = this.data[i].value;
-        }
-        series = _.uniq(series);
-        data = [];
-        var current_serie, j;
-        for (i = 0; i < series.length; i++) {
-            current_serie = {values: [], key: series[i]};
-            for (j = 0; j < xlabels.length; j++) {
-                current_serie.values.push({
-                    x: xlabels[j],
-                    y: values[series[i]][xlabels[j]] || 0,
-                });
+            series = _.uniq(series);
+            data = [];
+            var current_serie, j;
+            for (i = 0; i < series.length; i++) {
+                current_serie = {values: [], key: series[i]};
+                for (j = 0; j < xlabels.length; j++) {
+                    current_serie.values.push({
+                        x: xlabels[j],
+                        y: values[series[i]][xlabels[j]] || 0,
+                    });
+                }
+                data.push(current_serie);
             }
-            data.push(current_serie);
         }
         console.log('data', data);
         var svg = d3.select(this.$el[0]).append('svg');
