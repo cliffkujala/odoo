@@ -64,8 +64,8 @@
             <span class="oe_fade">or</span>
         </t>
         <div class="oe_kanban_import_contact">
-            <a t-if="href != true" t-attf-href="#{href}" class="oe_bold">Import Contacts from Linkedin</a>
-            <a t-if="href == true" href="#" class="oe_bold">Import Contacts from Linkedin</a>
+            <a t-if="href" t-attf-href="#{href}" class="oe_bold">Import Contacts from Linkedin</a>
+            <a t-if="!href" href="#" class="oe_bold">Import Contacts from Linkedin</a>
         </div>
     </t>
 

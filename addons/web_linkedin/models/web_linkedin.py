@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 import base64
 from datetime import datetime, timedelta
 import logging
@@ -5,10 +6,12 @@ import simplejson
 import urllib2
 from urlparse import urlparse, urlunparse
 import werkzeug.urls
+import requests
 
 import openerp
 from openerp import models, fields, api, _
 from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
+from openerp.exceptions import Warning
 
 BASE_API_URL = "https://api.linkedin.com/v1"
 company_fields = ["id", "name", "logo-url", "description", "industry", "website-url", "locations", "universal-name"]
@@ -59,6 +62,18 @@ class web_linkedin_settings(models.TransientModel):
         config_obj.set_param("web.linkedin.apikey", apikey, groups=['base.group_users'])
         config_obj.set_param("web.linkedin.secretkey", secret_key, groups=['base.group_users'])
 
+    @api.model
+    def create(self, vals):
+        if vals.get('api_key'):
+            self.env['linkedin'].check_valid_api_key(vals.get('api_key'))
+        return super(web_linkedin_settings, self).create(vals)
+
+    @api.multi
+    def write(self, vals):
+        if vals.get('api_key'):
+            self.env['linkedin'].check_valid_api_key(vals.get('api_key'))
+        return  super(web_linkedin_settings, self).write(vals)
+
 
 class web_linkedin_fields(models.Model):
     _inherit = 'res.partner'
@@ -90,6 +105,28 @@ class web_linkedin_fields(models.Model):
 
 class linkedin(models.AbstractModel):
     _name = 'linkedin'
+
+    @api.model
+    def check_valid_api_key(self, api_key):
+        status = ""
+        params = {
+            'response_type': 'code',
+            'client_id': api_key,
+            'state': True,
+            'redirect_uri': self.get_param_parameter('web.base.url') + '/linkedin/authentication',
+        }
+
+        url = self.get_uri_oauth(a='authorization') + "?%s" % werkzeug.url_encode(params)
+        try:
+            response = requests.post(url)
+            response.raise_for_status()
+            status = response.status_code
+        except requests.exceptions.ConnectionError:
+            _logger.exception("Either there is no connection or remote server is down !")
+        except Exception as e:
+            if status != 200:
+                raise Warning(_('Incorrect API Key!, Please enter a valid API Key.'))
+        return True
 
     @api.model
     def sync_linkedin_contacts(self, from_url):
@@ -367,6 +404,8 @@ class linkedin(models.AbstractModel):
     def test_linkedin_keys(self):
         res = self.get_param_parameter('web.linkedin.apikey') and self.get_param_parameter('web.linkedin.secretkey') and True
         if not res:
+            if not self.env['res.users'].has_group('base.group_system'):
+                return False
             action = self.env['ir.model.data'].get_object_reference('base_setup', 'action_sale_config')[1]
             base_url = self.get_param_parameter('web.base.url')
             res = base_url + '/web?#action=' + str(action),
