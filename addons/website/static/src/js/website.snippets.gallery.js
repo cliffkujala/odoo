@@ -19,10 +19,15 @@
         start  : function() {
             this._super();
             this.bind_change();
-            this.$target.find("img").each(function (index) {
+            var index = Math.max(_.map(this.$target.find("img").get(), function (img) { return img.dataset.index | 0; }));
+            this.$target.find("img:not([data-index])").each(function () {
+                index++;
                 $(this).attr('data-index', index).data('index', index);
             });
             this.$target.attr("contentEditable", false);
+
+            this._temp_mode = this.$el.find("data-mode").data("mode");
+            this._temp_col = this.$el.find("data-columns").data("columns");
         },
         drop_and_build_snippet: function() {
             var uuid = 0;
@@ -71,7 +76,12 @@
             imgs.sort(function (a,b) { return $(a).data('index')-$(b).data('index'); });
             return imgs;
         },
-        mode: function (type, value) {
+        mode: function (type, value, $li) {
+            if (type !== "reapply" && type !== "click" && this._temp_mode === value) {
+                return;
+            }
+            this._temp_mode = value;
+
             this.cancel_masonry();
 
             if (!value) value = 'nomode';
@@ -131,11 +141,12 @@
 
             // create columns
             for (var c = 0; c < columns; c++) {
-                var $col = $('<div class="col"></div>').addClass(colClass);
+                var $col = $('<div class="col o_snippet_not_selectable"></div>').addClass(colClass);
                 $row.append($col);
                 $cols.push($col.get()[0]);
             }
 
+            imgs.reverse();
             $cols = $($cols);
             function add() {
                 self.lowest($cols).append(imgs.pop());
@@ -197,7 +208,10 @@
         },
         columns : function(type, value) {
             this.$target.attr("data-columns", value);
-            if (type === "over") this.reapply();
+            if (this._temp_col !== value) {
+                this._temp_col = value;
+                this.reapply();
+            }
         },
         images_add : function(type) {
             if(type !== "click") return;
@@ -205,18 +219,22 @@
             var $container = this.$target.find(".container:first");
             var editor = new website.editor.MediaDialog(this.$target.closest('.o_editable'), null, {select_images: true});
             editor.appendTo(document.body);
+            var index = Math.max(_.map(this.$target.find("img").get(), function (img) { return img.dataset.index | 0; })) + 1;
             editor.on('saved', this, function (attachments) {
                 for (var i = 0 ; i < attachments.length; i++) {
-                    var img = $('<img class="img img-thumbnail img-responsive mb8 mt8"/>')
+                    var img = $('<img class="img img-responsive mb8 mt8"/>')
                         .attr("src", attachments[i].url)
-                        .attr('data-index', i)
-                        .data('index', i)
+                        .attr('data-index', index+i)
+                        .data('index', index+i)
                         .appendTo($container);
                 }
                 self.reapply(); // refresh the $target
+                setTimeout(function () {
+                    self.BuildingBlock.make_active(self.$target);
+                },0);
             });
         },
-        images_rm   : function() {
+        images_rm   : function(type) {
             if(type !== "click") return;
             this.replace($('<div class="alert alert-info css_editable_mode_display"/>').text(_t("Add Images from the 'Customize' menu")));
         },
@@ -328,6 +346,19 @@
             setTimeout(function () {
                 editor.reapply();
             },0);
+        },
+        remove: function (type) {
+            if (type !== "click") return;
+
+            var self = this;
+            var $parent = website.snippet.globalSelector.closest(this.$target.parent());
+            this.BuildingBlock.make_active(false);
+            this.$target.remove();
+            setTimeout(function () {
+                self.BuildingBlock.make_active($parent);
+                var gallery = $parent.data('snippet-editor').styles.gallery;
+                gallery.reapply();
+            }, 0);
         }
     });
 

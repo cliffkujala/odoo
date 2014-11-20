@@ -811,6 +811,16 @@
         </li>
     </div>
      
+    <div data-js='colorpicker'
+        data-selector="section:not(.jumbotron), :not(.o_gallery > .container) > .carousel, .parallax">
+        <li class="dropdown-submenu">
+            <a tabindex="-1" href="#">Color</a>
+            <ul class="dropdown-menu">
+                <li></li>
+            </ul>
+        </li>
+    </div>
+
     <div data-js='gallery' data-selector=".o_gallery">
         <li class="dropdown-submenu">
             <a tabindex="-2" href="#">Mode</a>
@@ -856,24 +866,18 @@
             </ul>
         </li>
         <li class="dropdown-submenu">
-           <a tabindex="-2" href="#">Album</a>
-           
-           <ul class="dropdown-menu">
-               <li data-images_add="true"> <a>Add images</a></li>
-               <li data-images_rm="true"><a>Remove all images</a></li>
-           </ul>
-        </li>
-        <li class="dropdown-submenu">
            <a tabindex="-2" href="#">Styling</a>
            
            <ul class="dropdown-menu">
+               <li data-styling=""              ><a>Square</a></li>
                <li data-styling="img-rounded"   ><a>Rounded corners</a></li>
                <li data-styling="img-thumbnail" ><a>Thumbnails</a></li>
                <li data-styling="img-circle"    ><a>Circle</a></li>
                <li data-styling="shadow"        ><a>Shadows</a></li>
-               <li data-styling="fa-spin"       ><a>Spinning</a></li>
            </ul>
         </li>
+       <li data-images_add="true"> <a>Add images</a></li>
+       <li data-images_rm="true"><a>Remove all images</a></li>
     </div>
 
     <div data-js='gallery_img' data-selector=".o_gallery img">
@@ -886,16 +890,7 @@
                 <li data-position="last"><a>Move to last</a></li>
             </ul>
         </li>
-    </div>
-
-    <div data-js='colorpicker'
-        data-selector="section:not(.jumbotron), :not(.o_gallery > .container) > .carousel, .parallax">
-        <li class="dropdown-submenu">
-            <a tabindex="-1" href="#">Color</a>
-            <ul class="dropdown-menu">
-                <li></li>
-            </ul>
-        </li>
+        <li data-remove="remove"><a>Remove from gallery</a></li>
     </div>
      
     <div data-js='media'
@@ -1005,7 +1000,7 @@
     </div>
 
     <div data-js='ul'
-         data-selector=":not(li) > ul:has(ul)">
+         data-selector=":not(li) > ul:has(ul,ol), :not(li) > ol:has(ul,ol)">
         <li data-toggle_class="o_ul_folded"> <a href="#">Folded list</a> </li>
     </div>
 

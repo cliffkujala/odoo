@@ -65,7 +65,7 @@
         *  start
         *  This method is called after init
         */
-        start: function () {
+        start: function (editable_mode) {
         },
         /*
         *  stop
@@ -170,30 +170,14 @@
     
     website.snippet.animationRegistry.ul = website.snippet.Animation.extend({
         selector: "ul.o_ul_folded, ol.o_ul_folded",
-        start: function () {
-            this.$('.o_ul_toggle_self, .o_ul_toggle_next').remove();
-
-            this.$('li:has(>ul,>ol)').map(function () {
-                    // get if the li contain a text label
-                    var texts = _.filter(_.toArray(this.childNodes), function (a) { return a.nodeType == 3;});
-                    if (!texts.length || !texts.reduce(function (a,b) { return a.textContent + b.textContent;}).match(/\S/)) {
-                        return;
-                    }
-                    $(this).children('ul,ol').addClass('o_close');
-                    return $(this).children(':not(ul,ol)')[0] || this;
-                })
-                .prepend('<a href="#" class="o_ul_toggle_self fa fa-plus-square" />');
-
-            this.$('.o_ul_toggle_self').on('click', function () {
+        start: function (editable_mode) {
+            this.$('.o_ul_toggle_self').off('click').on('click', function () {
+                $(this).toggleClass('o_open');
                 $(this).closest('li').find('ul,ol').toggleClass('o_close');
             });
 
-            var $li = this.$('li:has(+li:not(>.o_ul_toggle_self)>ul, +li:not(>.o_ul_toggle_self)>ol)');
-            $li.map(function () { return $(this).children()[0] || this; })
-                .prepend('<a href="#" class="o_ul_toggle_next fa fa-plus-square" />');
-            $li.next().addClass('o_close');
-
-            this.$('.o_ul_toggle_next').on('click', function () {
+            this.$('.o_ul_toggle_next').off('click').on('click', function () {
+                $(this).toggleClass('o_open');
                 $(this).closest('li').next().toggleClass('o_close');
             });
         },
@@ -223,12 +207,14 @@
                     milliseconds = undefined,
                     params = undefined,
                     $images = $cur.closest(".o_gallery").find("img"),
+                    size = 0.8,
                     dimensions = {
-                        min_width  : Math.round( window.innerWidth  *  0.7),
-                        min_height : Math.round( window.innerHeight *  0.7),
-                        max_width  : Math.round( window.innerWidth  *  0.7),
-                        max_height : Math.round( window.innerHeight *  0.7),
-                        height : Math.round( window.innerHeight *  0.7)
+                        min_width  : Math.round( window.innerWidth  *  size*0.9),
+                        min_height : Math.round( window.innerHeight *  size),
+                        max_width  : Math.round( window.innerWidth  *  size*0.9),
+                        max_height : Math.round( window.innerHeight *  size),
+                        width : Math.round( window.innerWidth *  size*0.9),
+                        height : Math.round( window.innerHeight *  size)
                 };
 
                 $images.each(function() {
@@ -257,11 +243,63 @@
 
                 });
                 $modal.find(".modal-content, .modal-body.o_slideshow").css("height", "100%");
-
                 $modal.appendTo(document.body);
-                $modal.find(".carousel").carousel();
+
+                this.carousel = new website.snippet.animationRegistry.gallery_slider($modal.find(".carousel").carousel());
             }
         } // click_handler  
+    });
+    website.snippet.animationRegistry.gallery_slider = website.snippet.Animation.extend({
+        selector: ".o_slideshow",
+        start: function() {
+            var $carousel = this.$target.is(".carousel") ? this.$target : this.$target.find(".carousel");
+            var self = this;
+            var $lis = $carousel.find('.carousel-indicators li');
+            var lis = $lis.get();
+            lis.sort(function (a, b) { return $(a).data('slide-to')-$(b).data('slide-to'); });
+            var Max = $(lis[lis.length-1]).data('slide-to') + 1;
+
+             // fix bootstrap use index insead of data-slide-to
+            $carousel.on('slide.bs.carousel', function() {
+                setTimeout(function () {
+                    var $item = $carousel.find('.carousel-inner .prev, .carousel-inner .next');
+                    var index = $item.index();
+                    $lis.removeClass("active")
+                        .filter('[data-slide-to="'+index+'"]')
+                        .addClass("active");
+                },0);
+            });
+
+            $carousel.on('slid.bs.carousel', function() {
+                $lis.addClass('hidden');
+                var index = $(this).find('.carousel-inner .item.active').index();
+
+                var min = (lis.length + index-5) % lis.length;
+                var max = (lis.length + index+6) % lis.length;
+
+                var display = [];
+                for (var i=0; i<lis.length; i++) {
+                    if ((min < max && min <= i && max > i) || (min > max && (min <= i || max > i))) {
+                        display.push(lis[i]);
+                    }
+                }
+                $(display).removeClass('hidden');
+
+                var flag =  min >= max;
+                var $parent = $lis.parent();
+                $lis.sort(function (a, b) {
+                    var slide = $(a).data('slide-to');
+                    var av = (flag && min > slide ? Max : 0 ) + slide;
+                    var slide = $(b).data('slide-to');
+                    var bv = (flag && min > slide ? Max : 0 ) + slide;
+                    return av - bv;
+                }).detach().appendTo($parent);
+
+                $lis.filter('[data-slide-to="'+index+'"]').addClass("active");
+            });
+
+            $carousel.trigger('slid.bs.carousel');
+        }
     });
 
 })();

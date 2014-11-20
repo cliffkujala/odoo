@@ -319,6 +319,9 @@
             (node.className && node.className.match(/(^|\s)media_iframe_video(\s|$)/i)) ||
             (node.parentNode && node.parentNode.className && node.parentNode.className.match(/(^|\s)media_iframe_video(\s|$)/i)) );
     };
+    dom.isForbiddenNode = function (node) {
+        return $(node).is(".media_iframe_video, .fa, img");
+    };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     /* attach event to Summernote
@@ -769,7 +772,7 @@
 
             var flag = false;
             window.onbeforeunload = function(event) {
-                if ($('.o_editable.o_dirty').length && flag) {
+                if ($('.o_editable.o_dirty').length && !flag) {
                     flag = true;
                     setTimeout(function () {flag=false;},0);
                     return _t('This document is not saved!');

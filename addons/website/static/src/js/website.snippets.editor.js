@@ -126,9 +126,9 @@
             });
             this.$el.css('top', this.parent.get('height'));
 
-            var _dontBreak = $.summernote.objects.dom.dontBreak;
-            $.summernote.objects.dom.dontBreak = function (node, sc, so, ec, eo) {
-                return _dontBreak(node, sc, so, ec, eo) || website.snippet.globalSelector.is($(node));
+            var _isNotBreakable = $.summernote.objects.dom.isNotBreakable;
+            $.summernote.objects.dom.isNotBreakable = function (node, sc, so, ec, eo) {
+                return _isNotBreakable(node, sc, so, ec, eo) || website.snippet.globalSelector.is($(node));
             };
         },
 
@@ -181,6 +181,8 @@
         },
         _add_check_selector : function (selector, no_check) {
             var self = this;
+            var selector = selector.split(/\s*,/).join(":not(.o_snippet_not_selectable), ") + ":not(.o_snippet_not_selectable)";
+
             if (no_check) {
                 return {
                     closest: function ($from, parentNode) {
@@ -1690,14 +1692,33 @@
             this._super();
             this.$target.data("snippet-view", new website.snippet.animationRegistry.ul(this.$target, true));
         },
-        clean_for_save: function () {
-            this._super();
-            this.$target.find("ul.o_close, ol.o_close, li.o_close").removeClass('o_close');
+        reset_ul: function () {
             this.$target.find('.o_ul_toggle_self, .o_ul_toggle_next').remove();
+
+            this.$target.find('li:has(>ul,>ol)').map(function () {
+                    // get if the li contain a text label
+                    var texts = _.filter(_.toArray(this.childNodes), function (a) { return a.nodeType == 3;});
+                    if (!texts.length || !texts.reduce(function (a,b) { return a.textContent + b.textContent;}).match(/\S/)) {
+                        return;
+                    }
+                    $(this).children('ul,ol').addClass('o_close');
+                    return $(this).children(':not(ul,ol)')[0] || this;
+                })
+                .prepend('<a href="#" class="o_ul_toggle_self fa" />');
+
+            var $li = this.$target.find('li:has(+li:not(>.o_ul_toggle_self)>ul, +li:not(>.o_ul_toggle_self)>ol)');
+            $li.map(function () { return $(this).children()[0] || this; })
+                .prepend('<a href="#" class="o_ul_toggle_next fa" />');
+            $li.removeClass('o_open').next().addClass('o_close');
+
+            this.$target.find("li").removeClass('o_open').css('list-style', '');
+            this.$target.find("li:has(.o_ul_toggle_self, .o_ul_toggle_next), li:has(>ul,>ol):not(:has(>li))").css('list-style', 'none');
+
         },
         toggle_class: function (type, value, $li) {
             this._super(type, value, $li);
             this.$target.data("snippet-view").stop();
+            this.reset_ul();
             this.$target.data("snippet-view", new website.snippet.animationRegistry.ul(this.$target, true));
         }
     });
