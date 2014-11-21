@@ -581,7 +581,9 @@
         var end = dom.ancestor(ec, dom.isFont);
 
         if (!dom.isText(ec) || ec.textContent.length !== eo) {
-            dom.splitTree(end || ec, ec, eo);
+            end = dom.splitTree(end || ec, ec, eo);
+        } else {
+            end = dom.node(ec);
         }
 
         var first;
@@ -589,52 +591,27 @@
             first = dom.firstChild(dom.splitTree(start || sc, sc, so));
         } else {
             first = sc;
+            start = dom.node(sc);
         }
 
-        var last = ec === sc ? first : ec;
+        var last;
+        if (dom.isText(ec)) {
+            last = ec === sc ? first : ec;
+        } else {
+            last = dom.lastChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(ec.childNodes[eo] || ec)));
+        }
         var nodes = dom.listBetween(first || sc, last);
 
-        var font = dom.ancestor(list.head(nodes), dom.isFont);
+        var font = dom.ancestor(first || sc, dom.isFont);
         if (font) {nodes.unshift(font);}
-        font = dom.ancestor(list.last(nodes), dom.isFont);
+        font = dom.ancestor(last, dom.isFont);
         if (font) {nodes.push(font);}
 
         nodes = _.uniq(nodes);
 
-        var regText = new RegExp('(^|\\s+)text-[^\\s]+(\\s+|$)', 'gi');
-        var regBg = new RegExp('(^|\\s+)bg-[^\\s]+(\\s+|$)', 'gi');
-
-        for (var i=0; i<nodes.length; i++) {
-            var font = nodes[i];
-            if (dom.isText(font)) {
-                continue;
-            }
-
-            if (color) {
-                font.className = (font.className || '').replace(regText, '');
-                font.style.color = '';
-            }
-            if (bgcolor) {
-                font.className = (font.className || '').replace(regBg, '');
-                font.style.backgroundColor = '';
-            }
-
-            if (!font.style.color && !font.style.backgroundColor && !font.style.fontSize) {
-                font.removeAttribute('style');
-            }
-            if (!font.className.length) {
-                font.removeAttribute('class');
-            }
-
-            if (!font.attributes.style && !font.className.length && font.parentNode && font.tagName === "FONT") {
-                nodes.splice(nodes.indexOf(font));
-                nodes.push.apply(nodes, dom.moveTo(font, font.parentNode, font));
-                i--;
-            }
-        }
-
+        // apply font
         var node;
-        if ((color && color !== "inherit") || (bgcolor && bgcolor !== "inherit")) {
+        if (color || bgcolor) {
             for (var i=0; i<nodes.length; i++) {
                 node = nodes[i];
                 font = dom.ancestor(node, dom.isFont);
@@ -646,6 +623,16 @@
                 }
 
                 if (color) {
+                    var className = font.className.split(/\s+/);
+                    for (var k=0; k<className.length; k++) {
+                        if (!className[k].length || className[k].slice(0,3) === "text-") {
+                            className.splice(k,1);
+                            k--;
+                        }
+                    }
+                    font.className = className.join(" ");
+                    font.style.color = '';
+
                     if (color.indexOf('text-') !== -1) {
                         font.className += ' ' + color;
                     } else if (color !== 'inherit') {
@@ -653,16 +640,53 @@
                     }
                 }
                 if (bgcolor) {
+                    var className = font.className.split(/\s+/);
+                    for (var k=0; k<className.length; k++) {
+                        if (!className[k].length || className[k].slice(0,3) === "bg-") {
+                            className.splice(k,1);
+                            k--;
+                        }
+                    }
+                    font.className = className.join(" ");
+                    font.style.backgroundColor = '';
+
                     if (bgcolor.indexOf('bg-') !== -1) {
-                        font.className += ' ' + bgcolor;
+                        if (font.className.indexOf('bg-') === -1) {
+                            font.className += ' ' + bgcolor;
+                        }
                     } else if (bgcolor !== 'inherit') {
                         font.style.backgroundColor = bgcolor;
                     }
                 }
+
+
+                if (!font.style.color && !font.style.backgroundColor && !font.style.fontSize) {
+                    font.removeAttribute('style');
+                }
+                if (!font.className.length) {
+                    font.removeAttribute('class');
+                }
             }
         }
 
-        return dom.merge(dom.commonAncestor(sc, ec), first, 0, last, last.textContent.length, null, true);
+        // remove white/space node if no content after or before
+        var ancestor = dom.commonAncestor(sc, ec);
+        var nodes = dom.listBetween(start, end);
+        for (var i=0; i<nodes.length; i++) {
+            node = nodes[i];
+            if (dom.isFont(node)) {
+                if ((!node.attributes.style && !node.className.length && node.parentNode && dom.isFont(node)) ||
+                    (!node.textContent.match(/[^ \t\n\r]/) &&
+                    (!dom.hasContentAfter(node) || !dom.hasContentBefore(node)))) {
+                    nodes.splice(i,1);
+                    nodes.push.apply(nodes, dom.moveTo(node, node.parentNode, node));
+                    i--;
+                }
+            }
+        }
+
+        var data = dom.merge(ancestor, first, 0, last, last.textContent.length, null, true);
+        return dom.removeSpace(ancestor, data.sc, data.so, data.ec, data.eo);
     };
 
     dom.isFont = function (node) {
@@ -1565,13 +1589,17 @@
         if (sEvent === "foreColor") {
             if (sValue.indexOf('text-') !== -1) {
                 font.className += ' ' + sValue;
+                font.style.color = '';
             } else {
+                font.className = font.className.replace(/(^|\s+)text-\S+/);
                 font.style.color = sValue !== 'inherit' ? sValue : "";
             }
         } else {
             if (sValue.indexOf('bg-') !== -1) {
                 font.className += ' ' + sValue;
+                font.style.backgroundColor = "";
             } else {
+                font.className = font.className.replace(/(^|\s+)bg-\S+/);
                 font.style.backgroundColor = sValue !== 'inherit' ? sValue : "";
             }
         }
