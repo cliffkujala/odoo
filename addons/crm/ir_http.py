@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 from openerp.http import request
-from openerp.osv import orm
+from openerp import models, api
 
 
-class ir_http(orm.AbstractModel):
+class ir_http(models.AbstractModel):
     _inherit = 'ir.http'
+
 
     def get_utm_domain_cookies(self):
         return request.httprequest.host

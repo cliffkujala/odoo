@@ -1,0 +1,1 @@
+from . import test_crm_lead_copy, test_crm_lead_to_opportunity, test_crm_merge_opportunities, test_base_partner_merge, test_crm_partner_binding, test_calender_event, test_crm_phonecall, test_crm_phonecall_to_phonecall
