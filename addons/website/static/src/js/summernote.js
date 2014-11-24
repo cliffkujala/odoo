@@ -331,6 +331,38 @@
             eo: eo
         };
     };
+    dom.autoMerge = function (target, previous) {
+        var node = dom.lastChild(target);
+        var nodes = [];
+        var temp;
+
+        while (node) {
+            nodes.push(node);
+            if (temp = (previous ? dom.hasContentBefore(node) : dom.hasContentAfter(node))) {
+                if (!dom.isText(node) && !dom.isMergable(node) && temp.tagName !== node.tagName) {
+                    nodes = [];
+                }
+                break;
+            }
+            node = node.parentNode;
+        }
+
+        while (nodes.length) {
+            node = nodes.pop();
+            if (node && (temp = (previous ? dom.hasContentBefore(node) : dom.hasContentAfter(node))) &&
+                temp.tagName === node.tagName &&
+                !dom.isText(node) &&
+                dom.isMergable(node) &&
+                !dom.isNotBreakable(node) && !dom.isNotBreakable(node.nextElementSibling)) {
+
+                if (previous) {
+                    dom.doMerge(temp, node);
+                } else {
+                    dom.doMerge(node, temp);
+                }
+            }
+        }
+    };
     dom.removeSpace = function (node, begin, so, end, eo) {
         var removed = false;
         var offsetEnd = end && (dom.lastChild(end).textContent.length - eo);
@@ -504,11 +536,10 @@
 
             var prev = dom.ancestorHaveNextSibling(sc);
             var next = dom.hasContentAfter(prev);
-            if ((eo || next !== dom.node(last)) && !dom.isBR(sc) && !dom.isBR(last) &&
-                    !dom.isNotBreakable(prev) && !dom.isNotBreakable(next) &&
-                    (!dom.isText(prev) && (dom.isEqual(prev, next) || dom.isMergable(prev)))) {
+            if ((eo || next !== dom.node(last)) && !dom.isBR(sc) && !dom.isBR(last)) {
+
                 sc.textContent = sc.textContent.replace(/[ \t\n\r]+$/, '\u00A0');
-                dom.doMerge(sc, last);
+                dom.autoMerge(sc, false);
             }
 
         } else {
@@ -1127,33 +1158,8 @@
                 range.create(target, offset, target, offset).select();
 
             } else {
-                var node = dom.lastChild(target);
-                var nodes = [];
-                var temp;
+                dom.autoMerge(target, false);
 
-                while (node) {
-                    nodes.push(node);
-                    if (temp = dom.hasContentAfter(node)) {
-                        if (!dom.isText(node) && !dom.isMergable(node) && temp.tagName !== node.tagName) {
-                            nodes = [];
-                        }
-                        break;
-                    }
-                    node = node.parentNode;
-                }
-
-                while (nodes.length) {
-                    node = nodes.pop();
-                    if (node && (temp = dom.hasContentAfter(node)) &&
-                        temp.tagName === node.tagName &&
-                        !dom.isText(node) &&
-                        dom.isMergable(node) &&
-                        !dom.isNotBreakable(node) && !dom.isNotBreakable(node.nextElementSibling)) {
-
-                        dom.doMerge(node, temp);
-
-                    }
-                }
                 next = dom.firstChild(dom.hasContentAfter(dom.ancestorHaveNextSibling(target)));
                 range.create(next, 0, next, 0).select();
             }
@@ -1267,33 +1273,8 @@
                 range.create(target, 0, target, 0).select();
 
             } else {
-                var node = dom.firstChild(target);
-                var nodes = [];
-                var temp;
+                dom.autoMerge(target, true);
 
-                while (node) {
-                    nodes.push(node);
-                    if (temp = dom.hasContentBefore(node)) {
-                        if (!dom.isText(node) && !dom.isMergable(node) && temp.tagName !== node.tagName) {
-                            nodes = [];
-                        }
-                        break;
-                    }
-                    node = node.parentNode;
-                }
-
-                while (nodes.length) {
-                    node = nodes.pop();
-                    if (node && (temp = dom.hasContentBefore(node)) &&
-                        temp.tagName === node.tagName &&
-                        !dom.isText(node) &&
-                        dom.isMergable(node) &&
-                        !dom.isNotBreakable(node) && !dom.isNotBreakable(node.previousElementSibling)) {
-
-                        dom.doMerge(temp, node);
-
-                    }
-                }
                 prev = dom.firstChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(target)));
                 range.create(prev, prev.textContent.length, prev, prev.textContent.length).select();
             }
