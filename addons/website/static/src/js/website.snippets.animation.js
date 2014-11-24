@@ -258,8 +258,8 @@
             var $lis = $indicator.find('li:not(.fa)');
             var $prev = $indicator.find('li.fa:first');
             var $next = $indicator.find('li.fa:last');
-            var index = $lis.filter('.active').index() || 0;
-            var page = Math.floor(index / 10);
+            var index = ($lis.filter('.active').index() || 1) -1;
+            var page = Math.floor((index-1) / 10);
             var nb = Math.ceil($lis.length / 10);
 
              // fix bootstrap use index insead of data-slide-to
@@ -289,6 +289,12 @@
                 hide();
             });
             hide();
+
+            $carousel.on('slid.bs.carousel', function() {
+                var index = ($lis.filter('.active').index() || 1) -1;
+                page = Math.floor((index-1) / 10);
+                hide();
+            });
         }
     });
 
