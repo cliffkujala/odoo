@@ -333,10 +333,10 @@
             var snipped_event_flag;
             $(document).on('click', '*', function (event) {
                 var srcElement = event.srcElement || (event.originalEvent && (event.originalEvent.originalTarget || event.originalEvent.target));
-                if (snipped_event_flag || !srcElement) {
+                if (snipped_event_flag===srcElement || !srcElement) {
                     return;
                 }
-                snipped_event_flag = true;
+                snipped_event_flag = srcElement;
 
                 setTimeout(function () {snipped_event_flag = false;}, 0);
                 var $target = $(srcElement);

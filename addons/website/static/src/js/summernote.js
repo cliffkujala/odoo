@@ -145,10 +145,10 @@
         if (prev && prev.tagName === "P" && dom.isText(cur)) {
             return true;
         }
-        if (prev && dom.isText(cur) && !cur.textContent.match(/\S/) && (dom.isText(prev) || prev.textContent.match(/\S/))) {
+        if (prev && dom.isText(cur) && !cur.textContent.match(/\S|\u00A0/) && (dom.isText(prev) || prev.textContent.match(/\S|\u00A0/))) {
             return true;
         }
-        if (prev && dom.isEqual(prev, cur) &&
+        if (prev && !dom.isBR(prev) && dom.isEqual(prev, cur) &&
             ((prev.tagName && window.getComputedStyle(prev).display === "inline" &&
               cur.tagName && window.getComputedStyle(cur).display === "inline"))) {
             return true;
@@ -504,7 +504,7 @@
 
             var prev = dom.ancestorHaveNextSibling(sc);
             var next = dom.hasContentAfter(prev);
-            if ((eo || next !== dom.node(last)) &&
+            if ((eo || next !== dom.node(last)) && !dom.isBR(sc) && !dom.isBR(last) &&
                     !dom.isNotBreakable(prev) && !dom.isNotBreakable(next) &&
                     (!dom.isText(prev) && (dom.isEqual(prev, next) || dom.isMergable(prev)))) {
                 sc.textContent = sc.textContent.replace(/[ \t\n\r]+$/, '\u00A0');
@@ -519,7 +519,7 @@
         }
 
         eo = so;
-        if(!sc.textContent.match(/\S/)) {
+        if(!dom.isBR(sc) && !sc.textContent.match(/\S|\u00A0/)) {
             ancestor = dom.node(sc);
             sc = document.createTextNode('\u00A0');
             $(ancestor).prepend(sc);
@@ -935,8 +935,17 @@
             } while (node && dom.isBR(node));
 
             // create a visible space because the user can't see the new line with only br in a block
-            node = document.createTextNode(!node ? '\u00A0' : '');
-            $(br).after(node);
+            if (!node) {
+                $(br).after(document.createTextNode('\u00A0'));
+            }
+            node = br;
+            range.create(node.parentNode, dom.listPrev(node).length).select();
+            return false;
+        } else if (last === node && dom.isBR(node)) {
+            var br = $("<br/>")[0];
+            $(node).after(br);
+            range.create(node.parentNode, dom.listPrev(node).length).select();
+            return false;
         } else if (!r.so && r.isOnList() && !r.sc.textContent.length && !dom.ancestor(r.sc, dom.isLi).nextElementSibling) {
             // double enter on the end of a list = new line out of the list
             node = $('<p><br/></p>').insertAfter(dom.ancestor(r.sc, dom.isList))[0];
@@ -1043,15 +1052,24 @@
             return false;
         }
 
-        var node = dom.node(r.ec);
-        var data = dom.merge(node, r.sc, r.so, r.ec, r.eo, null, true);
+        var target = r.ec;
+        var offset = r.eo;
+        if (target.tagName && target.childNodes[offset]) {
+            target = target.childNodes[offset];
+            offset = 0;
+        }
+
+        var node = dom.node(target);
+        var data = dom.merge(node, target, offset, target, offset, null, true);
         data = dom.removeSpace(node.parentNode, data.sc, data.so, data.ec, data.eo);
         r = range.create(data.sc, data.so).select();
+        target = r.sc;
+        offset = r.so;
 
         while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node) && !dom.isImg(node)) {node = node.parentNode;}
 
-        var contentAfter = r.sc.textContent.slice(r.so,Infinity).match(/\S|\u00A0/);
-        var content = r.ec.textContent.replace(/[ \t\r\n]+$/, '');
+        var contentAfter = target.textContent.slice(offset,Infinity).match(/\S|\u00A0/);
+        var content = target.textContent.replace(/[ \t\r\n]+$/, '');
         var temp;
         var temp2;
 
@@ -1077,38 +1095,39 @@
             }
         }
         // empty tag
-        else if (!content.length && (node.nextSibling || node.previousSibling) && r.sc.tagName && dom.isRemovableEmptyNode(r.sc)) {
+        else if (!content.length && target.tagName && dom.isRemovableEmptyNode(target)) {
             if (node === $editable[0] || $.contains(node, $editable[0])) {
                 return false;
             }
-            var next = dom.lastChild(dom.hasContentAfter(dom.ancestorHaveNextSibling(node)));
+            var next = dom.firstChild(dom.hasContentAfter(dom.ancestorHaveNextSibling(node)));
             range.create(next, next.textContent.length, next, next.textContent.length).select();
             node.parentNode.removeChild(node);
+            range.createFromNode(next, 0).select();
         }
         // normal feature if same tag and not the end
         else if (contentAfter) {
             return true;
         }
         // merge with the next text node
-        else if (dom.isText(r.ec) && r.ec.nextSibling && (dom.isText(r.sc.nextSibling) || dom.isBR(r.sc.nextSibling))) {
+        else if (dom.isText(target) && (temp = dom.hasContentAfter(target)) && (dom.isText(temp) || dom.isBR(temp))) {
             return true;
         }
         //merge with the next block
-        else if (!contentAfter && dom.isMergable(r.ec.parentNode) &&
-            !dom.isNotBreakable(r.ec.parentNode) &&
-            !dom.isNotBreakable(r.ec.parentNode.nextElementSibling)) {
+        else if (dom.isMergable(target.parentNode) &&
+            !dom.isNotBreakable(target.parentNode) &&
+            !dom.isNotBreakable(target.parentNode.nextElementSibling)) {
 
             summernote_keydown_clean("ec");
-            var next = r.ec.parentNode.nextElementSibling;
+            var next = target.parentNode.nextElementSibling;
             var style = window.getComputedStyle(next);
 
-            if (next && (r.sc.parentNode.tagName === next.tagName || (style.display !== "block" && style.display !== "table") || !parseInt(style.height))) {
+            if (next && (target.parentNode.tagName === next.tagName || (style.display !== "block" && style.display !== "table") || !parseInt(style.height))) {
 
-                dom.doMerge(r.sc.parentNode, next);
-                range.create(r.sc, r.so, r.sc, r.so).select();
+                dom.doMerge(target.parentNode, next);
+                range.create(target, offset, target, offset).select();
 
             } else {
-                var node = dom.lastChild(r.sc);
+                var node = dom.lastChild(target);
                 var nodes = [];
                 var temp;
 
@@ -1135,12 +1154,12 @@
 
                     }
                 }
-                next = dom.firstChild(dom.hasContentAfter(dom.ancestorHaveNextSibling(r.sc)));
+                next = dom.firstChild(dom.hasContentAfter(dom.ancestorHaveNextSibling(target)));
                 range.create(next, 0, next, 0).select();
             }
         }
         // jump to next node for delete
-        else if ((temp = dom.ancestorHaveNextSibling(r.sc)) && temp.tagName  !== ((temp2 = dom.hasContentAfter(temp) || {}).tagName) ||
+        else if ((temp = dom.ancestorHaveNextSibling(target)) && temp.tagName  !== ((temp2 = dom.hasContentAfter(temp) || {}).tagName) ||
                 // ul in li check
                 (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp2.firstElementChild && temp2.firstElementChild.tagName.match(/UL|OL/))) {
             temp2 = dom.firstChild(temp2);
@@ -1166,15 +1185,24 @@
             return false;
         }
 
-        var node = dom.node(r.sc);
-        var data = dom.merge(node, r.sc, r.so, r.ec, r.eo, null, true);
+        var target = r.sc;
+        var offset = r.so;
+        if (target.tagName && target.childNodes[offset]) {
+            target = target.childNodes[offset];
+            offset = 0;
+        }
+
+        var node = dom.node(target);
+        var data = dom.merge(node, target, offset, target, offset, null, true);
         data = dom.removeSpace(node.parentNode, data.sc, data.so, data.ec, data.eo);
         r = range.create(data.sc, data.so).select();
+        target = r.sc;
+        offset = r.so;
 
         while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node) && !dom.isImg(node)) {node = node.parentNode;}
 
-        var contentBefore = r.sc.textContent.slice(0,r.so).match(/\S|\u00A0/);
-        var content = r.ec.textContent.replace(/[ \t\r\n]+$/, '');
+        var contentBefore = target.textContent.slice(0,offset).match(/\S|\u00A0/);
+        var content = target.textContent.replace(/[ \t\r\n]+$/, '');
         var temp;
         var temp2;
 
@@ -1188,7 +1216,7 @@
             return false;
         }
         // table tr td
-        else if (r.isOnCell() && !r.so && (r.sc === (temp = dom.ancestor(r.sc, dom.isCell)) || r.sc === temp.firstChild)) {
+        else if (r.isOnCell() && !offset && (target === (temp = dom.ancestor(target, dom.isCell)) || target === temp.firstChild)) {
             if (temp.previousElementSibling) {
                 var td = temp.previousElementSibling;
                 node = td.lastChild || td;
@@ -1209,36 +1237,37 @@
             }
         }
         // empty tag
-        else if (!content.length && r.sc.tagName && dom.isRemovableEmptyNode(r.sc)) {
+        else if (!content.length && target.tagName && dom.isRemovableEmptyNode(target)) {
             if (node === $editable[0] || $.contains(node, $editable[0])) {
                 return false;
             }
             var prev = dom.lastChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(node)));
             range.create(prev, prev.textContent.length, prev, prev.textContent.length).select();
             node.parentNode.removeChild(node);
+            range.createFromNode(prev, prev.textContent.length).select();
         }
         // normal feature if same tag and not the begin
         else if (contentBefore) {
             return true;
         }
         // merge with the previous text node
-        else if (dom.isText(r.ec) && r.ec.previousSibling && (dom.isText(r.sc.previousSibling) || dom.isBR(r.sc.previousSibling))) {
+        else if (dom.isText(target) && (temp = dom.hasContentBefore(target)) && (dom.isText(temp) || dom.isBR(temp))) {
             return true;
         }
         //merge with the previous block
-        else if (!contentBefore && dom.isMergable(r.sc.parentNode)) {
+        else if (!contentBefore && dom.isMergable(target.parentNode)) {
 
             summernote_keydown_clean("sc");
-            var prev = r.sc.parentNode.previousElementSibling;
+            var prev = target.parentNode.previousElementSibling;
             var style = window.getComputedStyle(prev);
 
-            if (prev && (r.sc.parentNode.tagName === prev.tagName || style.display !== "block" || !parseInt(style.height))) {
+            if (prev && (target.parentNode.tagName === prev.tagName || style.display !== "block" || !parseInt(style.height))) {
 
-                dom.doMerge(prev, r.sc.parentNode);
-                range.create(r.sc, 0, r.sc, 0).select();
+                dom.doMerge(prev, target.parentNode);
+                range.create(target, 0, target, 0).select();
 
             } else {
-                var node = dom.firstChild(r.sc);
+                var node = dom.firstChild(target);
                 var nodes = [];
                 var temp;
 
@@ -1265,12 +1294,12 @@
 
                     }
                 }
-                prev = dom.firstChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(r.sc)));
+                prev = dom.firstChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(target)));
                 range.create(prev, prev.textContent.length, prev, prev.textContent.length).select();
             }
         }
         // jump to previous node for delete
-        else if ((temp = dom.ancestorHavePreviousSibling(r.sc)) && temp.tagName  !== ((temp2 = dom.hasContentBefore(temp) || {}).tagName) ||
+        else if ((temp = dom.ancestorHavePreviousSibling(target)) && temp.tagName  !== ((temp2 = dom.hasContentBefore(temp) || {}).tagName) ||
                 // ul in li check
                 (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.firstElementChild && temp.firstElementChild.tagName.match(/UL|OL/))) {
             temp2 = dom.lastChild(temp2);

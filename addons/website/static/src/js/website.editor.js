@@ -478,7 +478,7 @@
             });
 
             setTimeout(function () {
-                var target = dom.node(r.sc);
+                var target = dom.isBR(r.sc) ? r.sc.parentNode : dom.node(r.sc);
                 var evt = document.createEvent("MouseEvents");
                 evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, target);
                 target.dispatchEvent(evt);
