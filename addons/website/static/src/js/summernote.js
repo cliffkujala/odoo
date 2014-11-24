@@ -531,7 +531,7 @@
                 }
             }
 
-            sc = dom.firstChild(node);
+            sc = dom.lastChild(sc);
             so = sc.textContent.length;
 
             var prev = dom.ancestorHaveNextSibling(sc);

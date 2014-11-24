@@ -281,10 +281,6 @@
 
     eventHandler.dialog.showLinkDialog = function ($editable, $dialog, linkInfo) {
         var r = range.create();
-        if (r.isCollapsed() && dom.isImg(r.sc)) {
-            var index = Array.prototype.indexOf.call(r.sc.parentNode.childNodes, r.sc);
-            range.create(r.sc.parentNode, index, r.sc.parentNode, index+1).select();
-        }
         var editor = new website.editor.LinkDialog($editable, linkInfo);
         editor.appendTo(document.body);
 
@@ -292,6 +288,9 @@
         editor.on("save", this, function (linkInfo) {
             def.resolve(linkInfo);
             $('.note-popover .note-link-popover').show();
+            setTimeout(function () {
+                $(dom.node(linkInfo.range.sc)).trigger('keyup');
+            },0);
         });
         editor.on("cancel", this, function () { def.reject(); });
         return def;
@@ -1255,6 +1254,9 @@
                     nodes = dom.ancestor(r.sc, dom.isAnchor).childNodes;
                 }
 
+                if (dom.isImg(r.sc) && nodes.indexOf(r.sc) === -1) {
+                    nodes.push(r.sc);
+                }
                 if (nodes.length > 1 || dom.isImg(nodes[0])) {
                     var text = "";
                     this.data.images = [];
