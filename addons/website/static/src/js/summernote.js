@@ -49,7 +49,7 @@
         var next;
         while (node.nextSibling) {
             next = node.nextSibling;
-            if (next.tagName || next.textContent.match(/\S/) || dom.isBR(next)) return next;
+            if (next.tagName || next.textContent.match(/\S|\u00A0/) || dom.isBR(next)) return next;
             node = next;
         }
     };
@@ -57,7 +57,7 @@
         var prev;
         while (node.previousSibling) {
             prev = node.previousSibling;
-            if (prev.tagName || prev.textContent.match(/\S/) || dom.isBR(prev)) return prev;
+            if (prev.tagName || prev.textContent.match(/\S|\u00A0/) || dom.isBR(prev)) return prev;
             node = prev;
         }
     };
@@ -206,11 +206,19 @@
             begin = node;
             while(begin.firstChild) {begin = begin.firstChild;}
             so = 0;
+        } else if (begin.tagName && begin.childNodes[so]) {
+            begin = begin.childNodes[so];
+            so = 0;
         }
         if (!end) {
             end = node;
             while(end.lastChild) {end = end.lastChild;}
             eo = end.textContent.length-1;
+        } else if (end.tagName) {
+            
+        } else if (end.tagName && end.childNodes[so]) {
+            end = end.childNodes[so];
+            so = 0;
         }
 
         begin = dom.firstChild(begin);
@@ -353,22 +361,22 @@
                 if (cur === end) add = false;
 
                 // remove begin empty text node
-                if (node.childNodes.length > 1 && dom.isText(cur) && !cur.textContent.match(/\S/)) {
+                if (node.childNodes.length > 1 && dom.isText(cur) && !cur.textContent.match(/\S|\u00A0/)) {
                     removed = true;
                     if (cur === begin) {
                         so = 0;
-                        begin = dom.lastChild(cur.nextSibling ? cur.nextSibling : cur.parentNode);
+                        begin = dom.lastChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(cur)));
                     }
                     if (cur === end) {
                         eo = 1;
-                        end = dom.lastChild(cur.previousSibling ? cur.previousSibling : cur.parentNode);
+                        end = dom.firstChild(dom.hasContentAfter(dom.ancestorHaveNextSibling(cur)));
                         if (dom.isText(end)) {
                             eo = end.textContent.length;
                         }
                     }
                     cur.parentNode.removeChild(cur);
-                    while (begin.tagName && begin.lastChild) {begin = begin.lastChild;}
-                    while (end.tagName && end.lastChild) {end = end.lastChild;}
+                    begin = dom.lastChild(begin);
+                    end = dom.lastChild(end);
                     k--;
                     continue;
                 }
@@ -462,6 +470,15 @@
         range.create(data.sc, data.so, data.ec, data.eo).select();
     };
     dom.removeBetween = function (sc, so, ec, eo) {
+        if (sc.tagName && sc.childNodes[so]) {
+            sc = sc.childNodes[so];
+            so = 0;
+        }
+        if (ec.tagName && ec.childNodes[eo]) {
+            ec = ec.childNodes[eo];
+            eo = 0;
+        }
+
         var ancestor = dom.commonAncestor(sc, ec);
 
         if (ancestor.tagName) {
@@ -489,7 +506,7 @@
             var next = dom.hasContentAfter(prev);
             if ((eo || next !== dom.node(last)) &&
                     !dom.isNotBreakable(prev) && !dom.isNotBreakable(next) &&
-                    (dom.isEqual(prev, next) || dom.isMergable(prev))) {
+                    (!dom.isText(prev) && (dom.isEqual(prev, next) || dom.isMergable(prev)))) {
                 sc.textContent = sc.textContent.replace(/[ \t\n\r]+$/, '\u00A0');
                 dom.doMerge(sc, last);
             }
@@ -912,7 +929,14 @@
         }
 
         if (last === node && !dom.isBR(node)) {
-            node = r.insertNode($('<br/>')[0]).nextSibling;
+            var br = node = r.insertNode($('<br/>')[0]);
+            do {
+                node = dom.hasContentAfter(node);
+            } while (node && dom.isBR(node));
+
+            // create a visible space because the user can't see the new line with only br in a block
+            node = document.createTextNode(!node ? '\u00A0' : '');
+            $(br).after(node);
         } else if (!r.so && r.isOnList() && !r.sc.textContent.length && !dom.ancestor(r.sc, dom.isLi).nextElementSibling) {
             // double enter on the end of a list = new line out of the list
             node = $('<p><br/></p>').insertAfter(dom.ancestor(r.sc, dom.isList))[0];
@@ -923,8 +947,8 @@
             var $node = $(last);
             var $clone = $node.clone().text("");
             $node.after($clone);
-            node = $clone[0].firstElementChild || $clone[0];
-            $(dom.node(dom.firstChild(node))).html('<br/>');
+            node = dom.node(dom.firstChild($clone[0].firstElementChild || $clone[0]));
+            $(node).html('<br/>');
         } else {
             node = dom.splitTree(last, r.sc, r.so);
             if (!contentBefore) {
@@ -1026,8 +1050,8 @@
 
         while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node) && !dom.isImg(node)) {node = node.parentNode;}
 
-        var contentAfter = r.sc.textContent.slice(r.so,Infinity).match(/\S/);
-        var content = r.ec.textContent.replace(/\s+$/, '');
+        var contentAfter = r.sc.textContent.slice(r.so,Infinity).match(/\S|\u00A0/);
+        var content = r.ec.textContent.replace(/[ \t\r\n]+$/, '');
         var temp;
         var temp2;
 
@@ -1149,8 +1173,8 @@
 
         while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node) && !dom.isImg(node)) {node = node.parentNode;}
 
-        var contentBefore = r.sc.textContent.slice(0,r.so).match(/\S/);
-        var content = r.ec.textContent.replace(/\s+$/, '');
+        var contentBefore = r.sc.textContent.slice(0,r.so).match(/\S|\u00A0/);
+        var content = r.ec.textContent.replace(/[ \t\r\n]+$/, '');
         var temp;
         var temp2;
 
