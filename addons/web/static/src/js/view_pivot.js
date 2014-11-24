@@ -43,6 +43,9 @@ instance.web.PivotView = instance.web.View.extend({
             root: undefined,
             groupbys: [],
         };
+        this.initial_col_groupby = [];
+        this.initial_row_groupby = [];
+
         this.active_measures = [];
         this.headers = {};
         this.cells = {};
@@ -74,10 +77,10 @@ instance.web.PivotView = instance.web.View.extend({
         openerp.web.bus.on('click', self, function () {
             self.$field_selection.find('ul').first().hide();
         });
+        this.$buttons.find('button').tooltip();
     },
     view_loading: function (fvg) {
         var self = this;
-        this.do_push_state({});
         fvg.arch.children.forEach(function (field) {
             var name = field.attrs.name;
             if (field.attrs.interval) {
@@ -89,7 +92,7 @@ instance.web.PivotView = instance.web.View.extend({
                 self.active_measures.push(name);
                 break;
             case 'col':
-                self.main_col.groupbys.push(name);
+                self.initial_col_groupby.push(name);
                 break;
             default:
                 if ('operator' in field.attrs) {
@@ -97,12 +100,13 @@ instance.web.PivotView = instance.web.View.extend({
                     break;
                 }
             case 'row':
-                self.main_row.groupbys.push(name);
+                self.initial_row_groupby.push(name);
             }
         });
         if (!self.active_measures.length) {
             self.active_measures.push('__count__');
         }
+        self.main_col.groupbys = self.initial_col_groupby.slice(0);
     },
     prepare_fields: function (fields) {
         var self = this,
@@ -122,7 +126,8 @@ instance.web.PivotView = instance.web.View.extend({
         this.measures.__count__ = {string: "Quantity", type: "integer"};
     },
     do_search: function (domain, context, group_by) {
-        if (_.isEqual(domain, this.domain)) return;
+        this.main_row.groupbys = group_by.length ? group_by : this.initial_row_groupby.slice(0);
+
         this.domain = domain;
         this.context = context;
         if (!this.ready) {
@@ -130,23 +135,16 @@ instance.web.PivotView = instance.web.View.extend({
             this.ready = true;
             return;
         }
-        this.data_loaded = this.load_data(true);
+        this.data_loaded = this.load_data(false);
         return this.do_show();
-
-        // var col_groupbys = []; // to do: extract properly from context
-        // if (!this.ready) {
-        //     this.row_groupbys = group_by.length ? group_by : this.row_groupbys;
-        //     this.col_groupbys = col_groupbys.length ? col_groupbys : this.col_groupbys;
-        //     this.ready = true;
-        //     this.data_loaded = this.load_data();
-        // } else {
-        //     this.row_groupbys = group_by;
-        //     this.data_loaded = this.load_data();
-        //     this.do_show();
-        // }
     },
     do_show: function () {
-        this.data_loaded.done(this.display_table.bind(this));
+        var self = this;
+        this.do_push_state({});
+        this.data_loaded.done(function () {
+            self.display_table(); 
+            self.$el.show();
+        });
     },
     on_button_click: function (event) {
         var $target = $(event.target);

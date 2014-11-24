@@ -30,6 +30,7 @@ instance.web.GraphView = instance.web.View.extend({
         this.measures = [];
         this.active_measure = '__count__';
         this.groupbys = [];
+        this.initial_groupbys = [];
         this.data = [];
         this.$buttons = options.$buttons;
     },
@@ -67,10 +68,11 @@ instance.web.GraphView = instance.web.View.extend({
                 break;
             case 'col':
             case 'row':
-                self.groupbys.push(name);
+                self.initial_groupbys.push(name);
                 break;
             }
         });
+        self.groupbys = self.initial_groupbys.slice(0);
     },
     prepare_fields: function (fields) {
         var self = this;
@@ -85,7 +87,7 @@ instance.web.GraphView = instance.web.View.extend({
         this.measures.__count__ = {string: "Quantity", type: "integer"};
     },
     do_search: function (domain, context, group_by) {
-        // if (_.isEqual(domain, this.domain)) return;
+        this.groupbys = group_by.length ? group_by : this.initial_groupbys.slice(0);
         this.domain = domain;
         this.context = context;
         if (!this.ready) {
@@ -93,12 +95,15 @@ instance.web.GraphView = instance.web.View.extend({
             this.ready = true;
             return;
         }
-        this.groupbys = group_by;
         this.data_loaded = this.load_data();
         return this.do_show();
     },
     do_show: function () {
-        this.data_loaded.done(this.display_graph.bind(this));
+        var self = this;
+        this.data_loaded.done(function () {
+            self.display_graph(); 
+            self.$el.show();
+        });
     },
     on_button_click: function (event) {
         var $target = $(event.target);
@@ -117,8 +122,9 @@ instance.web.GraphView = instance.web.View.extend({
     },
     // returns a deferred that resolve when the data is loaded.
     load_data: function () {
-        console.log('loading_data', this.groupbys, this.active_measure);
-        var fields = this.groupbys.concat(this.active_measure);
+        var fields = this.groupbys;
+        if (this.active_measure !== '__count__')
+            fields = fields.concat(this.active_measure);
         return this.model
                     .query(fields)
                     .filter(this.domain)
@@ -128,8 +134,9 @@ instance.web.GraphView = instance.web.View.extend({
                     .then(this.proxy('prepare_data'));
     },
     prepare_data: function () {
-        var raw_data = arguments[0];
-        var data_pt, j, values;
+        var raw_data = arguments[0],
+            is_count = this.active_measure === '__count__';
+        var data_pt, j, values, value;
 
         this.data = [];
         for (var i = 0; i < raw_data.length; i++) {
@@ -139,13 +146,12 @@ instance.web.GraphView = instance.web.View.extend({
             for (j = 0; j < data_pt.value.length; j++) {
                 values[j] = this.sanitize_value(data_pt.value[j], data_pt.grouped_on[j]);
             }
+            value = is_count ? data_pt.length : data_pt.aggregates[this.active_measure];
             this.data.push({
                 labels: values,
-                value: data_pt.aggregates[this.active_measure]
+                value: value
             });
         }
-        console.log(raw_data);
-        console.table(this.data);
     },
     sanitize_value: function (value, field) {
         if (value === false) return _t("Undefined");
@@ -178,7 +184,7 @@ instance.web.GraphView = instance.web.View.extend({
     },
     display_bar: function () {
         // prepare data for bar chart
-        var data,
+        var data, values,
             measure = this.measures[this.active_measure].string;
         // zero groupbys
         if (this.groupbys.length === 0) {
@@ -191,8 +197,7 @@ instance.web.GraphView = instance.web.View.extend({
         } 
         // one groupby
         if (this.groupbys.length === 1) {
-            var values = this.data.map(function (datapt) {
-                console.log(datapt);
+            values = this.data.map(function (datapt) {
                 return {x: datapt.labels, y: datapt.value};
             });
             data = [
@@ -205,10 +210,9 @@ instance.web.GraphView = instance.web.View.extend({
         if (this.groupbys.length > 1) {
             var xlabels = [],
                 series = [],
-                values = {},
                 label, serie, value;
+            values = {};
             for (var i = 0; i < this.data.length; i++) {
-                console.log(this.data[i]);
                 label = this.data[i].labels[0];
                 serie = this.data[i].labels[1];
                 value = this.data[i].value;
@@ -233,7 +237,6 @@ instance.web.GraphView = instance.web.View.extend({
                 data.push(current_serie);
             }
         }
-        console.log('data', data);
         var svg = d3.select(this.$el[0]).append('svg');
         svg.datum(data);
 
@@ -258,10 +261,102 @@ instance.web.GraphView = instance.web.View.extend({
         nv.utils.onWindowResize(chart.update);
     },
     display_pie: function () {
-        // to do
+        var self = this,
+            data = [],
+            tickValues,
+            tickFormat,
+            measure = this.measures[this.active_measure].string;
+        if (this.groupbys.length) {
+            data = this.data.map(function (datapt) {
+                return {x:datapt.labels.join("/"), y: datapt.value};
+            });
+        }
+        var svg = d3.select(this.$el[0]).append('svg');
+        svg.datum(data);
+
+        svg.transition().duration(100);
+
+        var chart = nv.models.pieChart();
+        chart.options({
+          delay: 250,
+          transitionDuration: 100,
+          color: d3.scale.category10().range(),
+        });
+
+        chart(svg);
+        this.to_remove = chart.update;
+        nv.utils.onWindowResize(chart.update);
+
     },
     display_line: function () {
-        // to do
+        var self = this,
+            data = [],
+            tickValues,
+            tickFormat,
+            measure = this.measures[this.active_measure].string;
+        if (this.groupbys.length === 1) {
+            var values = this.data.map(function (datapt, index) {
+                console.log(datapt);
+                return {x: index, y: datapt.value};
+            });
+            data = [
+                {
+                    values: values,
+                    key: measure,
+                }
+            ];
+            tickValues = this.data.map(function (d, i) { return i;});
+            tickFormat = function (d) {return self.data[d].labels;};
+        }
+        if (this.groupbys.length > 1) {
+            data = [];
+            var data_dict = {},
+                tick = 0,
+                tickLabels = [],
+                serie, tickLabel,
+                identity = function (p) {return p;};
+            tickValues = [];
+            for (var i = 0; i < this.data.length; i++) {
+                if (this.data[i].labels[0] !== tickLabel) {
+                    tickLabel = this.data[i].labels[0];
+                    tickValues.push(tick);
+                    tickLabels.push(tickLabel);
+                    tick++;
+                }
+                serie = this.data[i].labels[1];
+                if (!data_dict[serie]) {
+                    data_dict[serie] = {
+                        values: [],
+                        key: serie,
+                    };
+                }
+                data_dict[serie].values.push({
+                    x: tick, y: this.data[i].value,
+                });
+                data = _.map(data_dict, identity);
+            }
+            tickFormat = function (d) {return tickLabels[d];};
+        }
+
+        var svg = d3.select(this.$el[0]).append('svg');
+        svg.datum(data);
+
+        svg.transition().duration(0);
+
+        var chart = nv.models.lineChart();
+        chart.options({
+          margin: {left: 50, right: 50},
+          useInteractiveGuideline: true,
+          showLegend: true,
+          showXAxis: true,
+          showYAxis: true,
+        });
+        chart.xAxis.tickValues(tickValues)
+            .tickFormat(tickFormat);
+
+        chart(svg);
+        this.to_remove = chart.update;
+        nv.utils.onWindowResize(chart.update);  
     },
     destroy: function () {
         nv.utils.offWindowResize(this.to_remove);
@@ -270,12 +365,12 @@ instance.web.GraphView = instance.web.View.extend({
 });
 
 
-// monkey path nvd3 to allow removing eventhandler on windowresize events
+// monkey patch nvd3 to allow removing eventhandler on windowresize events
 // see https://github.com/novus/nvd3/pull/396 for more details
 
 // Adds a resize listener to the window.
 nv.utils.onWindowResize = function(fun) {
-    if (fun == null) return;
+    if (fun === null) return;
     window.addEventListener('resize', fun);
 };
 
@@ -284,7 +379,7 @@ nv.utils.windowResize = nv.utils.onWindowResize;
 
 // Removes a resize listener from the window.
 nv.utils.offWindowResize = function(fun) {
-    if (fun == null) return;
+    if (fun === null) return;
     window.removeEventListener('resize', fun);
 };
 

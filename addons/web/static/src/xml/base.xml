@@ -943,9 +943,9 @@
 
 <t t-name="PivotView.buttons">
     <div class="btn-group btn-group-sm">
-        <button class="btn btn-default fa fa-expand oe-pivot-flip"></button>
-        <button class="btn btn-default fa fa-arrows-alt oe-pivot-expand-all"></button>
-        <button class="btn btn-default fa fa-download oe-pivot-download"></button>
+        <button class="btn btn-default fa fa-expand oe-pivot-flip" title="Flip axis"></button>
+        <button class="btn btn-default fa fa-arrows-alt oe-pivot-expand-all" title="Expand all"></button>
+        <button class="btn btn-default fa fa-download oe-pivot-download" title="Download"></button>
     </div>
     <div class="btn-group btn-group-sm"> 
         <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
