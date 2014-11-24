@@ -512,7 +512,7 @@ ul.nav-stacked > li > a
         border-width: 0
         position: absolute
         bottom: 0
-        li
+        > *
             list-style-image: none
             display: inline-block
             width: 40px
@@ -524,7 +524,7 @@ ul.nav-stacked > li > a
             background-size: cover
             background-color: #fff
             border-radius: 0
-        li:not(.active)
+        > *:not(.active)
             opacity: 0.8
             -webkit-filter: grayscale(100%)
             filter: grayscale(100%)

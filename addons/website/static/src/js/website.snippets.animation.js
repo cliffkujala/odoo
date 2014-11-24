@@ -254,10 +254,13 @@
         start: function() {
             var $carousel = this.$target.is(".carousel") ? this.$target : this.$target.find(".carousel");
             var self = this;
-            var $lis = $carousel.find('.carousel-indicators li');
-            var lis = $lis.get();
-            lis.sort(function (a, b) { return $(a).data('slide-to')-$(b).data('slide-to'); });
-            var Max = $(lis[lis.length-1]).data('slide-to') + 1;
+            var $indicator = $carousel.find('.carousel-indicators');
+            var $lis = $indicator.find('li:not(.fa)');
+            var $prev = $indicator.find('li.fa:first');
+            var $next = $indicator.find('li.fa:last');
+            var index = $lis.filter('.active').index() || 0;
+            var page = Math.floor(index / 10);
+            var nb = Math.ceil($lis.length / 10);
 
              // fix bootstrap use index insead of data-slide-to
             $carousel.on('slide.bs.carousel', function() {
@@ -270,35 +273,22 @@
                 },0);
             });
 
-            $carousel.on('slid.bs.carousel', function() {
-                $lis.addClass('hidden');
-                var index = $(this).find('.carousel-inner .item.active').index();
-
-                var min = (lis.length + index-5) % lis.length;
-                var max = (lis.length + index+6) % lis.length;
-
-                var display = [];
-                for (var i=0; i<lis.length; i++) {
-                    if ((min < max && min <= i && max > i) || (min > max && (min <= i || max > i))) {
-                        display.push(lis[i]);
+            function hide () {
+                $lis.addClass('hidden').each(function (i) {
+                    if (i > page*10 && i < (page+1)*10+1) {
+                        $(this).removeClass('hidden');
                     }
-                }
-                $(display).removeClass('hidden');
+                });
+                $prev.css('visibility', page === 0 ? 'hidden' : '');
+                $next.css('visibility', (page+1) >= nb ? 'hidden' : '');
+            }
 
-                var flag =  min >= max;
-                var $parent = $lis.parent();
-                $lis.sort(function (a, b) {
-                    var slide = $(a).data('slide-to');
-                    var av = (flag && min > slide ? Max : 0 ) + slide;
-                    var slide = $(b).data('slide-to');
-                    var bv = (flag && min > slide ? Max : 0 ) + slide;
-                    return av - bv;
-                }).detach().appendTo($parent);
-
-                $lis.filter('[data-slide-to="'+index+'"]').addClass("active");
+            $indicator.find('li.fa').on('click', function () {
+                page = (page + ($(this).hasClass('o_indicators_left')?-1:1)) % nb;
+                $carousel.carousel(page*10+1);
+                hide();
             });
-
-            $carousel.trigger('slid.bs.carousel');
+            hide();
         }
     });
 

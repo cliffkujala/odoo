@@ -193,11 +193,11 @@
                 if (id > uuid) uuid = id;
             });
             var params = {
-                        srcs : urls,
-                        index: 1,
-                        title: "",
-                        interval : this.$target.data("interval") || false,
-                        id: uuid+1
+                    srcs : urls,
+                    index: 1,
+                    title: "",
+                    interval : this.$target.data("interval") || false,
+                    id: "slideshow_" + (uuid+1)
                 },
                 $slideshow = $(openerp.qweb.render('website.gallery.slideshow', params));
             this.replace($slideshow);

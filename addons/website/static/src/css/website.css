@@ -648,7 +648,7 @@ ul.nav-stacked > li > a {
   position: absolute;
   bottom: 0;
 }
-.o_gallery.o_slideshow .carousel ul.carousel-indicators li, .modal-body.o_slideshow .carousel ul.carousel-indicators li {
+.o_gallery.o_slideshow .carousel ul.carousel-indicators > *, .modal-body.o_slideshow .carousel ul.carousel-indicators > * {
   list-style-image: none;
   display: inline-block;
   width: 40px;
@@ -661,7 +661,7 @@ ul.nav-stacked > li > a {
   background-color: #fff;
   border-radius: 0;
 }
-.o_gallery.o_slideshow .carousel ul.carousel-indicators li:not(.active), .modal-body.o_slideshow .carousel ul.carousel-indicators li:not(.active) {
+.o_gallery.o_slideshow .carousel ul.carousel-indicators > *:not(.active), .modal-body.o_slideshow .carousel ul.carousel-indicators > *:not(.active) {
   opacity: 0.8;
   -webkit-filter: grayscale(100%);
   filter: grayscale(100%);
