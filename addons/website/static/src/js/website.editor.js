@@ -192,7 +192,8 @@
                 oStyle.image = oStyle.image.parentNode;
             }
             var alt =  $(oStyle.image).attr("alt");
-            $imagePopover.find('.o_image_alt').text( alt || "" ).parent().toggle(oStyle.image.tagName === "IMG");
+
+            $imagePopover.find('.o_image_alt').text( (alt || "").replace(/&quot;/g, '"') ).parent().toggle(oStyle.image.tagName === "IMG");
             $imagePopover.show();
 
             range.createFromNode(dom.firstChild(oStyle.image)).select();
@@ -1496,15 +1497,17 @@
         init: function ($editable, media) {
             this.$editable = $editable;
             this.media = media;
-            this.alt = $(this.media).attr('alt') || "";
-            this.title = $(this.media).attr('title') || "";
+            this.alt = ($(this.media).attr('alt') || "").replace(/&quot;/g, '"');
+            this.title = ($(this.media).attr('title') || "").replace(/&quot;/g, '"');
             return this._super();
         },
         save: function () {
             var self = this;
             range.createFromNode(self.media).select();
             this.$editable.data('NoteHistory').recordUndo(this.$editable);
-            $(this.media).attr('alt', this.$('#alt').val() || null).attr('title', this.$('#title').val() || null);
+            var alt = this.$('#alt').val();
+            var title = this.$('#title').val();
+            $(this.media).attr('alt', alt ? alt.replace(/"/g, "&quot;") : null).attr('title', title ? title.replace(/"/g, "&quot;") : null);
             setTimeout(function () {
                 $(self.media).trigger("mouseup");
             },0);
