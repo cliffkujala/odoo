@@ -136,7 +136,9 @@
                             Preview
                         </label>
                         <div class="col-sm-10" style="line-height: 2em;">
-                            <a id="link-preview" href="#"></a>
+                            <div style="overflow: auto; max-width: 100%; max-height: 200px;">
+                                <a id="link-preview" href="#"></a>
+                            </div>
                         </div>
                     </div>
                 </div>
