@@ -985,7 +985,7 @@
             editor.appendTo(document.body);
             editor.$('[href="#editor-media-video"], [href="#editor-media-icon"]').addClass('hidden');
 
-            $image.on('saved', self, function (o) {
+            editor.on('saved', self, function (o) {
                 var value = $image.attr("src");
                 $image.remove();
                 self.$el.find('li[data-choose_image]').data("background", value).attr("data-background", value);
