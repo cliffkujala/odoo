@@ -1607,7 +1607,7 @@
         move_summernote_select: function () {
             var self = this;
             var transfo = this.$target.data("transfo");
-            $('.note-handle')
+            $('body > .note-handle')
                 .attr('style', transfo.$markup.attr('style'))
                 .css({
                     'z-index': 0,

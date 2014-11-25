@@ -220,11 +220,11 @@ $(document).ready(function () {
             $textarea.summernote({
                     height: 150,
                     toolbar: [
+                        ['style', ['style']],
                         ['font', ['bold', 'italic', 'underline', 'clear']],
                         ['para', ['ul', 'ol', 'paragraph']],
                         ['table', ['table']],
-                        ['insert', ['link', 'picture']],
-                        ['history', ['undo', 'redo']]
+                        ['insert', ['link', 'picture']]
                     ]
                 });
             $form.on('click', 'button, .a-submit', function () {
