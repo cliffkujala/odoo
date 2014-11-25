@@ -771,15 +771,17 @@
             this.rte.appendTo(this.$('#website-top-edit .nav.js_editor_placeholder'));
             return this._super.apply(this, arguments);
         },
-        edit: function () {
+        edit: function (no_editor) {
             this.$buttons.edit.prop('disabled', true);
             this.$('#website-top-view').hide();
             this.$el.show();
             this.$('#website-top-edit').show();
             $('.css_non_editable_mode_hidden').removeClass("css_non_editable_mode_hidden");
             
-            this.rte.start_edition();
-            this.trigger('rte:called');
+            if (!no_editor) {
+                this.rte.start_edition();
+                this.trigger('rte:called');
+            }
 
             var flag = false;
             window.onbeforeunload = function(event) {
@@ -1242,7 +1244,7 @@
 
             this.data.className = "";
             if (this.data.range) {
-                this.data.iniClassName = $(this.data.range.sc).attr("class") || "";
+                this.data.iniClassName = $(this.data.range.sc).filter("a").attr("class") || "";
                 this.data.className = this.data.iniClassName.replace(/(^|\s+)btn(-[a-z0-9_-]*)?/gi, ' ');
 
                 var is_link = this.data.range.isOnAnchor();
