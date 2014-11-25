@@ -640,7 +640,7 @@
         } else {
             last = dom.lastChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(ec.childNodes[eo] || ec)));
         }
-        
+
         var first;
         if (!dom.isText(sc) || so !== 0) {
             first = dom.firstChild(dom.splitTree(start || sc, sc, so));
@@ -1092,6 +1092,18 @@
             range.create(data.sc, data.so, data.sc, data.so).select();
         },0);
     }
+
+    function remove_table_content(sc, ec) {
+        var nodes = dom.listBetween(sc, ec);
+        nodes.push(dom.node(sc), dom.node(ec));
+        for (var i in nodes) {
+            if (dom.isCell(nodes[i])) {
+                $(nodes[i]).html("<br/>");
+            }
+        }
+        return false;
+    }
+
     eventHandler.editor.delete = function ($editable, options) {
         $editable.data('NoteHistory').recordUndo($editable, "delete");
         
@@ -1100,6 +1112,9 @@
             return false;
         }
         if (!r.isCollapsed()) {
+            if (dom.isCell(dom.node(r.sc)) || dom.isCell(dom.node(r.ec))) {
+                return remove_table_content(r.sc, r.ec);
+            }
             r = r.deleteContents().select();
             return false;
         }
@@ -1208,6 +1223,9 @@
             return false;
         }
         if (!r.isCollapsed()) {
+            if (dom.isCell(dom.node(r.sc)) || dom.isCell(dom.node(r.ec))) {
+                return remove_table_content(r.sc, r.ec);
+            }
             r = r.deleteContents().select();
             return false;
         }
