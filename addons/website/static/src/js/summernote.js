@@ -642,17 +642,19 @@
         var start = dom.ancestor(sc, dom.isFont);
         var end = dom.ancestor(ec, dom.isFont);
 
+        if (sc === ec && so === eo) {
+            return {
+                sc: sc,
+                so: so,
+                ec: ec,
+                eo: eo
+            };
+        }
+
         if (!dom.isText(ec) || ec.textContent.length !== eo) {
             end = dom.splitTree(end || ec, ec, eo);
         } else {
             end = dom.node(ec);
-        }
-
-        var last;
-        if (dom.isText(ec)) {
-            last = ec;
-        } else {
-            last = dom.lastChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(ec.childNodes[eo] || ec)));
         }
 
         var first;
@@ -663,17 +665,22 @@
             start = dom.node(sc);
         }
 
+        var last = ec;
+        if (sc === ec) {
+            last = first;
+        } else {
+            last = dom.lastChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(ec.childNodes[eo] || ec)));
+        }
+
         var nodes = dom.listBetween(first || sc, last);
 
-        var font = dom.ancestor(first || sc, dom.isFont);
-        if (font) {nodes.unshift(font);}
-        font = dom.ancestor(last, dom.isFont);
-        if (font) {nodes.push(font);}
+        nodes.unshift(first);
+        nodes.push(last);
 
         nodes = _.uniq(nodes);
 
         // apply font
-        var node;
+        var node, font;
         if (color || bgcolor) {
             for (var i=0; i<nodes.length; i++) {
                 node = nodes[i];

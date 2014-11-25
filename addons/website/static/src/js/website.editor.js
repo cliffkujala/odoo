@@ -372,13 +372,12 @@
     var remember_selection;
     function summernote_click (event) {
         var r = range.create();
-        if (!r || $(event.target).closest('#website-top-navbar, .note-popover, .modal').length) {
+        var node = dom.node(r.sc);
+        if (!r || $(node).closest('#website-top-navbar, #oe_main_menu_navbar, .note-popover, .modal').length) {
             if (remember_selection && !$(event.target).is('input, select')) {
-                setTimeout(function () {
-                    remember_selection.select();
-                },0);
+                remember_selection.select();
             }
-        } else {
+        } else if ($(node).closest('.o_editable, .note-editable').length) {
             remember_selection = r;
         }
     }
