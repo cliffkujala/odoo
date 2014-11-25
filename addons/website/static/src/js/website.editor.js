@@ -172,7 +172,7 @@
 
         fn_popover_update.call(this, $popover, oStyle, isAirMode);
 
-        if ($(oStyle.range.sc).closest('[data-oe-model]:not([data-oe-model="ir.ui.view"]):not([data-oe-type="html"])').length) {
+        if (!isAirMode || $(oStyle.range.sc).closest('[data-oe-model]:not([data-oe-model="ir.ui.view"]):not([data-oe-type="html"])').length) {
             $imagePopover.hide();
             $linkPopover.hide();
             $airPopover.hide();
@@ -1739,6 +1739,8 @@
             
             var element = document.getElementsByClassName('insert-media')[0];
             $('p').removeClass('insert-media');
+
+
             if (!(element = this.media)) {
                 element = document.createElement('img');
                 element.addClass('img');
@@ -1748,6 +1750,12 @@
                 }, 0);
                 this.media = element;
             }
+
+            // not air mode
+            if (!$(this.media).closest(".o_editable").length) {
+                $(this.media).addClass("img-responsive");
+            }
+
             var style = this.style;
             element.setAttribute('src', img.url);
             if (style) { element.addClass(style); }
