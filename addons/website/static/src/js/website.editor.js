@@ -651,10 +651,22 @@
     $.fn.extend({
         focusIn: function () {
             if (this.length) {
-                var node = dom.firstChild(this[0]);
-                range.create(node, 0).select();
+                range.create(dom.firstChild(this[0]), 0).select();
             }
             return this;
+        },
+        selectContent: function () {
+            if (this.length) {
+                var next = dom.lastChild(this[0]);
+                range.create(dom.firstChild(this[0]), 0, next, next.textContent.length).select();
+            }
+            return this;
+        },
+        activateBlock: function () {
+            var target = website.snippet.globalSelector.closest($(this))[0] || (dom.isBR(r.sc) ? r.sc.parentNode : dom.node(r.sc));
+            var evt = document.createEvent("MouseEvents");
+            evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, target);
+            target.dispatchEvent(evt);
         }
     });
 
@@ -1025,6 +1037,9 @@
                     $target.trigger('mousedown'); // for activate selection on picture
                 }
             });
+
+
+            $('.is-not-editable').attr("contentEditable", false);
 
             $('#wrapwrap [data-oe-model]')
                 .not('link, script')

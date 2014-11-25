@@ -511,7 +511,7 @@
             eo = 0;
         }
 
-        var ancestor = dom.commonAncestor(sc, ec);
+        var ancestor = dom.commonAncestor(sc.tagName ? sc.parentNode : sc, ec.tagName ? ec.parentNode : ec);
 
         if (ancestor.tagName) {
             var ancestor_sc = sc;
@@ -765,6 +765,12 @@
         return false; node === ec && !dom.isText(ec) && !dom.isBR(dom.firstChild(ec));
     };
 
+    dom.isContentEditable = function (node) {
+        var cfalse = $(node).closest('[contenteditable="false"]');
+        var ctrue = $(node).closest('[contenteditable="true"]');
+        return ctrue.length && (!cfalse.length || $.contains(cfalse[0], ctrue[0]));
+    };
+
     range.WrappedRange.prototype.reRange = function (keep_end, isNotBreakable) {
         var sc = this.sc;
         var so = this.so;
@@ -833,6 +839,11 @@
     };
     range.WrappedRange.prototype.deleteContents = function () {
         if (this.isCollapsed()) {
+            if (this.sc.tagName) {
+                var text = this.sc.parentNode.insertBefore(document.createTextNode(" "), this.sc);
+                this.sc.parentNode.removeChild(this.sc);
+                return new range.WrappedRange(text,0,text,0);
+            }
           return this;
         }
 
@@ -864,6 +875,9 @@
     range.WrappedRange.prototype.isOnCellFirst = function () {
         var node = dom.ancestor(this.sc, function (node) {return ["LI", "DIV", "TD","TH"].indexOf(node.tagName) !== -1;});
         return node && ["TD","TH"].indexOf(node.tagName) !== -1;
+    };
+    range.WrappedRange.prototype.isContentEditable = function () {
+        return dom.isContentEditable(this.sc) && (this.sc === this.ec || dom.isContentEditable(this.ec));
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -935,6 +949,9 @@
         $editable.data('NoteHistory').recordUndo($editable, 'enter');
 
         var r = range.create();
+        if (!r.isContentEditable()) {
+            return false;
+        }
         if (!r.isCollapsed()) {
             r = r.deleteContents().select();
         }
@@ -1078,6 +1095,9 @@
         $editable.data('NoteHistory').recordUndo($editable, "delete");
         
         var r = range.create();
+        if (!r.isContentEditable()) {
+            return false;
+        }
         if (!r.isCollapsed()) {
             r = r.deleteContents().select();
             return false;
@@ -1130,7 +1150,10 @@
             if (node === $editable[0] || $.contains(node, $editable[0])) {
                 return false;
             }
-            var next = dom.firstChild(dom.hasContentAfter(dom.ancestorHaveNextSibling(node)));
+            var next = dom.hasContentAfter(dom.ancestorHaveNextSibling(node));
+            data = dom.removeSpace(next.parentNode, next, 0, next, 0); // clean before jump for not select invisible space between 2 tag
+            next = dom.firstChild(next);
+
             range.create(next, next.textContent.length, next, next.textContent.length).select();
             node.parentNode.removeChild(node);
             range.createFromNode(next, 0).select();
@@ -1144,31 +1167,25 @@
             return true;
         }
         //merge with the next block
-        else if (dom.isMergable(target.parentNode) &&
-            !dom.isNotBreakable(target.parentNode) &&
-            !dom.isNotBreakable(target.parentNode.nextElementSibling)) {
-
+        else if (dom.isMergable(temp = dom.ancestorHaveNextSibling(target)) &&
+                dom.isMergable(temp2 = dom.hasContentAfter(temp)) &&
+                temp.tagName === temp2.tagName &&
+                (temp.tagName !== "LI" || !$('ul,ol', temp).length) && (temp2.tagName !== "LI" || !$('ul,ol', temp2).length) && // protect li
+                !dom.isNotBreakable(temp) &&
+                !dom.isNotBreakable(temp2)) {
             summernote_keydown_clean("ec");
-            var next = target.parentNode.nextElementSibling;
-            var style = window.getComputedStyle(next);
 
-            if (next && (target.parentNode.tagName === next.tagName || (style.display !== "block" && style.display !== "table") || !parseInt(style.height))) {
+            dom.autoMerge(target, false);
 
-                dom.doMerge(target.parentNode, next);
-                range.create(target, offset, target, offset).select();
-
-            } else {
-                dom.autoMerge(target, false);
-
-                next = dom.firstChild(dom.hasContentAfter(dom.ancestorHaveNextSibling(target)));
-                range.create(next, 0, next, 0).select();
-            }
+            var next = dom.firstChild(dom.hasContentAfter(dom.ancestorHaveNextSibling(target)));
+            range.create(next, 0, next, 0).select();
         }
         // jump to next node for delete
-        else if ((temp = dom.ancestorHaveNextSibling(target)) && temp.tagName  !== ((temp2 = dom.hasContentAfter(temp) || {}).tagName) ||
-                // ul in li check
-                (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp2.firstElementChild && temp2.firstElementChild.tagName.match(/UL|OL/))) {
+        else if ((temp = dom.ancestorHaveNextSibling(target)) && (temp2 = dom.hasContentAfter(temp))) {
+
+            dom.removeSpace(temp2.parentNode, temp2, 0, temp, 0); // clean before jump for not select invisible space between 2 tag
             temp2 = dom.firstChild(temp2);
+
             r = range.create(temp2, 0, temp2, 0).select();
 
             if ((dom.isText(temp) || window.getComputedStyle(temp).display === "inline") && (dom.isText(temp2) || window.getComputedStyle(temp2).display === "inline")) {
@@ -1186,6 +1203,9 @@
         $editable.data('NoteHistory').recordUndo($editable, "backspace");
 
         var r = range.create();
+        if (!r.isContentEditable()) {
+            return false;
+        }
         if (!r.isCollapsed()) {
             r = r.deleteContents().select();
             return false;
@@ -1248,6 +1268,8 @@
                 return false;
             }
             var prev = dom.lastChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(node)));
+            dom.removeSpace(prev.parentNode, prev, 0, prev, 0); // clean before jump for not select invisible space between 2 tag
+
             range.create(prev, prev.textContent.length, prev, prev.textContent.length).select();
             node.parentNode.removeChild(node);
             range.createFromNode(prev, prev.textContent.length).select();
@@ -1261,29 +1283,24 @@
             return true;
         }
         //merge with the previous block
-        else if (!contentBefore && dom.isMergable(target.parentNode)) {
-
+        else if (dom.isMergable(temp = dom.ancestorHavePreviousSibling(target)) &&
+                dom.isMergable(temp2 = dom.hasContentBefore(temp)) &&
+                temp.tagName === temp2.tagName &&
+                (temp.tagName !== "LI" || !$('ul,ol', temp).length) && (temp2.tagName !== "LI" || !$('ul,ol', temp2).length) && // protect li
+                !dom.isNotBreakable(temp) &&
+                !dom.isNotBreakable(temp2)) {
             summernote_keydown_clean("sc");
-            var prev = target.parentNode.previousElementSibling;
-            var style = window.getComputedStyle(prev);
 
-            if (prev && (target.parentNode.tagName === prev.tagName || style.display !== "block" || !parseInt(style.height))) {
+            dom.autoMerge(target, true);
 
-                dom.doMerge(prev, target.parentNode);
-                range.create(target, 0, target, 0).select();
-
-            } else {
-                dom.autoMerge(target, true);
-
-                prev = dom.firstChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(target)));
-                range.create(prev, prev.textContent.length, prev, prev.textContent.length).select();
-            }
+            var prev = dom.firstChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(target)));
+            range.create(prev, prev.textContent.length, prev, prev.textContent.length).select();
         }
         // jump to previous node for delete
-        else if ((temp = dom.ancestorHavePreviousSibling(target)) && temp.tagName  !== ((temp2 = dom.hasContentBefore(temp) || {}).tagName) ||
-                // ul in li check
-                (temp.tagName === temp2.tagName && temp.tagName === "LI" && temp.firstElementChild && temp.firstElementChild.tagName.match(/UL|OL/))) {
+        else if ((temp = dom.ancestorHavePreviousSibling(target)) && (temp2 = dom.hasContentBefore(temp))) {
+            dom.removeSpace(temp2.parentNode, temp2, 0, temp, 0); // clean before jump for not select invisible space between 2 tag
             temp2 = dom.lastChild(temp2);
+        
             r = range.create(temp2, temp2.textContent.length, temp2, temp2.textContent.length).select();
 
             if ((dom.isText(temp) || window.getComputedStyle(temp).display === "inline") && (dom.isText(temp2) || window.getComputedStyle(temp2).display === "inline")) {

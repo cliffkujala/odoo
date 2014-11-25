@@ -64,7 +64,7 @@
         },
         data: function(node,i,m){
             return $(node).data(m[3]);
-        },
+        }
     });
 
     if (!website.snippet) website.snippet = {};

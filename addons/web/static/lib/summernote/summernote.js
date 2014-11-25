@@ -2022,11 +2022,6 @@
 
       if (!anchor) {
         rng = rng.deleteContents();
-        if (rng.sc.tagName) {
-          var text = rng.sc.parentNode.insertBefore(document.createTextNode(" "), rng.sc);
-          rng.sc.parentNode.removeChild(rng.sc);
-          rng = range.create(text, 0).select();
-        }
         // Create a new link when there is no anchor on range.
         anchor = rng.insertNode($('<A>' + sLinkText + '</A>')[0]);
       }
