@@ -1570,16 +1570,27 @@
             });
 
             // don't unactive transform if rotation and mouseup on an other container
+            var cursor_mousedown = false;
+            $(document).on('mousedown', function (event) {
+                if (self.$overlay.hasClass('oe_active') && $(event.target).closest(".transfo-controls").length) {
+                    cursor_mousedown = event;
+                }
+            });
             $(document).on('mouseup', function (event) {
-                if (self.$target[0] !== event.target && self.$overlay.hasClass('oe_active') && !$.contains(self.$overlay[0], event.target)) {
-                    var summernote = self.$target.closest('.o_editable').data('summernote');
-                    if (summernote) {
-                        summernote.popover.find('.note-air-popover, .note-link-popover').hide();
-                        summernote.popover.find('.note-image-popover').show();
-                        setTimeout(function () {
-                            summernote.handle.show();
-                        });
-                    }
+                if (cursor_mousedown) {
+                    event.preventDefault();
+
+                    var dx = event.clientX-cursor_mousedown.clientX;
+                    var dy = event.clientY-cursor_mousedown.clientY;
+                    setTimeout(function () {
+                        self.$target.focusIn().activateBlock();
+                        if (10 < Math.pow(dx, 2)+Math.pow(dy, 2)) {
+                            setTimeout(function () {
+                                self.$target.transfo({ 'hide': false });
+                            },0);
+                        }
+                    },0);
+                    cursor_mousedown = false;
                 }
             });
         },

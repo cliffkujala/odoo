@@ -360,7 +360,7 @@
         if (cursor_mousedown) {
             var dx = event.clientX-cursor_mousedown.clientX;
             var dy = event.clientY-cursor_mousedown.clientY;
-            if (10 < Math.pow(dx, 2)+Math.pow(cursor_mousedown.clientY-event.clientY, 2) ) {
+            if (10 < Math.pow(dx, 2)+Math.pow(dy, 2) ) {
                 reRangeSelect(event, dx, dy);
             }
         }
@@ -667,6 +667,7 @@
             var evt = document.createEvent("MouseEvents");
             evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, target);
             target.dispatchEvent(evt);
+            return this;
         }
     });
 
