@@ -2042,23 +2042,23 @@
             for (var i = 0; i < classes.length; i++) {
                 var cls = classes[i];
                 switch(cls) {
-                case 'fa-2x':case 'fa-3x':case 'fa-4x':case 'fa-5x':
-                    // size classes
-                    this.$('#fa-size').val(cls);
-                    continue;
-                case 'fa-spin':
-                case 'fa-rotate-90':case 'fa-rotate-180':case 'fa-rotate-270':
-                case 'fa-flip-horizontal':case 'fa-rotate-vertical':
-                    this.$('#fa-rotation').val(cls);
-                    continue;
-                case 'fa-fw':
-                    continue;
-                case 'fa-border':
-                    this.$('#fa-border').prop('checked', true);
-                    continue;
-                default:
-                    if (!/^fa-/.test(cls)) { continue; }
-                    this.$('#fa-icon').val(cls);
+                    case 'fa-1x':case 'fa-2x':case 'fa-3x':case 'fa-4x':case 'fa-5x':
+                        // size classes
+                        this.$('#fa-size').val(cls);
+                        continue;
+                    case 'fa-spin':
+                    case 'fa-rotate-90':case 'fa-rotate-180':case 'fa-rotate-270':
+                    case 'fa-flip-horizontal':case 'fa-rotate-vertical':
+                        this.$('#fa-rotation').val(cls);
+                        continue;
+                    case 'fa-fw':
+                        continue;
+                    case 'fa-border':
+                        this.$('#fa-border').prop('checked', true);
+                        continue;
+                    default:
+                        if (!/^fa-/.test(cls)) { continue; }
+                        this.$('#fa-icon').val(cls);
                 }
             }
             this.update_preview();
