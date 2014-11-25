@@ -1199,7 +1199,7 @@
             dom.removeSpace(next.parentNode, next, 0, next, 0); // clean before jump for not select invisible space between 2 tag
             next = dom.firstChild(next);
             node.parentNode.removeChild(node);
-            range.create(next, before ? before.textContent.length : 0).select();
+            range.create(next, before ? next.textContent.length : 0).select();
         }
         // normal feature if same tag and not the end
         else if (contentAfter) {
@@ -1871,7 +1871,9 @@
         if (!r.isCollapsed()) {
             r = r.deleteContents().select();
         }
-        dom.pasteText(r.sc, r.so, clipboardData.getData("text/plain"));
+
+        var text = clipboardData.getData("text/plain").replace(/</g, "&lt;");
+        dom.pasteText(r.sc, r.so, text);
         return false;
     }
     function summernote_rerange (event) {
