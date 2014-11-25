@@ -634,6 +634,13 @@
             end = dom.node(ec);
         }
 
+        var last;
+        if (dom.isText(ec)) {
+            last = ec;
+        } else {
+            last = dom.lastChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(ec.childNodes[eo] || ec)));
+        }
+        
         var first;
         if (!dom.isText(sc) || so !== 0) {
             first = dom.firstChild(dom.splitTree(start || sc, sc, so));
@@ -642,12 +649,6 @@
             start = dom.node(sc);
         }
 
-        var last;
-        if (dom.isText(ec)) {
-            last = ec === sc ? first : ec;
-        } else {
-            last = dom.lastChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(ec.childNodes[eo] || ec)));
-        }
         var nodes = dom.listBetween(first || sc, last);
 
         var font = dom.ancestor(first || sc, dom.isFont);
