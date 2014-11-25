@@ -666,8 +666,8 @@
         }
 
         var last = ec;
-        if (sc === ec) {
-            last = first;
+        if (dom.isText(ec)) {
+            last = sc === ec ? first : ec;
         } else {
             last = dom.lastChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(ec.childNodes[eo] || ec)));
         }
