@@ -172,6 +172,8 @@ openerp.base = function(instance) {
                     self.on('message:blockUI', self, function() { instance.web.blockUI(); });
                     self.on('message:unblockUI', self, function() { instance.web.unblockUI(); });
 
+                    self.on('message:warn', self, function(m) {instance.webclient.do_warn(m.title, m.message, m.sticky); });
+
                     self.$ifr.appendTo(self.$el).css(css).addClass('apps-client');  // TODO design the iframe.
 
                 }).
