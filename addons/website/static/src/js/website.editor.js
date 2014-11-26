@@ -373,7 +373,7 @@
     function summernote_click (event) {
         var r = range.create();
         if ($(r ? dom.node(r.sc) : event.srcElement || event.target).closest('#website-top-navbar, #oe_main_menu_navbar, .note-popover, .modal').length) {
-            if (remember_selection && !$(event.target).is('input, select')) {
+            if (remember_selection && !$(event.target).is('input, select, label, button, a')) {
                 remember_selection.select();
             }
         } else if ($(dom.node(r.sc)).closest('.o_editable, .note-editable').length) {
