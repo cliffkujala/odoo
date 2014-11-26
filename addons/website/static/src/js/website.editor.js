@@ -376,7 +376,7 @@
             if (remember_selection && !$(event.target).is('input, select, label, button, a')) {
                 remember_selection.select();
             }
-        } else if ($(dom.node(r.sc)).closest('.o_editable, .note-editable').length) {
+        } else if (r && $(dom.node(r.sc)).closest('.o_editable, .note-editable').length) {
             remember_selection = r;
         }
     }
@@ -465,7 +465,7 @@
             $editable.html(oSnap.contents).scrollTop(oSnap.scrollTop);
             $(".oe_overlay").remove();
             $(".note-control-selection").hide();
-            
+
             var r = range.createFromBookmark(oSnap.editable, oSnap.bookmark);
             r.select();
 
