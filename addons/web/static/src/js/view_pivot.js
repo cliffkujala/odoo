@@ -34,6 +34,7 @@ instance.web.PivotView = instance.web.View.extend({
         this.groupable_fields = {};
         this.ready = false; // will be ready after the first do_search
         this.data_loaded = $.Deferred();
+        this.title = options.title || 'Data';
 
         this.main_row = {
             root: undefined,
@@ -65,6 +66,7 @@ instance.web.PivotView = instance.web.View.extend({
         var self = this;
         var context = {measures: _.pairs(_.omit(this.measures, '__count__'))};
         this.$buttons.html(QWeb.render('PivotView.buttons', context));
+        this.$buttons.find('.oe-pivot-download').hide();
         this.$buttons.click(this.on_button_click.bind(this));
         context.measures.forEach(function (kv, index) {
             if (_.contains(self.active_measures, kv[0])) {
@@ -76,6 +78,10 @@ instance.web.PivotView = instance.web.View.extend({
         this.$field_selection.html(QWeb.render('PivotView.FieldSelection', another_ctx));
         openerp.web.bus.on('click', self, function () {
             self.$field_selection.find('ul').first().hide();
+        });
+
+        openerp.session.rpc('/web/pivot/check_xlwt').then(function (result) {
+            self.$buttons.find('.oe-pivot-download').show();
         });
         this.$buttons.find('button').tooltip();
     },
@@ -148,14 +154,17 @@ instance.web.PivotView = instance.web.View.extend({
     },
     on_button_click: function (event) {
         var $target = $(event.target);
-        if ($target.hasClass('oe-pivot-flip')) {this.flip();}
-        if ($target.hasClass('oe-pivot-expand-all')) {this.expand_all();}
+        if ($target.hasClass('oe-pivot-flip')) { return this.flip();}
+        if ($target.hasClass('oe-pivot-expand-all')) {return this.expand_all();}
         if ($target.parents('.oe-measure-list').length) {
             var parent = $target.parent(),
                 field = parent.data('field');
             parent.toggleClass('selected');
             event.stopPropagation();
-            this.toggle_measure(field);
+            return this.toggle_measure(field);
+        }
+        if ($target.hasClass('oe-pivot-download')) {
+            return this.dowload_table();
         }
     },
     on_open_header_click: function (event) {
@@ -459,10 +468,11 @@ instance.web.PivotView = instance.web.View.extend({
                 }
                 if (cell.measure) {
                     $cell.addClass('measure-row')
-                        .text(cell.measure);
-                    if (display_total && (j >= headers[i].length - this.active_measures.length)) {
-                        $cell.addClass('oe-total');
-                    }
+                        .text(cell.measure)
+                        .toggleClass('oe-total', cell.is_bold);
+                    // if (display_total && (j >= headers[i].length - this.active_measures.length)) {
+                    //     $cell.addClass('oe-total');
+                    // }
                 }
                 $row.append($cell);
             }
@@ -524,7 +534,7 @@ instance.web.PivotView = instance.web.View.extend({
         });
         this.main_col.width = width;
         if (width > 1) {
-            var total_cell = {width:nbr_measures, height: depth};
+            var total_cell = {width:nbr_measures, height: depth, title:""};
             if (nbr_measures === 1) {
                 total_cell.title = this.measures[this.active_measures[0]].string;
                 total_cell.total = true;
@@ -535,7 +545,10 @@ instance.web.PivotView = instance.web.View.extend({
             var nbr_cols = width === 1 ? nbr_measures : (width + 1)*nbr_measures;
             for (var i = 0, measure_row = [], measure; i < nbr_cols; i++) {
                 measure = this.active_measures[i % nbr_measures];
-                measure_row.push({measure: this.measures[measure].string});
+                measure_row.push({
+                    measure: this.measures[measure].string,
+                    is_bold: (width > 1) && (i >= nbr_measures*width)
+                });
             }
             result.push(measure_row);
         }
@@ -616,6 +629,37 @@ instance.web.PivotView = instance.web.View.extend({
             this.active_measures.push(field);            
             this.load_data().then(this.display_table.bind(this));
         }
+    },
+    dowload_table: function () {
+        openerp.web.blockUI();
+        var nbr_measures = this.active_measures.length,
+            headers = this.compute_headers(),
+            measure_row = nbr_measures > 1 ? _.last(headers) : [],
+            rows = this.compute_rows();
+        headers[0].splice(0,1);
+        for (var i =0, j, value; i < rows.length; i++) {
+            for (j = 0; j < rows[i].values.length; j++) {
+                value = rows[i].values[j];
+                rows[i].values[j] = {
+                    is_bold: (i === 0) || ((this.main_col.width > 1) && (j >= rows[i].values.length - nbr_measures)),
+                    value:  (value === undefined) ? "" : value,
+                };
+            }
+        }
+        var table = {
+            headers: nbr_measures > 1 ? _.initial(headers) : headers,
+            measure_row: measure_row,
+            rows: rows,
+            nbr_measures: nbr_measures,
+            title: this.title,
+        };
+        var c = openerp.webclient.crashmanager;
+        this.session.get_file({
+            url: '/web/pivot/export_xls',
+            data: {data: JSON.stringify(table)},
+            complete: openerp.web.unblockUI,
+            error: c.rpc_error.bind(c)
+        });    
     },
 });
 
