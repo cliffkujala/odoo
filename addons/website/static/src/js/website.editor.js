@@ -464,6 +464,7 @@
 
             $editable.html(oSnap.contents).scrollTop(oSnap.scrollTop);
             $(".oe_overlay").remove();
+            $(".note-control-selection").hide();
             
             var r = range.createFromBookmark(oSnap.editable, oSnap.bookmark);
             r.select();
