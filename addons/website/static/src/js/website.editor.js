@@ -463,11 +463,12 @@
             $editable.trigger('mousedown');
 
             $editable.html(oSnap.contents).scrollTop(oSnap.scrollTop);
+            $(".oe_overlay").remove();
+            
             var r = range.createFromBookmark(oSnap.editable, oSnap.bookmark);
             r.select();
 
             $(document).trigger("click");
-            $(".oe_overlay").remove();
             $(".o_editable *").filter(function () {
                 var $el = $(this);
                 if($el.data('snippet-editor')) {
