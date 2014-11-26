@@ -662,7 +662,7 @@
             return this;
         },
         activateBlock: function () {
-            var target = website.snippet.globalSelector.closest($(this))[0] || (dom.isBR(r.sc) ? r.sc.parentNode : dom.node(r.sc));
+            var target = website.snippet.globalSelector.closest($(this))[0] || (dom.isBR(this) ? this.parentNode : dom.node(this));
             var evt = document.createEvent("MouseEvents");
             evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, target);
             target.dispatchEvent(evt);
