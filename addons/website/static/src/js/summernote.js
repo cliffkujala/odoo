@@ -513,6 +513,15 @@
 
         var ancestor = dom.commonAncestor(sc.tagName ? sc.parentNode : sc, ec.tagName ? ec.parentNode : ec);
 
+        if (!dom.isContentEditable(ancestor)) {
+            return {
+                sc: sc,
+                so: so,
+                ec: sc,
+                eo: eo
+            };
+        }
+
         if (ancestor.tagName) {
             var ancestor_sc = sc;
             var ancestor_ec = ec;
@@ -521,26 +530,42 @@
 
 
             var node = dom.node(sc);
-            var begin = dom.splitTree(ancestor_sc, sc, so);
-            var last = dom.splitTree(ancestor_ec, ec, eo);
+            var before = sc;
+            if (so) {
+                dom.splitTree(ancestor_sc, sc, so);
+            } else {
+                before = dom.hasContentBefore(dom.ancestorHavePreviousSibling(sc));
+            }
 
-            var nodes = dom.listBetween(begin, ec);
-            for (var i=0; i<nodes.length-1; i++) {
-                if (last !== nodes[i] && sc !== nodes[i]) {
+            var after;
+            if (ec.textContent.slice(eo, Infinity).match(/\S|\u00A0/)) {
+                after = dom.splitTree(ancestor_ec, ec, eo);
+            } else {
+                after = dom.hasContentAfter(dom.ancestorHaveNextSibling(ec));
+            }
+
+            var first = before ? dom.hasContentAfter(dom.ancestorHaveNextSibling(before)) : sc;
+            var last = after ? dom.hasContentBefore(dom.ancestorHavePreviousSibling(after)) : ec;
+
+            var nodes = dom.listBetween(first, last);
+
+            var ancestor_first_last = function (node) {
+                return node === before || node === after;
+            };
+
+            for (var i=0; i<nodes.length; i++) {
+                if (!dom.ancestor(nodes[i], ancestor_first_last)) {
                     nodes[i].parentNode.removeChild(nodes[i]);
                 }
             }
 
-            sc = dom.lastChild(sc);
+            sc = before ? dom.lastChild(before) : dom.firstChild(after);
             so = sc.textContent.length;
 
-            var prev = dom.ancestorHaveNextSibling(sc);
-            var next = dom.hasContentAfter(prev);
-            if ((eo || next !== dom.node(last)) && !dom.isBR(sc) && !dom.isBR(last)) {
-
+            if (before) {
                 sc.textContent = sc.textContent.replace(/[ \t\n\r]+$/, '\u00A0');
-                dom.autoMerge(sc, false);
             }
+            dom.autoMerge(sc, false);
 
         } else {
 
@@ -687,6 +712,9 @@
                 font = dom.ancestor(node, dom.isFont);
 
                 if (!font) {
+                    if (!dom.isText(node)) {
+                        continue;
+                    }
                     font = document.createElement("font");
                     node.parentNode.insertBefore(font, node);
                     font.appendChild(node);
@@ -1324,7 +1352,7 @@
             prev = dom.firstChild(prev);
             node.parentNode.removeChild(node);
             range.createFromNode(prev).select();
-            range.create(next, before ? next.textContent.length : 0).select();
+            range.create(prev, before ? prev.textContent.length : 0).select();
         }
         // normal feature if same tag and not the begin
         else if (contentBefore) {

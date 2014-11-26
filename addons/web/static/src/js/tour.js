@@ -555,6 +555,22 @@ var Tour = {
 
                 Tour.autoDragAndDropSnippet($element);
             
+            } else if (step.keydown) {
+                
+                if (!(step.keydown instanceof Array)) {
+                    step.keydown = [step.keydown];
+                }
+                var keydown = function (list) {
+                    var keyCode = list.pop();
+                    if (keyCode) {
+                        setTimeout(function () {
+                            $element.trigger({ type: 'keydown', keyCode: keyCode });
+                        },0);
+                        keydown(list);
+                    }
+                };
+                keydown(step.keydown.slice());
+
             } else if ($element.is(":visible")) {
 
                 var click_event = function(type) {

@@ -781,7 +781,7 @@
 
     <div data-js='background'
         data-selector="section, :not(.o_gallery > .container) > .carousel, .parallax">
-        <li class="dropdown-submenu" data-background="">
+        <li class="dropdown-submenu">
             <a tabindex="-1" href="#">Background</a>
             <ul class="dropdown-menu">
                 <li data-background="/website/static/src/img/parallax/parallax_bg.jpg"><a>Sunflower</a></li>
