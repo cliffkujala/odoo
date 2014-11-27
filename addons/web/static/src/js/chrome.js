@@ -349,10 +349,10 @@ instance.web.RedirectWarningHandler = instance.web.Dialog.extend(instance.web.Ex
                     post_text : _t("or"),
                     click: function() {
                         if(_.isObject(error.data.arguments[1])) {
-                        openerp.webclient.action_manager.do_action(error.data.arguments[1])
-                    } else {
-                        window.location.href='#action='+error.data.arguments[1];
-                    }
+                            openerp.webclient.action_manager.do_action(error.data.arguments[1])
+                        } else {
+                            window.location.href='#action='+error.data.arguments[1];
+                        }
                         self.destroy();
                     }},
                 {text: _t("Cancel"), oe_link_class: 'oe_link', click: function() { self.$el.parents('.modal').modal('hide');  self.destroy();}}

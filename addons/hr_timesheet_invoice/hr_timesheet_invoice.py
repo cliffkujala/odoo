@@ -20,7 +20,6 @@
 ##############################################################################
 
 import time
-from openerp.addons.analytic.models import analytic
 from openerp.osv import fields, osv
 from openerp.tools.translate import _
 import openerp.tools

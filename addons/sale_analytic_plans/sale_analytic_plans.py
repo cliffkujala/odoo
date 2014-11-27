@@ -39,16 +39,17 @@ class sale_order_line(osv.osv):
             i = i + 1
         return create_ids
 
+
 class sale_order(osv.Model):
     _inherit = "sale.order"
 
     def _get_analytic_account(self, cr, uid, order):
-        cr.execute( 'SELECT DISTINCT acc.id, acc.name '\
-            'FROM account_analytic_account as acc '\
-            'INNER JOIN account_analytic_plan_instance_line as plan_line on (acc.id = plan_line.analytic_account_id) '\
-            'INNER JOIN account_analytic_plan_instance as plan on (plan_line.plan_id = plan.id) '\
-            'INNER JOIN sale_order_line as sale_line on (plan.id = sale_line.analytics_id AND sale_line.order_id = %s) '\
-            'WHERE acc.state in %s', ((tuple([order.id])), ('close', 'cancelled', 'pending')))
+        cr.execute('SELECT DISTINCT acc.id, acc.name '
+                   'FROM account_analytic_account as acc '
+                   'INNER JOIN account_analytic_plan_instance_line as plan_line on (acc.id = plan_line.analytic_account_id) '
+                   'INNER JOIN account_analytic_plan_instance as plan on (plan_line.plan_id = plan.id) '
+                   'INNER JOIN sale_order_line as sale_line on (plan.id = sale_line.analytics_id AND sale_line.order_id = %s) '
+                   'WHERE acc.state in %s', ((tuple([order.id])), ('close', 'cancelled', 'pending')))
         contract_list = [(rec[0], rec[1]) for rec in cr.fetchall()]
         return contract_list
 
@@ -56,16 +57,16 @@ class sale_order(osv.Model):
         contract_list = self._get_analytic_account(cr, uid, order)
         models_data = self.pool.get('ir.model.data')
         if contract_list:
-            contract_ids, contract_name = [], []
-            for record in contract_list: contract_ids.append(record[0]), contract_name.append(record[1])
+            contract_ids = []
+            contract_name = []
+            for record in contract_list:
+                contract_ids.append(record[0]), contract_name.append(record[1])
             dummy, tree_view = models_data.get_object_reference(cr, uid, 'analytic', 'view_account_analytic_account_tree')
             model, action_id = models_data.get_object_reference(cr, uid, 'analytic', 'action_account_analytic_account_form')
             action = self.pool.get('ir.actions.act_window').read(cr, uid, action_id, ['name', 'type', 'view_type', 'view_mode', 'res_model', 'views', 'view', 'domain'])
-            action.update({
-                'name': _('Contract'),
-                'domain': [('id', 'in', contract_ids)],
-                'views': [(tree_view or False, 'list'), (False, 'form')]
-            })
+            action['name'] = _('Contract')
+            action['domain'] = [('id', 'in', contract_ids)]
+            action['views'] = [(tree_view or False, 'list'), (False, 'form')]
             msg = _('''Contract(s) mentioned below %s in "Closed/Cancelled/To Renew" state, please renew %s before confirmation :\n%s.''') % (len(contract_list) > 1 and 'are' or 'is', len(contract_name) > 1 and 'them' or 'it', '-' + '\n- '.join(contract_name))
             raise openerp.exceptions.RedirectWarning(msg, action, _('Modify Contract(s)'))
         return super(sale_order, self)._check_order_before_confirm(cr, uid, order, context=context)

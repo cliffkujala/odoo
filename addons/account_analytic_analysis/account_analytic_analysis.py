@@ -26,7 +26,6 @@ import time
 from openerp.osv import osv, fields
 import openerp.tools
 from openerp.tools.translate import _
-from openerp.addons.analytic.models import analytic
 from openerp.addons.decimal_precision import decimal_precision as dp
 
 _logger = logging.getLogger(__name__)
@@ -890,24 +889,5 @@ class account_analytic_account_summary_month(osv.osv):
                     ') ' \
                 'GROUP BY d.month, d.account_id ' \
                 ')')
-
-class sale_order(osv.Model):
-    _inherit = "sale.order"
-
-    def _check_order_before_confirm(self, cr, uid, order, context=None):
-        ir_model_data_obj = self.pool.get('ir.model.data')
-        contract_state = dict(analytic.ANALYTIC_ACCOUNT_STATE)
-        if order.project_id and order.project_id.state in ['close', 'cancelled', 'pending']:
-            model, action_id = ir_model_data_obj.get_object_reference(cr, uid, 'analytic', 'action_account_analytic_account_form')
-            action = self.pool.get('ir.actions.act_window').read(cr, uid, action_id, ['name','type','view_type','view_mode','res_model','views','view_id','domain'])
-            dummy, tree_view = ir_model_data_obj.get_object_reference(cr, uid, 'analytic', 'view_account_analytic_account_tree')
-            action.update({
-                         'name': _('Contract'),
-                         'domain': [('id', '=', order.project_id.id)],
-                         'views': [(tree_view or False, 'list'),(False, 'form')]
-            })
-            msg = _('''The %s contract is in "%s" state, please renew it before confirming the quotation.\n''') % (order.project_id.name, contract_state[order.project_id.state])
-            raise openerp.exceptions.RedirectWarning(msg, action, _('Modify Contract(s)'))
-        return super(sale_order, self)._check_order_before_confirm(cr, uid, order, context=context)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
