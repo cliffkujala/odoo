@@ -1657,11 +1657,11 @@
         on_blur : function () {
             this.$target.transfo("hide");
             $('.note-handle').hide(); // hide selection of summernote
-            this.$target.css({"-webkit-animation-play-state": "", "-webkit-transition": "", "transition": "", "-webkit-animation": "", "animation": ""});
+            this.$target.css({"-webkit-animation-play-state": "", "animation-play-state": "", "-webkit-transition": "", "transition": "", "-webkit-animation": "", "animation": ""});
         },
         clean_for_save: function () {
             this._super();
-            this.$target.css({"-webkit-animation-play-state": "", "-webkit-transition": "", "transition": "", "-webkit-animation": "", "animation": ""});
+            this.$target.css({"-webkit-animation-play-state": "", "animation-play-state": "", "-webkit-transition": "", "transition": "", "-webkit-animation": "", "animation": ""});
         }
     });
 
