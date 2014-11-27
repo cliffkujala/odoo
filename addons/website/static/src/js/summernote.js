@@ -258,10 +258,7 @@
                         prev = cur;
                     }
                     continue;
-                }
-
-                // merge with parent
-                if (mergeFilter.call(dom, null, cur, node)) {
+                } else if (mergeFilter.call(dom, null, cur, node)) { // merge with parent
                     prev = prev || cur.previousSibling;
                     dom.moveTo(cur, cur.parentNode, cur);
                     k--;
@@ -439,8 +436,8 @@
             removed: removed,
             sc: begin,
             ec: end,
-            so: so > 0 ? so : 0,
-            eo: end && end.textContent.length > offsetEnd ? end.textContent.length - offsetEnd : 0
+            so: !dom.isBR(begin) && so > 0 ? so : 0,
+            eo: !dom.isBR(end) && end && end.textContent.length > offsetEnd ? end.textContent.length - offsetEnd : 0
         };
     };
     dom.node = function (node) {
@@ -807,7 +804,7 @@
         return "h1 h2 h3 h4 h5 h6 p b bold i u code sup strong small li a ul ol font span br".indexOf(node.tagName.toLowerCase()) !== -1;
     };
     dom.isForbiddenNode = function (node) {
-        return $(node).is(".fa, img");
+        return node.tagName === "BR" || $(node).is(".fa, img");
     };
 
     dom.isNotBreakable = function (node, sc, so, ec, eo) {
@@ -1025,8 +1022,9 @@
             node = node.parentNode;
         }
 
+        var br = $("<br/>")[0];
         if (last === node && !dom.isBR(node)) {
-            var br = node = r.insertNode($('<br/>')[0]);
+            node = r.insertNode(br);
             do {
                 node = dom.hasContentAfter(node);
             } while (node && dom.isBR(node));
@@ -1036,18 +1034,13 @@
                 $(br).after(document.createTextNode('\u00A0'));
             }
             node = br;
-            range.create(node.parentNode, dom.listPrev(node).length).select();
-            dom.scrollIntoViewIfNeeded(node);
-            return false;
         } else if (last === node && dom.isBR(node)) {
-            var br = $("<br/>")[0];
             $(node).after(br);
-            range.create(node.parentNode, dom.listPrev(node).length).select();
-            dom.scrollIntoViewIfNeeded(br);
-            return false;
+            node = br;
         } else if (!r.so && r.isOnList() && !r.sc.textContent.length && !dom.ancestor(r.sc, dom.isLi).nextElementSibling) {
             // double enter on the end of a list = new line out of the list
-            node = $('<p><br/></p>').insertAfter(dom.ancestor(r.sc, dom.isList))[0];
+            node = $('<p></p>').append(br).insertAfter(dom.ancestor(r.sc, dom.isList))[0];
+            node = br;
         } else if (last === r.sc) {
             if (dom.isBR(last)) {
                 last = last.parentNode;
@@ -1056,21 +1049,27 @@
             var $clone = $node.clone().text("");
             $node.after($clone);
             node = dom.node(dom.firstChild($clone[0].firstElementChild || $clone[0]));
-            $(node).html('<br/>');
+            $(node).html(br);            
+            node = br;
         } else {
             node = dom.splitTree(last, r.sc, r.so);
             if (!contentBefore) {
-                $(dom.node(dom.lastChild(node.previousSibling))).html('<br/>');
+                $(dom.node(dom.lastChild(node.previousSibling))).html(br);
             }
-            if (!node.textContent.match(/\S/)) {
-                $(dom.node(dom.firstChild(node))).html('<br/>');
+            if (!node.textContent.match(/\S|\u00A0/)) {
+                node = dom.firstChild(node);
+                $(dom.node( dom.isBR(node) ? node.parentNode : node )).html(br);
+                node = br;
             }
         }
 
         if (node) {
             node = dom.firstChild(node);
-            node = dom.isBR(node) ? node.parentNode : node;
-            range.create(node,0).select();
+            if (dom.isBR(node)) {
+                range.create(node.parentNode, dom.listPrev(node).length).select();
+            } else {
+                range.create(node,0).select();
+            }
 
             dom.scrollIntoViewIfNeeded(node);
         }
@@ -1765,7 +1764,7 @@
     }
     function summernote_table_update (oStyle) {
         var r = range.create();
-        if (!r.isOnCell() || !r.isOnCellFirst()) {
+        if (!r || !r.isOnCell() || !r.isOnCellFirst()) {
             $('.o_table_handler').remove();
             return;
         }
@@ -1902,14 +1901,6 @@
         dom.pasteText(r.sc, r.so, text);
         return false;
     }
-    function summernote_rerange (event) {
-        if (!event.keyCode || event.shiftKey) {
-            var r = range.create();
-            if (r) {
-                r.reRange().select();
-            }
-        }
-    }
 
     var fn_attach = eventHandler.attach;
     eventHandler.attach = function (oLayoutInfo, options) {
@@ -1917,7 +1908,6 @@
         fn_attach.call(this, oLayoutInfo, options);
         oLayoutInfo.editor.on("paste", summernote_paste);
         $editable.on("scroll", summernote_table_scroll);
-        $editable.on("mouseup keydown keyup", summernote_rerange);
     };
     var fn_dettach = eventHandler.dettach;
     eventHandler.dettach = function (oLayoutInfo, options) {
@@ -1925,7 +1915,6 @@
         fn_dettach.call(this, oLayoutInfo, options);
         oLayoutInfo.editor.off("paste", summernote_paste);
         $editable.off("scroll", summernote_table_scroll);
-        $editable.off("mouseup keydown keyup", summernote_rerange);
     };
 
 })();

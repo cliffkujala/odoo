@@ -174,7 +174,7 @@
                 title:     "save pictogram",
             },
             {
-                waitNot:   '#editor-media-icon',
+                waitNot:   '#editor-media-icon, #wrapwrap > main > div > section .row > div:first img',
                 element:   '.note-image-popover:visible button[data-event="floatMe"][data-value="right"]',
                 title:     "click on float right",
             },

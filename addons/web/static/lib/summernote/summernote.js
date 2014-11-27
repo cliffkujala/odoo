@@ -1620,6 +1620,16 @@
           ec = sc;
           eo = so;
         }
+
+        if (dom.isBR(sc)) { // hack from odoo (for ie)
+          so = dom.listPrev(sc).length;
+          sc = sc.parentNode;
+        }
+        if (dom.isBR(ec)) {
+          eo = dom.listPrev(ec).length;
+          ec = ec.parentNode;
+        }
+
         return new WrappedRange(sc, so, ec, eo);
       },
 

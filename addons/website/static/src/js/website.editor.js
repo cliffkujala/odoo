@@ -303,7 +303,7 @@
             (node.parentNode && node.parentNode.className && node.parentNode.className.match(/(^|\s)media_iframe_video(\s|$)/i)) );
     };
     dom.isForbiddenNode = function (node) {
-        return $(node).is(".media_iframe_video, .fa, img");
+        return node.tagName === "BR" || $(node).is(".media_iframe_video, .fa, img");
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -314,6 +314,15 @@
     *  - re-active snippet and carret
     *  - display editor popover
     */
+
+    function reRangeSelectKey (event) {
+        if (!event.keyCode || event.shiftKey) {
+            var r = range.create();
+            if (r) {
+                r.reRange().select();
+            }
+        }
+    }
 
     function reRangeSelect (event, dx, dy) {
         var r = range.create();
@@ -374,6 +383,7 @@
         oLayoutInfo.editor.on('dblclick', 'img, .media_iframe_video, span.fa, i.fa, span.fa', function (event) {
             new website.editor.MediaDialog(oLayoutInfo.editor, event.target).appendTo(document.body);
         });
+        $(document).on("keydown keyup", reRangeSelectKey);
         
         var clone_data = false;
         var $node = oLayoutInfo.editor;
@@ -421,6 +431,7 @@
         $(document).off('mouseup', summernote_mouseup);
         $(document).off('click', summernote_click);
         oLayoutInfo.editor.off("dblclick");
+        $(document).off("keydown keyup", reRangeSelectKey);
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1969,7 +1980,9 @@
             },
         }),
         // extract list of FontAwesome from the cheatsheet.
-        icons: getCssSelectors(/(?=^|\s)(\.fa-[0-9a-z_-]+)/i).splice(22, Infinity),
+        icons: _.map(getCssSelectors(/(?=^|\s)(\.fa-[0-9a-z_-]+::before)/i), function (css) {
+            return css.slice(0, -8);
+        }),
 
         init: function (parent, media) {
             this._super();
