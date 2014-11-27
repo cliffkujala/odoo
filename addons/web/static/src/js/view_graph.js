@@ -66,8 +66,7 @@ instance.web.GraphView = instance.web.View.extend({
             case 'measure':
                 self.active_measure = name;
                 break;
-            case 'col':
-            case 'row':
+            default:
                 self.initial_groupbys.push(name);
                 break;
             }
