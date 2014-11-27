@@ -298,10 +298,12 @@ class hr_analytic_timesheet(osv.osv):
     _inherit = "hr.analytic.timesheet"
 
     def _check_analytic_account_state(self, cr, uid, analytic_account, context=None):
+        if context is None:
+            context = {}
         analytic_account_obj = self.pool.get('account.analytic.account')
         account_name_list = set()
         account_ids = set()
-        for analytic_account_record in analytic_account_obj.browse(cr, uid, analytic_account):
+        for analytic_account_record in analytic_account_obj.browse(cr, uid, analytic_account, context=context):
             if analytic_account_record.state in ('pending', 'cancelled', 'close') and context.get('analytic_account_status'):
                 # check state of analytic account on click "Approve" button.
                 account_name_list.add(analytic_account_record.name)
