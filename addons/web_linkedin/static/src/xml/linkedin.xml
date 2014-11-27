@@ -11,12 +11,12 @@
     </t>
     <t t-name="Linkedin.popup">
         <div>
-            <h2 style="margin-top:5px;">Contacts</h2>
+            <h2 class="oe_linkedin_popup">Contacts</h2>
             <div class="oe_linkedin_pop_p">
                 <div class="oe_linkedin_people_entities"></div>
                 <div class="oe_linkedin_show_more"></div>
             </div>
-            <h2>Companies</h2>
+            <h2 class="oe_linkedin_popup">Companies</h2>
             <div class="oe_linkedin_pop_c">
                 <div class="oe_linkedin_company_entities"></div>
                 <div class="oe_linkedin_show_more"></div>
@@ -64,13 +64,13 @@
             <span class="oe_fade">or</span>
         </t>
         <div class="oe_kanban_import_contact">
-            <a t-if="href" t-attf-href="#{href}" class="oe_bold">Import Contacts from Linkedin</a>
-            <a t-if="!href" href="#" class="oe_bold">Import Contacts from Linkedin</a>
+            <a t-if="result.redirect_url" t-attf-href="#{result.redirect_url}" class="oe_bold">Import Contacts from Linkedin</a>
+            <a t-if="!result.redirect_url or result.is_key_set" href="#" class="oe_bold">Import Contacts from Linkedin</a>
         </div>
     </t>
 
     <t t-name="LinkedIn.PeopleAccess">
-        <div>
+        <div class="oe_linkedin_popup">
             <strong class="text-danger">You does not have access to People Search. </strong><strong><a href='https://help.linkedin.com/app/api-dvr' target='NEW'>Click Here</a> to access People search using <a href='https://developer.linkedin.com/blog/vetted-api-access' target='NEW'>Vetted API Access. </a></strong>
         </div>
     </t>

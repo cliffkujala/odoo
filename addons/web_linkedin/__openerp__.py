@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 {
     'name' : 'LinkedIn Integration',
     'version': '0.1',

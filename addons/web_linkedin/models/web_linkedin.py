@@ -1,21 +1,21 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import base64
-from datetime import datetime, timedelta
 import logging
+import openerp
+import requests
 import simplejson
 import urllib2
-from urlparse import urlparse, urlunparse
 import werkzeug.urls
-import requests
 
-import openerp
+from urlparse import urlparse, urlunparse
+from datetime import datetime, timedelta
 from openerp import models, fields, api, _
 from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from openerp.exceptions import Warning
 
 BASE_API_URL = "https://api.linkedin.com/v1"
-company_fields = ["id", "name", "logo-url", "description", "industry", "website-url", "locations", "universal-name"]
-people_fields = ["id", "picture-url", "public-profile-url", "first-name", "last-name", "formatted-name", "location", "phone-numbers", "im-accounts", "main-address", "headline", "positions", "summary", "specialties", "email-address"]
+COMPANY_FIELDS = ["id", "name", "logo-url", "description", "industry", "website-url", "locations", "universal-name"]
+PEOPLE_FIELDS = ["id", "picture-url", "public-profile-url", "first-name", "last-name", "formatted-name", "location", "phone-numbers", "im-accounts", "main-address", "headline", "positions", "summary", "specialties", "email-address"]
 _logger = logging.getLogger(__name__)
 
 
@@ -42,8 +42,8 @@ class web_linkedin_settings(models.TransientModel):
 
     api_key = fields.Char(string="API Key", help="LinkedIn API Key")
     secret_key = fields.Char(string="Secret Key", help="LinkedIn Secret Key")
-    server_domain = fields.Char()
-    redirect_url = fields.Char(related='server_domain')
+    server_domain = fields.Char(string="Server Domain")
+    redirect_url = fields.Char(related='server_domain', string="Server Domain")
     linkedin_cus_sync = fields.Boolean("Show tutorial to know how to get my 'API key' and my 'Secret key'")
     company_name = fields.Char("Company", default=lambda self:self.env.user.company_id.name)
 
@@ -54,7 +54,7 @@ class web_linkedin_settings(models.TransientModel):
         secret_key = self.env['ir.config_parameter'].get_param('web.linkedin.secretkey')
         return {'api_key': key, 'server_domain': dom + "/linkedin/authentication", 'secret_key': secret_key}
 
-    @api.multi
+    @api.one
     def set_linkedin(self):
         config_obj = self.env['ir.config_parameter']
         apikey = self.api_key or ""
@@ -125,7 +125,7 @@ class linkedin(models.AbstractModel):
             _logger.exception("Either there is no connection or remote server is down !")
         except Exception as e:
             if status != 200:
-                raise Warning(_('Incorrect API Key!, Please enter a valid API Key.'))
+                raise Warning(_('Something went wrong!, Please check your API Key.'))
         return True
 
     @api.model
@@ -136,19 +136,15 @@ class linkedin(models.AbstractModel):
             Here if user does not have one of the right from create or write then this method will allow at least for allowed operation,
             AccessError is handled as a special case, AccessError wil not raise exception instead it will return result with warning and status=AccessError.
         """
-        sync_result = False
         if not self.need_authorization():
             headers = {'Content-type': 'application/json', 'Accept': 'text/plain', 'x-li-format': 'json'}
             params = {
                 'oauth2_access_token': self.env.user.linkedin_token
             }
-            connection_uri = "/people/~/connections:{people_fields}".format(people_fields='(' + ','.join(people_fields) + ')')
-            status, res = self.with_context(self.env.context).send_request(connection_uri, params=params, headers=headers, type="GET")
-            if not isinstance(res, str):
-                sync_result = self.update_contacts(res)
-            return sync_result
-        else:
-            return {'status': 'need_auth', 'url': self._get_authorize_uri(from_url=from_url, scope=True)}
+            connection_uri = "/people/~/connections:{people_fields}".format(people_fields='(' + ','.join(PEOPLE_FIELDS) + ')')
+            status, res = self.send_request(connection_uri, params=params, headers=headers, type="GET")
+            return self.update_contacts(res) if not isinstance(res, str) else False
+        return {'status': 'need_auth', 'url': self._get_authorize_uri(from_url=from_url, scope=True)}
 
     @api.model
     def update_contacts(self, records):
@@ -271,11 +267,11 @@ class linkedin(models.AbstractModel):
             headers = {'Content-type': 'application/json', 'Accept': 'text/plain', 'x-li-format': 'json'}
         #search by universal-name
         if kw.get('search_uid'):
-            universal_search_uri = "/companies/universal-name={company_name}:{company_fields}".format(company_name=kw['search_uid'], company_fields='(' + ','.join(company_fields) + ')')
+            universal_search_uri = "/companies/universal-name={company_name}:{company_fields}".format(company_name=kw['search_uid'], company_fields='(' + ','.join(COMPANY_FIELDS) + ')')
             status, universal_company = self.with_context(kw.get('local_context') or {}).send_request(universal_search_uri, params=params, headers=headers, type="GET")
         #Companies search
         search_params = dict(params.copy(), keywords=kw.get('search_term', "") or "", start=offset, count=limit)
-        company_search_uri = "/company-search:(companies:{company_fields})".format(company_fields='(' + ','.join(company_fields) + ')')
+        company_search_uri = "/company-search:(companies:{company_fields})".format(company_fields='(' + ','.join(COMPANY_FIELDS) + ')')
         status, companies = self.with_context(kw.get('local_context') or {}).send_request(company_search_uri, params=search_params, headers=headers, type="GET")
         if companies and companies['companies'].get('values') and universal_company:
             companies['companies']['values'].append(universal_company)
@@ -295,7 +291,7 @@ class linkedin(models.AbstractModel):
             #but generated url may not have proper public url and may raise 400 or 410 status hence added a warning in response and handle warning at client side
             try:
                 public_profile_url = werkzeug.url_quote_plus("http://www.linkedin.com/pub/%s" % (kw['search_uid']))
-                profile_uri = "/people/url={public_profile_url}:{people_fields}".format(public_profile_url=public_profile_url, people_fields='(' + ','.join(people_fields) + ')')
+                profile_uri = "/people/url={public_profile_url}:{people_fields}".format(public_profile_url=public_profile_url, people_fields='(' + ','.join(PEOPLE_FIELDS) + ')')
                 status, public_profile = self.with_context(kw.get('local_context') or {}).send_request(profile_uri, params=params, headers=headers, type="GET")
 
             except urllib2.HTTPError, e:
@@ -306,7 +302,7 @@ class linkedin(models.AbstractModel):
         search_params = dict(params.copy(), keywords=kw.get('search_term', "") or "", start=offset, count=limit)
         #Note: People search is allowed to only vetted API access request, please go through following link
         #https://help.linkedin.com/app/api-dvr
-        people_search_uri = "/people-search:(people:{people_fields})".format(people_fields='(' + ','.join(people_fields) + ')')
+        people_search_uri = "/people-search:(people:{people_fields})".format(people_fields='(' + ','.join(PEOPLE_FIELDS) + ')')
         status, people = self.with_context(kw.get('local_context') or {}).send_request(people_search_uri, params=search_params, headers=headers, type="GET")
         if people and people['people'].get('values') and public_profile:
             people['people']['values'].append(public_profile)
@@ -322,8 +318,8 @@ class linkedin(models.AbstractModel):
                 'current-company': 'true',
                 'count': limit
             }
-            people_criteria_uri = "/people-search:(people:{people_fields})".format(people_fields='(' + ','.join(people_fields) + ')')
-            status, res = self.with_context(self.env.context).send_request(people_criteria_uri, params=params, headers=headers, type="GET")
+            people_criteria_uri = "/people-search:(people:{people_fields})".format(people_fields='(' + ','.join(PEOPLE_FIELDS) + ')')
+            status, res = self.send_request(people_criteria_uri, params=params, headers=headers, type="GET")
             return res
         else:
             return {'status': 'need_auth', 'url': self._get_authorize_uri(from_url=from_url)}
@@ -390,7 +386,6 @@ class linkedin(models.AbstractModel):
 
     @api.model
     def need_authorization(self):
-        print "\n\ncurrent_user.linkedin_token_validity is ::: ", self.env.user.linkedin_token_validity, datetime.now(), self.env.user.login
         if not self.env.user.linkedin_token_validity or \
                 datetime.strptime(self.env.user.linkedin_token_validity.split('.')[0], DEFAULT_SERVER_DATETIME_FORMAT) < (datetime.now() + timedelta(minutes=1)):
             return True
@@ -398,18 +393,19 @@ class linkedin(models.AbstractModel):
 
     @api.model
     def get_param_parameter(self, parameter):
-        return self.env['ir.config_parameter'].sudo().get_param(parameter, default=False)
+        return self.env['ir.config_parameter'].sudo().get_param(parameter)
 
     @api.model
     def test_linkedin_keys(self):
         res = self.get_param_parameter('web.linkedin.apikey') and self.get_param_parameter('web.linkedin.secretkey') and True
-        if not res:
-            if not self.env['res.users'].has_group('base.group_system'):
-                return False
-            action = self.env['ir.model.data'].get_object_reference('base_setup', 'action_sale_config')[1]
-            base_url = self.get_param_parameter('web.base.url')
-            res = base_url + '/web?#action=' + str(action),
-        return res
+        if not self.env['res.users'].has_group('base.group_system'):
+            return {'is_access_right': False}
+        if res:
+            return {'is_key_set': res}
+        action = self.env['ir.model.data'].get_object_reference('base_setup', 'action_sale_config')[1]
+        base_url = self.get_param_parameter('web.base.url')
+        return {'redirect_url': base_url + '/web?#action=' + str(action)}
+
 
     @api.multi
     def get_uri_oauth(self, a=''):  # a = action
@@ -424,6 +420,7 @@ class linkedin(models.AbstractModel):
         try:
             url = urlunparse(('http', 'media.licdn.com', path, params, query, fragment))
             bfile = urllib2.urlopen(url)
+            return base64.b64encode(bfile.read())
         except urllib2.HTTPError, e:
             _logger.exception("Bad URl request : %s !" % e.read())
-        return base64.b64encode(bfile.read())
+        return False

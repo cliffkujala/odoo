@@ -21,12 +21,12 @@ openerp.web_linkedin = function(instance) {
         test_linkedin: function(show_dialog) {
             var self = this;
             if (this.is_set_keys) {
-                return $.when(true);
+                return $.when(this.is_key_set=true);
             }
             return new instance.web.Model("linkedin").call("test_linkedin_keys", []).then(function(data) {
-                if (data == true) {
-                    self.is_set_keys = data;
-                    return true;
+                if (data.is_key_set) {
+                    self.is_set_keys = data.is_key_set;
+                    return data;
                 } else {
                     if (show_dialog) {
                         self.show_error({'name': "Linkedin API key not set."});
@@ -53,7 +53,6 @@ openerp.web_linkedin = function(instance) {
     instance.web_linkedin.Linkedin = instance.web.form.FieldChar.extend({
         init: function() {
             this._super.apply(this, arguments);
-            this.display_dm = new instance.web.DropMisordered(true);
         },
         initialize_content: function() {
             var $ht = $(QWeb.render("FieldChar.linkedin"));
@@ -67,7 +66,7 @@ openerp.web_linkedin = function(instance) {
             var self = this;
             if (!this.open_in_process) {
                 this.open_in_process = true;
-                this.display_dm.add(instance.web_linkedin.tester.test_linkedin(true)).done(function() {
+                instance.web_linkedin.tester.test_linkedin(true).done(function() {
                     self.open_in_process = false;
                     var text = (self.get("value") || "").replace(/^\s+|\s+$/g, "").replace(/\s+/g, " ");
                     var pop = new instance.web_linkedin.LinkedinSearchPopup(self, text);
@@ -170,11 +169,7 @@ openerp.web_linkedin = function(instance) {
             $.when.apply($, defs).then(function () {
                 new instance.web.DataSetSearch(this, 'res.partner').call("linkedin_check_similar_partner", [entities]).then(function (partners) {
                     _.each(partners, function (partner, i) {
-                        _.each(partner, function (val, key) {
-                            if (val) {
-                                childs_to_change[i][key] = val;
-                            }
-                        });
+                        _.extend(childs_to_change[i], partner);
                     });
                     deferrer.resolve(childs_to_change);
                 });
@@ -258,7 +253,6 @@ openerp.web_linkedin = function(instance) {
     instance.web_linkedin.LinkedinSearchPopup = instance.web.Dialog.extend({
         template: "Linkedin.popup",
         init: function(parent, search) {
-            var self = this;
             this._super(parent, { 'title': QWeb.render('LinkedIn.AdvancedSearch') });
             this.search = search;
             this.limit = 5;
@@ -470,21 +464,18 @@ openerp.web_linkedin = function(instance) {
     */
     openerp.web_kanban.KanbanView.include({
         init: function() {
-            this.display_dm = new instance.web.DropMisordered(true);
             return this._super.apply(this, arguments);
         },
         load_kanban: function() {
             var self = this;
             var super_res = this._super.apply(this, arguments);
             if(this.dataset.model == 'res.partner' && !this.dataset.child_name) {
-                this.display_dm.add(instance.web_linkedin.tester.test_linkedin(false)).done(function(result) {
-                    var href;
-                    if(_.isBoolean(result)) { href = false } else { href = result }
-                    $linkedin_button = $(QWeb.render("KanbanView.linkedinButton", {'widget': self, 'href': href}));
+               instance.web_linkedin.tester.test_linkedin(false).done(function(result) {
+                    $linkedin_button = $(QWeb.render("KanbanView.linkedinButton", {'widget': self, 'result': result}));
                     $linkedin_button.appendTo(self.$buttons);
-                    if (_.isBoolean(result)) {
+                    if (!result.redirect_url) {
                         $linkedin_button.click(function() {
-                            if (!result) {
+                            if (!result.is_access_right && !result.is_key_set) {
                                 var dialog = new instance.web.Dialog(self, {
                                     title: _t("LinkedIn is not configured"),
                                     buttons: [
@@ -494,7 +485,7 @@ openerp.web_linkedin = function(instance) {
                                 return super_res;
                             }
                             var context = _.extend(instance.web.pyeval.eval('context'), {'from_url': window.location.href, 'scope': true});
-                            res = self.rpc("/linkedin/sync_linkedin_contacts", {
+                            var res = self.rpc("/linkedin/sync_linkedin_contacts", {
                                 from_url: window.location.href,
                                 local_context: context
                             }).done(function(result) {
