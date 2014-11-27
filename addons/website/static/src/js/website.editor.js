@@ -1466,6 +1466,7 @@
             var $preview = this.$("#link-preview");
             this.get_data(true).then(function (url, new_window, label, classes) {
                 $preview.attr("target", new_window ? '_blank' : "")
+                    .attr("href", url && url.length ? url : "#")
                     .html((label && label.length ? label : url))
                     .attr("class", classes.replace(/pull-\w+/, ''));
             });

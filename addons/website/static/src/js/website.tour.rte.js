@@ -208,12 +208,49 @@
             },
             {
                 waitNot:   '.select2-drop:visible',
+                element:   '#link-text',
+                title:     "change text label",
+                sampleText: "ABC[IMG] DEF",
+            },
+            {
+                waitFor:   '.modal a#link-preview.btn:containsRegex(/^ABC<span [^>]+><\\/span> DEF$/)',
                 element:   '.modal button.save',
                 title:     "save link",
             },
             {
                 waitNot:   '#link-preview',
                 waitFor:   'a.btn[href^="/"]:has(span.fa.fa-3x.pull-right)',
+                element:   '#wrapwrap > main > div > section .row > div:last img',
+                title:     "click on other picture",
+            },
+            {
+                waitFor:   '#wrapwrap > main > div > section .row > div:first span.fa.pull-right',
+                element:   '.note-image-popover:visible button[data-event="showLinkDialog"]',
+                title:     "click on create link again",
+            },
+            {
+                waitFor:   '.modal a#link-preview:containsRegex(/^<img [^>]+>$/)',
+                element:   '.modal .dropdown:has(.link-style) a[data-toggle="dropdown"]',
+                title:     "click on color style again",
+            },
+            {
+                element:   '.modal .dropdown ul label.btn-success',
+                title:     "choose success style",
+            },
+            {
+                waitFor:   '.modal a#link-preview.btn',
+                element:   '#link-external',
+                sampleText: "test@test.test",
+                title:     "insert an email",
+            },
+            {
+                waitFor:   '.modal a#link-preview.btn[href="mailto:test@test.test"]',
+                element:   '.modal button.save',
+                title:     "save link",
+            },
+            {
+                waitNot:   '#link-preview',
+                waitFor:   '#wrapwrap > main > div > section .row > div:last > a > img',
                 title:     "end",
             },
         ]
