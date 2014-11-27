@@ -300,7 +300,7 @@ class hr_analytic_timesheet(osv.osv):
     def _check_analytic_account_state(self, cr, uid, analytic_account, context=None):
         if context is None:
             context = {}
-        analytic_account_obj = self.pool.get('account.analytic.account')
+        analytic_account_obj = self.pool['account.analytic.account']
         account_name_list = set()
         account_ids = set()
         for analytic_account_record in analytic_account_obj.browse(cr, uid, analytic_account, context=context):
@@ -314,16 +314,14 @@ class hr_analytic_timesheet(osv.osv):
                 account_ids.add(analytic_account_record.id)
 
         if account_name_list:
-            act_window_obj = self.pool.get('ir.actions.act_window')
-            ir_model_data_obj = self.pool.get('ir.model.data')
+            act_window_obj = self.pool['ir.actions.act_window']
+            ir_model_data_obj = self.pool['ir.model.data']
             model, action_id = ir_model_data_obj.get_object_reference(cr, uid, 'analytic', 'action_account_analytic_account_form')
             action = act_window_obj.read(cr, uid, action_id, [
                 'name', 'type', 'view_type', 'view_mode', 'res_model', 'views', 'view_id', 'domain'])
-            dummy, tree_view = ir_model_data_obj.get_object_reference(cr, uid, 'analytic', 'view_account_analytic_account_tree')
-            action.update({
-                'domain': [('id', 'in', list(account_ids))],
-                'views': [(tree_view or False, 'list'), (False, 'form')]
-            })
+            tree_view = ir_model_data_obj.get_object_reference(cr, uid, 'analytic', 'view_account_analytic_account_tree')[1]
+            action['domain'] = [('id', 'in', list(account_ids))]
+            action['views'] = [(tree_view or False, 'list'), (False, 'form')]
 
             if len(account_name_list) == 1 and len(account_ids) == 1:
                 msg = _('''The %s Analytic Account is in "%s" state.\nYou should not work on this account !\n please renew it.\n''') \

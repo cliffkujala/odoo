@@ -55,13 +55,10 @@ class sale_order(osv.Model):
 
     def _check_order_before_confirm(self, cr, uid, order, context=None):
         contract_list = self._get_analytic_account(cr, uid, order)
-        models_data = self.pool.get('ir.model.data')
+        models_data = self.pool['ir.model.data']
         if contract_list:
-            contract_ids = []
-            contract_name = []
-            for record in contract_list:
-                contract_ids.append(record[0]), contract_name.append(record[1])
-            dummy, tree_view = models_data.get_object_reference(cr, uid, 'analytic', 'view_account_analytic_account_tree')
+            contract_ids, contract_name = zip(*contract_list)
+            tree_view = models_data.get_object_reference(cr, uid, 'analytic', 'view_account_analytic_account_tree')[1]
             model, action_id = models_data.get_object_reference(cr, uid, 'analytic', 'action_account_analytic_account_form')
             action = self.pool.get('ir.actions.act_window').read(cr, uid, action_id, ['name', 'type', 'view_type', 'view_mode', 'res_model', 'views', 'view', 'domain'])
             action['name'] = _('Contract')

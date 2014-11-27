@@ -106,11 +106,11 @@ class hr_timesheet_sheet(osv.osv):
             analytic_timesheet_obj = self.pool.get('hr.analytic.timesheet')
             for timesheet in self.browse(cr, uid, ids):
                 if timesheet.timesheet_ids and timesheet.state == 'confirm':
-                    context.update({'analytic_account_status': True})
+                    context['analytic_account_status'] = True
                     analytic_timesheet_obj._check_analytic_account_state(
                         cr, uid, [timesheet_id.account_id.id for timesheet_id in timesheet.timesheet_ids], context=context)
                 elif timesheet.timesheet_ids and timesheet.state == 'draft':
-                    context.update({'analytic_account_status': False})
+                    context['analytic_account_status'] = False
                     analytic_timesheet_obj._check_analytic_account_state(
                         cr, uid, [timesheet_id.account_id.id for timesheet_id in timesheet.timesheet_ids], context=context)
         res = super(hr_timesheet_sheet, self).write(cr, uid, ids, vals, context=context)
