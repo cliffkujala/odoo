@@ -156,7 +156,7 @@ var Tour = {
             Tour.$element.removeData("tour");
             Tour.$element.removeData("tour-step");
             $(".tour-backdrop").remove();
-            $(".popover.tour").remove();
+            Tour.$popover.remove();
             Tour.$element = null;
         }
     },
@@ -201,6 +201,9 @@ var Tour = {
 
 
         var $tip = $element.data("bs.popover").tip();
+
+
+        Tour.$popover = $tip.add($element.data("bs.popover").arrow());
 
 
         // add popover style (orphan, static, backdrop)

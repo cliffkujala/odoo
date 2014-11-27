@@ -816,9 +816,7 @@
     };
 
     dom.isContentEditable = function (node) {
-        var cfalse = $(node).closest('[contenteditable="false"]');
-        var ctrue = $(node).closest('[contenteditable="true"]');
-        return ctrue.length && (!cfalse.length || $.contains(cfalse[0], ctrue[0]));
+        return $(node).closest('[contenteditable]').is('[contenteditable="true"]');
     };
 
     range.WrappedRange.prototype.reRange = function (keep_end, isNotBreakable) {

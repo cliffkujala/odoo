@@ -106,7 +106,7 @@
             {
                 waitFor:   '#wrapwrap > main > div > section .row > div:first:not(:has(p font)) h1',
                 element:   '.o_editable.note-editable.o_dirty',
-                title:     "clean and delete an other selection",
+                title:     "clean and delete (backspace) an other selection",
                 onload: function () {
                     var $el = $(this.waitFor);
                     $.summernote.objects.range.createFromNode($el.next("p")[0]).clean();
@@ -126,9 +126,98 @@
             },
             {
                 waitFor:   '#wrapwrap > main > div > section .row > div:first:has( font:last:containsExact(Bat) )',
-                title:     "gdfsgdfg",
+                element:   '.note-air-popover button[data-event="undo"]',
+                title:     "undo",
+            },
+            {
+                waitFor:   '#wrapwrap > main > div > section .row > div:first:has( font:last:containsExact(i) )',
+                element:   '.note-air-popover button[data-event="undo"]',
+                title:     "undo adain",
+            },
+            {
+                waitFor:   '#wrapwrap > main > div > section .row > div:first:not(:has(p font)) h1',
+                element:   '.o_editable.note-editable.o_dirty',
+                title:     "delete (backspace) after undo",
+                keydown:   8 // backspace
+            },
+            {
+                waitFor:   '#wrapwrap > main > div > section .row > div:first:has( font:last:containsExact(i) ):has( p:first:containsRegex(/^uam/) )',
+                element:   '#wrapwrap > main > div > section .row > div:first img.img-responsive-25',
+                title:     "click on image",
+            },
+            {
+                element:   '.note-image-popover:visible button[data-event="resize"][data-value="0.5"]',
+                title:     "Click on resize half",
+            },
+            {
+                waitFor:   '#wrapwrap > main > div > section .row > div:first img.img-responsive-50',
+                element:   '.note-image-popover:visible button[data-event="showImageDialog"]',
+                title:     "Click on edit picture",
+            },
+            {
+                waitFor:   '.modal #editor-media-image',
+                element:   '.modal a[data-toggle="tab"]:contains(Pictogram)',
+                title:     "Click on pictogram tab",
+            },
+            {
+                element:   '#editor-media-icon.active span.fa:first',
+                title:     "select a pictogram",
+            },
+            {
+                waitFor:   '#editor-media-icon.active #fa-icon[value]',
+                element:   '#editor-media-icon.active #fa-preview span[data-size="fa-3x"]',
+                title:     "select a size for the pictogram",
+            },
+            {
+                waitFor:   '#editor-media-icon.active #fa-preview span[data-size="fa-3x"].font-icons-selected',
+                element:   '.modal button.save',
+                title:     "save pictogram",
+            },
+            {
+                waitNot:   '#editor-media-icon',
+                element:   '.note-image-popover:visible button[data-event="floatMe"][data-value="right"]',
+                title:     "click on float right",
+            },
+            {
+                waitFor:   '#wrapwrap > main > div > section .row > div:first span.fa.pull-right',
+                element:   '.note-image-popover:visible button[data-event="showLinkDialog"]',
+                title:     "click on create link",
+            },
+            {
+                waitFor:   '.modal a#link-preview:containsRegex(/^<span [^>]+><\\/span>$/) > span.fa.fa-3x.pull-right',
+                element:   '.modal .dropdown:has(.link-style) a[data-toggle="dropdown"]',
+                title:     "click on color style",
+            },
+            {
+                element:   '.modal .dropdown ul label.btn-success',
+                title:     "choose success style",
+            },
+            {
+                waitFor:   '.modal a#link-preview.btn:containsRegex(/^<span [^>]+><\\/span>$/)',
+                element:   '.modal .select2-container.url-source a.select2-choice',
+                title:     "click to choose an internal page",
+            },
+            {
+                element:   '.select2-drop:visible .select2-search input',
+                title:     "search 'contact'",
+                sampleText: "contact",
+            },
+            {
+                element:   '.select2-drop:visible .select2-results .select2-result div:contains(/page/)',
+                title:     "select /page/contactus",
+            },
+            {
+                waitNot:   '.select2-drop:visible',
+                element:   '.modal button.save',
+                title:     "save link",
+            },
+            {
+                waitNot:   '#link-preview',
+                waitFor:   'a.btn[href^="/"]:has(span.fa.fa-3x.pull-right)',
+                title:     "end",
             },
         ]
     });
 
 }());
+

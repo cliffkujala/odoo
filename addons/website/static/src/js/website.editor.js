@@ -32,23 +32,6 @@
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     /* update and change the popovers content, and add history button */
 
-    var fn_handle_update = eventHandler.handle.update;
-    eventHandler.handle.update = function ($handle, oStyle, isAirMode) {
-        fn_handle_update.call(this, $handle, oStyle, isAirMode);
-        $handle.find('.note-control-selection')
-                .css({
-                    'pointer-events': 'none'
-                })
-                .find('.note-control-sizing')
-                .removeClass('note-control-sizing')
-                .addClass('note-control-holder')
-                .css({
-                    'cursor': 'auto',
-                    'border-top': 0,
-                    'border-left': 0
-                })
-            .off('click');
-    };
     function summernote_popover_update ($popover) {
         var $imagePopover = $popover.find('.note-image-popover');
         var $linkPopover = $popover.find('.note-link-popover');
@@ -223,7 +206,7 @@
         };
         $selection.data('target', oStyle.image); // save current image element.
         var sSizing = szImage.w + 'x' + szImage.h;
-        $selection.find('.note-control-selection-info').text(szImage.w ? sSizing : "");
+        $selection.find('.note-control-selection-info').text(szImage.w > 50 ? sSizing : "");
 
         $selection.find('.note-control-sizing').toggleClass('note-control-sizing note-control-holder').css({
                 'border-top': 0,
@@ -1542,8 +1525,8 @@
 
             this.range = range.create();
 
-            var only_images = this.options.select_images || (this.media && $(this.media).parent().data("oe-field") === "image");
-            if (only_images) {
+            this.only_images = this.options.select_images || (this.media && $(this.media).parent().data("oe-field") === "image");
+            if (this.only_images) {
                 this.$('[href="#editor-media-video"], [href="#editor-media-icon"]').addClass('hidden');
             }
 
@@ -1616,11 +1599,12 @@
             self.trigger("saved", self.active.media, self.media);
             setTimeout(function () {
                 range.createFromNode(self.active.media).select();
-                $(self.active.media).trigger("mouseup");
-                if (self.isNewMedia) {
+                $(self.active.media).trigger("mousedown");
+                if (!this.only_images) {
                     setTimeout(function () {
                         var e = jQuery.Event( "click", { srcElement: self.active.media } );
                         $(self.active.media).trigger(e);
+                        $(self.active.media).trigger("mouseup");
                     },0);
                 }
             },0);
