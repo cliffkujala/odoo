@@ -913,9 +913,6 @@
     </label>
 </t>
 
-<div t-name="GraphView" class="oe_graph">
-</div>
-
 <t t-name="GraphView.buttons">
     <div class="btn-group btn-group-sm">
         <button class="btn btn-default fa fa-bar-chart-o oe-bar-mode" title="Bar Chart"></button>

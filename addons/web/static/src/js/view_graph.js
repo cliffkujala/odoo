@@ -2,37 +2,32 @@
  * Odoo Pivot Table view
  *---------------------------------------------------------*/
 
-(function () {
+(function (a, b, c) {
 'use strict';
 
 var instance = openerp,
     _lt = instance.web._lt,
     _t = instance.web._t,
-    QWeb = instance.web.qweb,
-    format_value = instance.web.format_value,
-    total = _t("Total");
+    QWeb = instance.web.qweb;
 
 nv.dev = false;  // sets nvd3 library in production mode
 
 instance.web.views.add('graph', 'instance.web.GraphView');
 
 instance.web.GraphView = instance.web.View.extend({
-    template: 'GraphView',
+    className: 'oe_graph',
     display_name: _lt('Graph'),
     view_type: 'graph',
 
     init: function(parent, dataset, view_id, options) {
         this._super(parent, dataset, view_id, options);
-        this.model = new instance.web.Model(dataset.model, {group_by_no_leaf: true});
 
-        this.ready = false;
-        this.mode = "bar";
+        this.model = new instance.web.Model(dataset.model, {group_by_no_leaf: true});
         this.measures = [];
         this.active_measure = '__count__';
-        this.groupbys = [];
         this.initial_groupbys = [];
-        this.data = [];
         this.$buttons = options.$buttons;
+        this.widget = undefined;
     },
     start: function () {
         var load_fields = this.model.call('fields_get', [])
@@ -56,22 +51,21 @@ instance.web.GraphView = instance.web.View.extend({
     },
     view_loading: function (fvg) {
         var self = this;
-        this.do_push_state({});
         fvg.arch.children.forEach(function (field) {
             var name = field.attrs.name;
             if (field.attrs.interval) {
                 name += ':' + field.attrs.interval;
             }
-            switch (field.attrs.type) {
-            case 'measure':
+            if (field.attrs.type === 'measure') {
                 self.active_measure = name;
-                break;
-            default:
+            } else {
                 self.initial_groupbys.push(name);
-                break;
             }
         });
-        self.groupbys = self.initial_groupbys.slice(0);
+    },
+    do_show: function () {
+        this.do_push_state({});
+        this.$el.show();
     },
     prepare_fields: function (fields) {
         var self = this;
@@ -83,32 +77,31 @@ instance.web.GraphView = instance.web.View.extend({
                 }
             }
         });
-        this.measures.__count__ = {string: "Quantity", type: "integer"};
+        this.measures.__count__ = {string: _t("Quantity"), type: "integer"};
     },
     do_search: function (domain, context, group_by) {
-        this.groupbys = group_by.length ? group_by : this.initial_groupbys.slice(0);
-        this.domain = domain;
-        this.context = context;
-        if (!this.ready) {
-            this.data_loaded = this.load_data();
-            this.ready = true;
-            return;
+        if (!this.widget) {
+            this.widget = new instance.web.GraphWidget(this, this.dataset.model, {
+                measure: this.active_measure,
+                mode: this.active_mode,
+                domain: domain,
+                groupbys: this.initial_groupbys,
+                context: context,
+                fields: this.fields,
+            });
+            // append widget
+            this.$el.hide();
+            this.widget.appendTo(this.$el);
+        } else {
+            var groupbys = group_by.length ? group_by : this.initial_groupbys.slice(0);
+            this.widget.update_data(domain, groupbys);
         }
-        this.data_loaded = this.load_data();
-        return this.do_show();
-    },
-    do_show: function () {
-        var self = this;
-        this.data_loaded.done(function () {
-            self.display_graph(); 
-            self.$el.show();
-        });
     },
     on_button_click: function (event) {
         var $target = $(event.target);
-        if ($target.hasClass('oe-bar-mode')) {this.switch_mode('bar');}
-        if ($target.hasClass('oe-line-mode')) {this.switch_mode('line');}
-        if ($target.hasClass('oe-pie-mode')) {this.switch_mode('pie');}
+        if ($target.hasClass('oe-bar-mode')) {this.widget.set_mode('bar');}
+        if ($target.hasClass('oe-line-mode')) {this.widget.set_mode('line');}
+        if ($target.hasClass('oe-pie-mode')) {this.widget.set_mode('pie');}
         if ($target.parents('.oe-measure-list').length) {
             var parent = $target.parent(),
                 field = parent.data('field');
@@ -116,14 +109,45 @@ instance.web.GraphView = instance.web.View.extend({
             parent.toggleClass('selected');
             event.stopPropagation();
             this.update_measure();
-            this.load_data().then(this.proxy('display_graph'));
+            this.widget.set_measure(this.active_measure);
         }
     },
-    // returns a deferred that resolve when the data is loaded.
+});
+
+instance.web.GraphWidget = instance.web.Widget.extend({
+    init: function (parent, model, options) {
+        this._super(parent);
+        this.context = options.context;
+        this.fields = options.fields;
+        this.fields.__count__ = _t("Quantity");
+        this.model = new instance.web.Model(model, {group_by_no_leaf: true});
+
+        this.domain = options.domain || [];
+        this.groupbys = options.groupbys || [];
+        this.mode = options.mode || "bar";
+        this.measure = options.measure || "__count__";
+    },
+    start: function () {
+        console.log('start widget');
+        return this.load_data().then(this.proxy('display_graph'));
+    },
+    update_data: function (domain, groupbys) {
+        this.domain = domain;
+        this.groupbys = groupbys;
+        return this.load_data().then(this.proxy('display_graph'));
+    },
+    set_mode: function (mode) {
+        this.mode = mode;
+        this.display_graph();
+    },
+    set_measure: function (measure) {
+        this.measure = measure;
+        return this.load_data().then(this.proxy('display_graph'));        
+    },
     load_data: function () {
-        var fields = this.groupbys;
-        if (this.active_measure !== '__count__')
-            fields = fields.concat(this.active_measure);
+        var fields = this.groupbys.slice(0);
+        if (this.measure !== '__count__'.slice(0))
+            fields = fields.concat(this.measure);
         return this.model
                     .query(fields)
                     .filter(this.domain)
@@ -134,7 +158,7 @@ instance.web.GraphView = instance.web.View.extend({
     },
     prepare_data: function () {
         var raw_data = arguments[0],
-            is_count = this.active_measure === '__count__';
+            is_count = this.measure === '__count__';
         var data_pt, j, values, value;
 
         this.data = [];
@@ -145,7 +169,7 @@ instance.web.GraphView = instance.web.View.extend({
             for (j = 0; j < data_pt.value.length; j++) {
                 values[j] = this.sanitize_value(data_pt.value[j], data_pt.grouped_on[j]);
             }
-            value = is_count ? data_pt.length : data_pt.aggregates[this.active_measure];
+            value = is_count ? data_pt.length : data_pt.aggregates[this.measure];
             this.data.push({
                 labels: values,
                 value: value
@@ -161,19 +185,6 @@ instance.web.GraphView = instance.web.View.extend({
         }
         return value;
     },
-    toggle_measure: function (field) {
-        if (_.contains(this.active_measures, field)) {
-            this.active_measures = _.without(this.active_measures, field);
-            this.display_table();
-        } else {
-            this.active_measures.push(field);            
-            this.load_data().then(this.display_table.bind(this));
-        }
-    },
-    switch_mode: function (mode) {
-        this.mode = mode;
-        this.display_graph();
-    },
     display_graph: function () {
         if (this.to_remove) {
             nv.utils.offWindowResize(this.to_remove);
@@ -184,7 +195,7 @@ instance.web.GraphView = instance.web.View.extend({
     display_bar: function () {
         // prepare data for bar chart
         var data, values,
-            measure = this.measures[this.active_measure].string;
+            measure = this.fields[this.measure].string;
         // zero groupbys
         if (this.groupbys.length === 0) {
             data = [{
@@ -260,11 +271,10 @@ instance.web.GraphView = instance.web.View.extend({
         nv.utils.onWindowResize(chart.update);
     },
     display_pie: function () {
-        var self = this,
-            data = [],
+        var data = [],
             tickValues,
             tickFormat,
-            measure = this.measures[this.active_measure].string;
+            measure = this.fields[this.measure].string;
         if (this.groupbys.length) {
             data = this.data.map(function (datapt) {
                 return {x:datapt.labels.join("/"), y: datapt.value};
@@ -292,7 +302,7 @@ instance.web.GraphView = instance.web.View.extend({
             data = [],
             tickValues,
             tickFormat,
-            measure = this.measures[this.active_measure].string;
+            measure = this.fields[this.measure].string;
         if (this.groupbys.length === 1) {
             var values = this.data.map(function (datapt, index) {
                 console.log(datapt);
@@ -362,7 +372,6 @@ instance.web.GraphView = instance.web.View.extend({
         return this._super();
     }
 });
-
 
 // monkey patch nvd3 to allow removing eventhandler on windowresize events
 // see https://github.com/novus/nvd3/pull/396 for more details
