@@ -303,7 +303,7 @@
             (node.parentNode && node.parentNode.className && node.parentNode.className.match(/(^|\s)media_iframe_video(\s|$)/i)) );
     };
     dom.isForbiddenNode = function (node) {
-        return node.tagName === "BR" || $(node).is(".media_iframe_video, .fa, img");
+        return $(node).is(".media_iframe_video, .fa, img");
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1980,8 +1980,8 @@
             },
         }),
         // extract list of FontAwesome from the cheatsheet.
-        icons: _.map(getCssSelectors(/(?=^|\s)(\.fa-[0-9a-z_-]+::before)/i), function (css) {
-            return css.slice(0, -8);
+        icons: _.map(getCssSelectors(/(?=^|\s)(\.fa-[0-9a-z_-]+::?before)/i), function (css) {
+            return css.replace(/::?before$/, '');
         }),
 
         init: function (parent, media) {

@@ -156,6 +156,7 @@ var Tour = {
             Tour.$element.removeData("tour");
             Tour.$element.removeData("tour-step");
             $(".tour-backdrop").remove();
+            Tour.$popover.data('bs.popover').$element.popover('destroy');
             Tour.$popover.remove();
             Tour.$element = null;
         }
@@ -568,6 +569,14 @@ var Tour = {
                     if (keyCode) {
                         setTimeout(function () {
                             $element.trigger({ type: 'keydown', keyCode: keyCode });
+                            if ((keyCode > 47 && keyCode < 58)   || // number keys
+                                keyCode == 32  || // spacebar
+                                (keyCode > 64 && keyCode < 91)   || // letter keys
+                                (keyCode > 95 && keyCode < 112)  || // numpad keys
+                                (keyCode > 185 && keyCode < 193) || // ;=,-./` (in order)
+                                (keyCode > 218 && keyCode < 223)) {   // [\]' (in order))
+                                document.execCommand('insertText', 0, String.fromCharCode(keyCode));
+                            }
                         },0);
                         keydown(list);
                     }

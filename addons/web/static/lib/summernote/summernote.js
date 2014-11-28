@@ -1622,11 +1622,11 @@
         }
 
         if (dom.isBR(sc)) { // hack from odoo (for ie)
-          so = dom.listPrev(sc).length;
+          so = dom.listPrev(sc).length-1;
           sc = sc.parentNode;
         }
         if (dom.isBR(ec)) {
-          eo = dom.listPrev(ec).length;
+          eo = dom.listPrev(ec).length-1;
           ec = ec.parentNode;
         }
 
@@ -2965,6 +2965,7 @@
       //preventDefault Selection for FF, IE8+
       if (dom.isImg(event.target)) {
         event.preventDefault();
+        range.createFromNode(event.target).select();
       }
     };
 

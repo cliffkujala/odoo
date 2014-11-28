@@ -1064,13 +1064,7 @@
         }
 
         if (node) {
-            node = dom.firstChild(node);
-            if (dom.isBR(node)) {
-                range.create(node.parentNode, dom.listPrev(node).length).select();
-            } else {
-                range.create(node,0).select();
-            }
-
+            range.create(dom.lastChild(node),0).select();
             dom.scrollIntoViewIfNeeded(node);
         }
 

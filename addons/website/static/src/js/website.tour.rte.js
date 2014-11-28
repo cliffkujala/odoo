@@ -43,8 +43,7 @@
                         '\n     <p>Batnae municipium in Anthemusia conditum Macedonum manu priscorum ab Euphrate flumine brevi spatio disparatur, refertum mercatoribus opulentis, ubi annua sollemnitate prope Septembris initium mensis ad.</p>'+
                         '\n     <p>    Quam <img class="img-responsive-25" src="/website/static/src/img/text_image.png"/> quidem <span class="fa fa-flag fa-2x"></span> partem accusationis admiratus sum et moleste tuli potissimum esse Atratino datam. Neque enim decebat neque aetas.</p>'+
                         '\n     <p>Et hanc quidem praeter oppida multa duae civitates exornant Seleucia opus Seleuci regis, et Claudiopolis quam deduxit coloniam Claudius Caesar. Isaura enim antehac nimium potens, olim subversa ut rebellatrix.</p>'+
-                        '<p>Accedebant enim eius asperitati, ubi inminuta vel laesa amplitudo imperii dicebatur, et iracundae suspicionum quantitati proximorum cruentae blanditiae exaggerantium incidentia et dolere inpendio simulantium.</p>'+
-                        '<p>Harum trium sententiarum nulli prorsus assentior. Nec enim illa prima vera est, ut, quem ad modum in se quisque sit, sic in amicum sit animatus. Quam multa enim, quae nostra causa numquam faceremus.</p>';
+                        '<p>Harum trium sententiarum nulli prorsus assentior.</p>';
                     $el.html(html);
                     $.summernote.objects.range.create($el.find('h1')[0].firstChild, 0, $el.find('h1')[0], 0).select();
                 }
@@ -251,10 +250,61 @@
             {
                 waitNot:   '#link-preview',
                 waitFor:   '#wrapwrap > main > div > section .row > div:last > a > img',
+                element:   '#wrapwrap > main > div > section .row > div:first p:last',
+                title:     "triple enter",
+                keydown:   [13, 13, 66, 13] // enter
+            },
+            {
+                waitFor:   '#wrapwrap > main > div > section .row > div:first p:eq(5)',
+                element:   '#wrapwrap > main > div.o_editable.note-editable',
+                title:     "double backspace",
+                keydown:   [8, 8] // backspace
+            },
+            {
+                waitNot:   '#wrapwrap > main > div > section .row > div:first p:eq(4), #wrapwrap > main > div > section .row > div:eq(3)',
+                waitFor:   '#wrapwrap > main > div > section .row > div:first p:eq(3)',
+                title:     "add ul content",
+                onload: function () {
+                    var $el = $('#wrapwrap > main > div > section .row > div:first');
+                    var html = '  <ul>     '+
+                        '\n     <li>   <p>Batnae municipium.  </p></li>'+
+                        '\n     <li>    Seleucia praeter.</li>'+
+                        '\n     <li><p>Et hanc quidem.</p></li>'+
+                        '\n    </ul>';
+                    $el.append(html);
+                    var node = $el.find('ul li:first p')[0].firstChild;
+                    $.summernote.objects.range.create(node, 6, node, 6).select();
+                }
+            },
+            {
+                element:   '#wrapwrap > main > div > section .row > div:first ul li:first',
+                title:     "enter in ul",
+                keydown:   [13] // enter
+            },
+            {
+                waitFor:   '#wrapwrap > main > div > section .row > div:first ul li p:eq(2)',
+                element:   '.note-air-popover .note-style button.dropdown-toggle',
+                title:     "apend style dropdown",
+            },
+            {
+                element:   '.note-air-popover .note-style ul:visible a[data-value="h3"]',
+                title:     "select h3",
+            },
+            {
+                element:   '#wrapwrap > main > div > section .row > div:first > ul > li > h3',
+                title:     "double tabulation",
+                keydown:   [9, 9] // tabulation
+            },
+            {
+                waitFor:   '#wrapwrap > main > div > section .row > div:first ul > li > ul > li > ul > li > h3',
+                element:   '.note-air-popover button[data-event="insertOrderedList"]',
+                title:     "click on order list",
+            },
+            {
+                waitFor:   '#wrapwrap > main > div > section .row > div:first ul > li > ul > li > ol > li > h3',
                 title:     "end",
             },
         ]
     });
 
 }());
-
