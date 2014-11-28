@@ -1621,11 +1621,11 @@
           eo = so;
         }
 
-        if (dom.isBR(sc)) { // hack from odoo (for ie)
+        if (dom.isBR(sc) || dom.isImg(sc)) { // hack from odoo (for ie)
           so = dom.listPrev(sc).length-1;
           sc = sc.parentNode;
         }
-        if (dom.isBR(ec)) {
+        if (dom.isBR(ec) || dom.isImg(ec)) {
           eo = dom.listPrev(ec).length-1;
           ec = ec.parentNode;
         }
@@ -2965,7 +2965,7 @@
       //preventDefault Selection for FF, IE8+
       if (dom.isImg(event.target)) {
         event.preventDefault();
-        range.createFromNode(event.target).select();
+        range.create(event.target, 0).select(); // fix by odoo
       }
     };
 

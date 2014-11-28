@@ -499,13 +499,19 @@
         range.create(data.sc, data.so, data.ec, data.eo).select();
     };
     dom.removeBetween = function (sc, so, ec, eo) {
-        if (sc.tagName && sc.childNodes[so]) {
-            sc = sc.childNodes[so];
-            so = 0;
-        }
         if (ec.tagName && ec.childNodes[eo]) {
             ec = ec.childNodes[eo];
             eo = 0;
+        }
+        if (sc.tagName && sc.childNodes[so]) {
+            sc = sc.childNodes[so];
+            so = 0;
+            if (!dom.hasContentBefore(sc)) {
+                sc.parentNode.insertBefore(document.createTextNode('\u00A0'), sc);
+                if (sc === ec) {
+                    eo++;
+                }
+            }
         }
 
         var ancestor = dom.commonAncestor(sc.tagName ? sc.parentNode : sc, ec.tagName ? ec.parentNode : ec);
@@ -541,10 +547,7 @@
                 after = dom.hasContentAfter(dom.ancestorHaveNextSibling(ec));
             }
 
-            var first = before ? dom.hasContentAfter(dom.ancestorHaveNextSibling(before)) : sc;
-            var last = after ? dom.hasContentBefore(dom.ancestorHavePreviousSibling(after)) : ec;
-
-            var nodes = dom.listBetween(first, last);
+            var nodes = dom.listBetween(sc, ec);
 
             var ancestor_first_last = function (node) {
                 return node === before || node === after;
@@ -557,10 +560,12 @@
             }
 
             sc = before ? dom.lastChild(before) : dom.firstChild(after);
-            so = sc.textContent.length;
+            so = sc.textContent.length-1;
 
             if (before) {
-                sc.textContent = sc.textContent.replace(/[ \t\n\r]+$/, '\u00A0');
+                var text = sc.textContent.replace(/[ \t\n\r]+$/, '\u00A0');
+                so -= sc.textContent.length - text.length;
+                sc.textContent = text;
             }
             dom.autoMerge(sc, false);
 
@@ -883,15 +888,6 @@
         return new range.WrappedRange(sc, so, ec, eo);
     };
     range.WrappedRange.prototype.deleteContents = function () {
-        if (this.isCollapsed()) {
-            if (this.sc.tagName) {
-                var text = this.sc.parentNode.insertBefore(document.createTextNode(" "), this.sc);
-                this.sc.parentNode.removeChild(this.sc);
-                return new range.WrappedRange(text,0,text,0);
-            }
-          return this;
-        }
-
         var prevBP = dom.removeBetween(this.sc, this.so, this.ec, this.eo);
 
         return new range.WrappedRange(
@@ -1086,11 +1082,11 @@
                 if (text && dom.isText(text) && text.textContent.match(/\S/)) {
                     range.create(text, text.textContent.length, text, text.textContent.length).select();
                 } else {
-                    text = node.parentNode.insertBefore(document.createTextNode( "_" ), node);
+                    text = node.parentNode.insertBefore(document.createTextNode( "." ), node);
                     range.create(text, 1, text, 1).select();
                     setTimeout(function () {
                         var text = range.create().sc;
-                        text.textContent = text.textContent.replace(/^_/, '');
+                        text.textContent = text.textContent.replace(/^./, '');
                         range.create(text, text.textContent.length, text, text.textContent.length).select();
                     },0);
                 }
@@ -1316,7 +1312,7 @@
             } else {
                 var tr = temp.parentNode;
                 var prevTr = tr.previousElementSibling;
-                if (!$(temp.parentNode).text().match(/\S/)) {
+                if (!$(temp.parentNode).text().match(/\S|\u00A0/)) {
                     if (prevTr) {
                         tr.parentNode.removeChild(tr);
                         node = (prevTr.lastElementChild.lastChild && prevTr.lastElementChild.lastChild.tagName ? prevTr.lastElementChild.lastChild.previousSibling : prevTr.lastElementChild.lastChild) || prevTr.lastElementChild;
@@ -1340,7 +1336,7 @@
                 prev = dom.hasContentAfter(dom.ancestorHaveNextSibling(node));
             }
             dom.removeSpace(prev.parentNode, prev, 0, prev, 0); // clean before jump for not select invisible space between 2 tag
-            prev = dom.firstChild(prev);
+            prev = dom.lastChild(prev);
             node.parentNode.removeChild(node);
             range.createFromNode(prev).select();
             range.create(prev, before ? prev.textContent.length : 0).select();

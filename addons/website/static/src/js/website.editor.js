@@ -264,7 +264,6 @@
     };
 
     eventHandler.dialog.showLinkDialog = function ($editable, $dialog, linkInfo) {
-        var r = range.create();
         var editor = new website.editor.LinkDialog($editable, linkInfo);
         editor.appendTo(document.body);
 
@@ -286,7 +285,10 @@
         return false;
     };
     eventHandler.dialog.showImageDialog = function ($editable) {
-        var r = range.create();
+        var r = $editable.data('range');
+        if (r.sc.tagName && r.sc.childNodes.length) {
+            r.sc = r.sc.childNodes[r.so];
+        }
         var editor = new website.editor.MediaDialog($editable, dom.isImg(r.sc) ? r.sc : null);
         editor.appendTo(document.body);
         return new $.Deferred().reject();

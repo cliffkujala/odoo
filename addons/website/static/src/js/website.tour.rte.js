@@ -6,7 +6,7 @@
     openerp.Tour.register({
         id:   'website_rte',
         name: "Test website RTE",
-        path: '/page/homepage',
+        path: '/page/homepage?debug',
         mode: 'test',
         steps: [
             {
@@ -249,10 +249,14 @@
             },
             {
                 waitNot:   '#link-preview',
-                waitFor:   '#wrapwrap > main > div > section .row > div:last > a > img',
+                waitFor:   '#wrapwrap > main > div > section .row > div:eq(1) > a > img',
                 element:   '#wrapwrap > main > div > section .row > div:first p:last',
                 title:     "triple enter",
-                keydown:   [13, 13, 66, 13] // enter
+                keydown:   [13, 13, 66, 13], // enter
+                onload: function () {
+                    var $el = $(this.element);
+                    $.summernote.objects.range.create($el[0], 0, $el[0], 0).select();
+                },
             },
             {
                 waitFor:   '#wrapwrap > main > div > section .row > div:first p:eq(5)',
