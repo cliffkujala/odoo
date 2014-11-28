@@ -82,8 +82,8 @@ instance.web.GraphView = instance.web.View.extend({
     do_search: function (domain, context, group_by) {
         if (!this.widget) {
             this.widget = new instance.web.GraphWidget(this, this.dataset.model, {
-                measure: this.active_measure,
-                mode: this.active_mode,
+                measure: context.graph_measure || this.active_measure,
+                mode: context.graph_mode || this.active_mode,
                 domain: domain,
                 groupbys: this.initial_groupbys,
                 context: context,
@@ -96,6 +96,12 @@ instance.web.GraphView = instance.web.View.extend({
             var groupbys = group_by.length ? group_by : this.initial_groupbys.slice(0);
             this.widget.update_data(domain, groupbys);
         }
+    },
+    get_context: function () {
+        return !this.widget ? {} : {
+            graph_mode: this.widget.mode,
+            graph_measure: this.widget.measure,
+        };
     },
     on_button_click: function (event) {
         var $target = $(event.target);
@@ -128,7 +134,6 @@ instance.web.GraphWidget = instance.web.Widget.extend({
         this.measure = options.measure || "__count__";
     },
     start: function () {
-        console.log('start widget');
         return this.load_data().then(this.proxy('display_graph'));
     },
     update_data: function (domain, groupbys) {
@@ -305,7 +310,6 @@ instance.web.GraphWidget = instance.web.Widget.extend({
             measure = this.fields[this.measure].string;
         if (this.groupbys.length === 1) {
             var values = this.data.map(function (datapt, index) {
-                console.log(datapt);
                 return {x: index, y: datapt.value};
             });
             data = [

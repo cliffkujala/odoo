@@ -797,10 +797,11 @@ instance.web.ViewManager =  instance.web.Widget.extend({
     search: function(domains, contexts, groupbys) {
         var self = this,
             controller = this.active_view.controller,
-            action_context = this.action.context || {};
+            action_context = this.action.context || {},
+            view_context = controller.get_context();
         instance.web.pyeval.eval_domains_and_contexts({
             domains: [this.action.domain || []].concat(domains || []),
-            contexts: [action_context].concat(contexts || []),
+            contexts: [action_context, view_context].concat(contexts || []),
             group_by_seq: groupbys || []
         }).done(function (results) {
             if (results.error) {
@@ -1399,6 +1400,9 @@ instance.web.View = instance.web.Widget.extend({
     is_action_enabled: function(action) {
         var attrs = this.fields_view.arch.attrs;
         return (action in attrs) ? JSON.parse(attrs[action]) : true;
+    },
+    get_context: function () {
+        return {}
     },
 });
 

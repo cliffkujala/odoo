@@ -1646,9 +1646,13 @@ instance.web.search.FavoriteMenu = instance.web.Widget.extend({
             return;
         }
         var search = this.searchview.build_search_data(),
+            view_manager = this.findAncestor(function (a) {
+                return a instanceof instance.web.ViewManager
+            }),
+            view_context = view_manager.active_view.controller.get_context(),
             results = instance.web.pyeval.sync_eval_domains_and_contexts({
                 domains: search.domains,
-                contexts: search.contexts,
+                contexts: [search.contexts, view_context],
                 group_by_seq: search.groupbys || [],
             });
         if (!_.isEmpty(results.group_by)) {

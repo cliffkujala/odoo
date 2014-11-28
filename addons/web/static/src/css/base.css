@@ -1583,6 +1583,12 @@
 .openerp .oe_pivot .dropdown-menu .pivot-dropdown-submenu:hover > .dropdown-menu {
   display: block;
 }
+.openerp .o-dashboard .oe_pivot th {
+  border-top: 1px solid #bfbfb6;
+}
+.openerp .o-dashboard .oe_pivot th, .openerp .o-dashboard .oe_pivot .oe-closed, .openerp .o-dashboard .oe_pivot .oe-opened {
+  border-left: 1px solid #bfbfb6;
+}
 .openerp .oe_graph {
   height: 100%;
 }

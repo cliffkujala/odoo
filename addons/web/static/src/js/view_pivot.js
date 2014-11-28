@@ -112,7 +112,6 @@ instance.web.PivotView = instance.web.View.extend({
         if (!self.active_measures.length) {
             self.active_measures.push('__count__');
         }
-        self.main_col.groupbys = self.initial_col_groupby.slice(0);
     },
     prepare_fields: function (fields) {
         var self = this,
@@ -132,7 +131,9 @@ instance.web.PivotView = instance.web.View.extend({
         this.measures.__count__ = {string: "Quantity", type: "integer"};
     },
     do_search: function (domain, context, group_by) {
-        this.main_row.groupbys = group_by.length ? group_by : this.initial_row_groupby.slice(0);
+        this.main_row.groupbys = group_by.length ? group_by : (context.pivot_row_groupby || this.initial_row_groupby.slice(0));
+        this.main_col.groupbys = context.pivot_column_groupby || this.initial_col_groupby.slice(0);
+        this.active_measures = context.pivot_measures || this.active_measures;
 
         this.domain = domain;
         this.context = context;
@@ -151,6 +152,13 @@ instance.web.PivotView = instance.web.View.extend({
             self.display_table(); 
             self.$el.show();
         });
+    },
+    get_context: function () {
+        return !this.ready ? {} : {
+            pivot_measures: this.active_measures,
+            pivot_column_groupby: this.main_col.groupbys,
+            pivot_row_groupby: this.main_row.groupbys,
+        };
     },
     on_button_click: function (event) {
         var $target = $(event.target);
