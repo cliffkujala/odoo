@@ -98,10 +98,25 @@ class loyalty_reward(osv.osv):
             else:
                 return True
 
+    def _check_product_availability(self, cr, uid, ids, context=None):
+        for reward in self.browse(cr, uid, ids, context=context):
+            if reward.type == 'gift':
+                product = reward.gift_product_id
+            elif reward.type == 'discount':
+                product = reward.discount_product_id
+            elif reward.type == 'resale':
+                product = reward.point_product_id
+            
+            if product:
+                return product.sale_ok and product.available_in_pos
+            
+            return True
+
     _constraints = [
         (_check_gift_product,     "The gift product field is mandatory for gift rewards",         ["type","gift_product_id"]),
         (_check_discount_product, "The discount product field is mandatory for discount rewards", ["type","discount_product_id"]),
-        (_check_point_product,    "The point product field is mandatory for point resale rewards", ["type","discount_product_id"]),
+        (_check_point_product,    "The point product field is mandatory for point resale rewards", ["type","point_product_id"]),
+        (_check_product_availability, "The reward product must be saleable and available in the point of sale",['gift_product_id','discount_product_id','point_product_id']),
     ]
 
 class pos_config(osv.osv):
