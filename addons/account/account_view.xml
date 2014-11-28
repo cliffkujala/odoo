@@ -9,22 +9,31 @@
             <field name="arch" type="xml">
                 <form string="Fiscal year">
                 <header>
-                    <button name="create_period" states="draft" string="Create Monthly Periods" type="object" class="oe_highlight"/>
-                    <button name="create_period3" states="draft" string="Create 3 Months Periods" type="object" class="oe_highlight"/>
                     <field name="state" widget="statusbar" nolabel="1" />
                 </header>
-                    <group>
-                        <group>
-                            <field name="name"/>
-                            <field name="code"/>
-                            <field name="company_id" groups="base.group_multi_company"/>
-                            <field name="end_journal_period_id"/>
-                        </group>
-                        <group>
-                            <field name="date_start"/>
-                            <field name="date_stop"/>
-                        </group>
-                    </group>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <group>
+                                <group>
+                                    <field name="name"/>
+                                    <field name="date_start"/>
+                                    <field name="date_stop"/>
+                                    <field name="company_id" groups="base.group_multi_company"/>
+                                    <field name="end_journal_period_id"/>
+                                </group>
+                                <group>
+                                    <field name="code" placeholder="Enter code"/>
+                                    <field name="period_types" widget="radio"/>
+                                </group>
+                            </group>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="oe_fiscal_help">
+                                <p>. A fiscal year starts generally on the 01 of january and ends on the 31 of the December</p>
+                                <p>. Generate periods regarding your taxes reporting needs</p>
+                            </div>
+                        </div>
+                    </div>
                     <field colspan="4" name="period_ids" nolabel="1" widget="one2many_list">
                         <form string="Period">
                             <group col="4">
@@ -167,38 +176,73 @@
             <field name="model">account.account</field>
             <field name="arch" type="xml">
                 <form string="Account">
-                    <label for="code" class="oe_edit_only" string="Account Code and Name"/>
-                    <h1>
-                        <field name="code" class="oe_inline" placeholder="Account code" style="width: 6em"/> -
-                        <field name="name" class="oe_inline" placeholder="Account name"/>
-                    </h1>
-                    <group>
-                        <group>
-                            <field name="parent_id"/>
-                            <field name="type"/>
-                            <field name="user_type"/>
-                            <field name="active"/>
-                            <field name="company_id" widget="selection" groups="base.group_multi_company"/>
-                        </group>
-                        <group>
-                            <field name="debit" attrs="{'readonly':[('type','=','view')]}"/>
-                            <field name="credit" attrs="{'readonly':[('type','=','view')]}"/>
-                            <field name="balance"/>
-                        </group>
-                        <group>
-                            <field name="tax_ids" domain="[('parent_id','=',False)]" widget="many2many_tags"/>
-                            <field name="reconcile"/>
-                            <field name="child_consol_ids"
-                                attrs="{'invisible':[('type','!=','consolidation')]}"
-                                widget="many2many_tags"/>
-                        </group>
-                        <group groups="base.group_multi_currency">
-                            <field name="currency_id"/>
-                            <field name="currency_mode" attrs="{'readonly': [('currency_id','=',False)]}"/>
-                        </group>
-                    </group>
-                    <label for="note"/>
-                    <field name="note"/>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <group>
+                                <group>
+                                    <field name="code" placeholder="Account code"/> -
+                                    <field name="name" placeholder="Account name"/>
+                                    <field name="parent_id"/>
+                                    <field name="user_type"/>
+                                    <field name="tax_ids" domain="[('parent_id','=',False)]" widget="many2many_tags"/>
+                                    <field name="company_id" widget="selection" groups="base.group_multi_company"/>
+                                    <field name="currency_id"/>
+                                    <field name="active"/>
+                                    
+                                </group>
+                            </group>
+                        </div>
+                        
+                            <p style='font-size: 17px;font-weight: bold;margin: 0px;'>How account type affects your report</p>
+                            <div class="col-md-4">
+                                <div class="oe_account_help" style='height: 400px;text-align: center;'>
+                                    <p class ="oe_account_font_help" style='font-size: 18px;text-align: center;color: grey;'> Profit <![CDATA[&amp;]]> Loss</p>
+                                     <p class ="oe_account_font_help" style='font-size: 15px;color: grey;margin-top: 7px;'>Income</p>
+                                     <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>Revenue</p>
+                                     <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>Sales</p> 
+                                     <p class ="oe_account_font_help" style='font-size: 15px;font-style: italic;color: grey;margin-top: 7px;'>Less Cost of Sales</p>
+                                     <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>Direct Costs</p>
+                                     <p class ="oe_account_font_help" style='font-size: 18px;color: grey;margin-top: 9px;border-top: 2px solid;border-bottom: 2px solid;'>GROSS PROFIT</p>
+                                     <p class ="oe_account_font_help" style='font-size: 15px;font-style: italic;color: grey;margin-top: 7px;'>Plus Other Income</p>
+                                     <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>Other Income</p>
+                                     <p class ="oe_account_font_help" style='font-size: 15px;font-style: italic;color: grey;margin-top: 7px;'>Less Expenses</p>
+                                     <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>Expenses</p>
+                                     <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>Depriciation</p>
+                                     <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>Over Heads</p>
+                                     <p class ="oe_account_font_help" style='font-size: 18px;color: grey;margin-top: 9px;border-top: 2px solid;border-bottom: 2px solid;'>NET PROFIT</p>
+                                     <svg width="150%" height="100%" version="1.1">
+                                        <path d="M 80 0 q 180 0 90 75 t 100 80" stroke="black"
+                                        stroke-linecap="round" stroke-dasharray="5,10,5" fill="none" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="oe_account_help"  style='height: 580px;'>
+                                    <p class ="oe_account_font_help" style='font-size: 18px;text-align: center;color: grey;'>Balance Sheet</p>
+                                    <p class ="oe_account_font_help" style='font-size: 15px;color: grey;margin-top: 7px;'>Current Assets</p>
+                                    <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>Current Assets</p>
+                                    <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>Prepayments</p>    
+                                    <p class ="oe_account_font_help" style='font-size: 15px;font-style: italic;color: grey;margin-top: 7px;'>Plus Bank</p>
+                                    <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>Bank Accounts</p>
+                                    <p class ="oe_account_font_help" style='font-size: 15px;font-style: italic;color: grey;margin-top: 7px;'>Plus Fixed Assets</p>
+                                    <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>Fixed Assets</p>
+                                    <p class ="oe_account_font_help" style='font-size: 15px;font-style: italic;color: grey;margin-top: 7px;'>Plus None-current Assets</p>
+                                    <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>None-current Assets</p>
+                                    <p class ="oe_account_font_help" style='font-size: 18px;color: grey;margin-top: 9px;border-top: 2px solid;border-bottom: 2px solid;'>TOTAL ASSETS</p>
+                                    <p class ="oe_account_font_help" style='font-size: 15px;font-style: italic;color: grey;margin-top: 7px;'>Less Current Liabilities</p>
+                                    <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>Current Liabilities</p>
+                                    <p class ="oe_account_font_help" style='font-size: 15px;font-style: italic;color: grey;margin-top: 7px;'>Less None-current Liabilities</p>
+                                    <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>Liabilities</p>
+                                    <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>None-current Liabilities</p>
+                                    <p class ="oe_account_font_help" style='font-size: 18px;color: grey;margin-top: 9px;border-top: 2px solid;border-bottom: 2px solid;'>NET ASSETS</p>
+                                    <p class ="oe_account_font_help" style='font-size: 15px;color: grey;margin-top: 7px;'>Equity</p>
+                                    <p class ="oe_account_font_help" style='font-size: 14px;margin-left: 30px;'>Equity</p>
+                                    <p class ="oe_account_font_help" style='font-size: 15px;font-style: italic;color: grey;margin-top: 7px;'>Plus Net Profit</p>
+                                    <p class ="oe_account_font_help" style='font-size: 18px;color: grey;margin-top: 9px;border-top: 2px solid;border-bottom: 2px solid;'>TOTAL EQUITY</p>
+                                </div>
+                            </div>
+                      
+                    </div>
                 </form>
             </field>
         </record>
@@ -212,9 +256,6 @@
                     <field name="name"/>
                     <field name="parent_id" invisible="1"/>
                     <field name="user_type" invisible="1"/>
-                    <field name="debit"/>
-                    <field name="credit"/>
-                    <field name="balance"/>
                     <field name="type"/>
                     <field name="company_id" groups="base.group_multi_company"/>
                     <field name="company_currency_id"/>
@@ -233,7 +274,7 @@
                     <group expand="0" string="Group By">
                         <filter string="Parent Account" icon="terp-folder-orange" domain="" context="{'group_by':'parent_id'}"/>
                         <filter string="Account Type" icon="terp-stock_symbol-selection" domain="" context="{'group_by':'user_type'}"/>
-                        <filter string="Internal Type" icon="terp-stock_symbol-selection" domain="" context="{'group_by':'type'}"/>
+                        <!--<filter string="Internal Type" icon="terp-stock_symbol-selection" domain="" context="{'group_by':'type'}"/>-->
                     </group>
                 </search>
             </field>

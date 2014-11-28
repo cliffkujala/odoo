@@ -1,0 +1,28 @@
+.openerp div.oe_fiscal_help {
+    background : #7DBDFF;
+    width: 90%;
+    height: 150px;
+    padding: 10px;
+    border: 3px solid #7FCCFF;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: 20px;
+    border-radius: 10px; 
+}
+
+.openerp div.oe_account_help {
+    background : #D6EBFF;
+    width: 100%;
+    padding: 10px;
+    border: 3px solid #C1D4E6;
+}
+
+.openerp p.oe_account_font_help{
+    text-align: left;
+    font-weight: bold;
+    margin: 0px;
+}
+
+svg {
+    width:150% !important;
+}
