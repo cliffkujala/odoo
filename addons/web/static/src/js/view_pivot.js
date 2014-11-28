@@ -22,6 +22,7 @@ instance.web.PivotView = instance.web.View.extend({
         'click .oe-opened': 'on_open_header_click',
         'click .oe-closed': 'on_closed_header_click',
         'click .o-field-menu': 'on_field_menu_selection',
+        'click td': 'on_cell_click',
     },
 
     init: function(parent, dataset, view_id, options) {
@@ -34,7 +35,7 @@ instance.web.PivotView = instance.web.View.extend({
         this.groupable_fields = {};
         this.ready = false; // will be ready after the first do_search
         this.data_loaded = $.Deferred();
-        this.title = options.title || 'Data';
+        this.title = options.title;
 
         this.main_row = {
             root: undefined,
@@ -87,6 +88,7 @@ instance.web.PivotView = instance.web.View.extend({
     },
     view_loading: function (fvg) {
         var self = this;
+        this.title = this.title || fvg.arch.attrs.string;
         fvg.arch.children.forEach(function (field) {
             var name = field.attrs.name;
             if (field.attrs.interval) {
@@ -201,6 +203,26 @@ instance.web.PivotView = instance.web.View.extend({
             $menu.show();
             event.stopPropagation();            
         }
+    },
+    on_cell_click: function (event) {
+        var $target = $(event.target);
+        if ($target.hasClass('oe-closed') || $target.hasClass('oe-opened')) return;
+        var row_id = $target.data('id'),
+            col_id = $target.data('col_id'),
+            row_domain = this.headers[row_id].domain,
+            col_domain = this.headers[col_id].domain;
+        // debugger;
+        return this.do_action({
+            type: 'ir.actions.act_window',
+            name: this.title,
+            res_model: this.model.name,
+            views: [[false, 'list']],
+            view_type : "list",
+            view_mode : "list",
+            target: 'current',
+            context: this.context,
+            domain: this.domain.concat(row_domain, col_domain),
+        });
     },
     on_field_menu_selection: function (event) {
         var self = this;
@@ -511,7 +533,10 @@ instance.web.PivotView = instance.web.View.extend({
             $header.appendTo($row);
             for (j = 0; j < length; j++) {
                 value = format_value(rows[i].values[j], {type: measure_types[j % nbr_measures]});
-                $cell = $('<td>').text(value);
+                $cell = $('<td>')
+                            .data('id', rows[i].id)
+                            .data('col_id', rows[i].col_ids[Math.floor(j / nbr_measures)])
+                            .text(value);
                 if (((j >= length - this.active_measures.length) && display_total) || i === 0){
                     $cell.css('font-weight', 'bold');   
                 }
@@ -592,15 +617,17 @@ instance.web.PivotView = instance.web.View.extend({
             result = [],
             nbr_measures = this.active_measures.length;
         traverse_tree(this.main_row.root, function (header) {
-            var values = [];
+            var values = [],
+                col_ids = [];
             result.push({
                 id: header.id,
+                col_ids: col_ids,
                 indent: header.path.length - 1,
                 title: header.path[header.path.length-1],
                 expanded: header.expanded,
                 values: values,              
             });
-            traverse_tree(self.main_col.root, add_cells, header.id, values);
+            traverse_tree(self.main_col.root, add_cells, header.id, values, col_ids);
             if (self.main_col.width > 1) {
                 aggregates = self.get_value(header.id, self.main_col.root.id);
                 for (i = 0; i < self.active_measures.length; i++) {
@@ -609,8 +636,9 @@ instance.web.PivotView = instance.web.View.extend({
             }
         });
         return result;
-        function add_cells (col_hdr, row_id, values) {
+        function add_cells (col_hdr, row_id, values, col_ids) {
             if (col_hdr.expanded) return;
+            col_ids.push(col_hdr.id);
             aggregates = self.get_value(row_id, col_hdr.id);
             for (i = 0; i < self.active_measures.length; i++) {
                 values.push(aggregates && aggregates[self.active_measures[i]]);
@@ -678,11 +706,11 @@ function generate_id () {
     return ++id;
 }
 
-function traverse_tree(root, f, arg1, arg2) {
-    f(root, arg1, arg2);
+function traverse_tree(root, f, arg1, arg2, arg3) {
+    f(root, arg1, arg2, arg3);
     if (!root.expanded) return;
     for (var i = 0; i < root.children.length; i++) {
-        traverse_tree(root.children[i], f, arg1, arg2);
+        traverse_tree(root.children[i], f, arg1, arg2, arg3);
     }
 }
 
