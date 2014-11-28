@@ -156,7 +156,9 @@ var Tour = {
             Tour.$element.removeData("tour");
             Tour.$element.removeData("tour-step");
             $(".tour-backdrop").remove();
-            Tour.$popover.data('bs.popover').$element.popover('destroy');
+            if (Tour.$popover.data('bs.popover')) {
+                Tour.$popover.data('bs.popover').$element.popover('destroy');
+            }
             Tour.$popover.remove();
             Tour.$element = null;
         }
