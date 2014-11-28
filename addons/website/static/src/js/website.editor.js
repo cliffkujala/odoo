@@ -362,6 +362,9 @@
     }
     function summernote_mousedown (event) {
         history.splitNext();
+        if (!!document.documentMode) {
+            summernote_ie_fix(event);
+        }
     }
     var remember_selection;
     function summernote_click (event) {
@@ -374,6 +377,31 @@
             remember_selection = r;
         }
     }
+
+    var $last_fix = $();
+    var $last_editable = $();
+    function summernote_ie_fix (event) {
+        var $editable = $(event.target).closest('.o_editable');
+        if (!$editable.length) {
+            $last_fix.removeAttr("contentEditable");
+            $last_editable.attr("contentEditable", "true");
+            return;
+        }
+        $last_editable = $editable;
+        var $div = $(event.target).closest('.o_editable div');
+        if ($div[0] === $last_fix[0]) {
+            return;
+        }
+        $last_fix.removeAttr("contentEditable");
+        if ($div.hasClass('o_editable') || $div.attr("contentEditable")) {
+            $last_fix = $();
+            $editable.attr("contentEditable", "true");
+            return;
+        }
+        $last_fix = $div.attr("contentEditable", "true");
+        $editable.removeAttr("contentEditable");
+    }
+
     var fn_attach = eventHandler.attach;
     eventHandler.attach = function (oLayoutInfo, options) {
         fn_attach.call(this, oLayoutInfo, options);
