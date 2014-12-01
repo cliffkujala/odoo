@@ -383,7 +383,9 @@
             }
             this.$editable.find("*[contentEditable], *[attributeEditable]")
                 .removeAttr('contentEditable')
-                .removeAttr('attributeEditable');
+                .removeProp('contentEditable')
+                .removeAttr('attributeEditable')
+                .removeProp('attributeEditable');
         },
         make_active: function ($snippet) {
             if ($snippet && this.$active_snipped_id && this.$active_snipped_id.get(0) === $snippet.get(0)) {

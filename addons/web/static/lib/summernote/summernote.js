@@ -1357,6 +1357,16 @@
      * @param {Number} eo - end offset
      */
     var WrappedRange = function (sc, so, ec, eo) {
+
+      if (dom.isBR(sc) || dom.isImg(sc)) { // hack from odoo (for ie)
+        so = dom.listPrev(sc).length-1;
+        sc = sc.parentNode;
+      }
+      if (dom.isBR(ec) || dom.isImg(ec)) {
+        eo = dom.listPrev(ec).length-1;
+        ec = ec.parentNode;
+      }
+
       this.sc = sc;
       this.so = so;
       this.ec = ec;
@@ -1620,16 +1630,6 @@
           ec = sc;
           eo = so;
         }
-
-        if (dom.isBR(sc) || dom.isImg(sc)) { // hack from odoo (for ie)
-          so = dom.listPrev(sc).length-1;
-          sc = sc.parentNode;
-        }
-        if (dom.isBR(ec) || dom.isImg(ec)) {
-          eo = dom.listPrev(ec).length-1;
-          ec = ec.parentNode;
-        }
-
         return new WrappedRange(sc, so, ec, eo);
       },
 

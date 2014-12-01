@@ -378,28 +378,44 @@
         }
     }
 
-    var $last_fix = $();
-    var $last_editable = $();
+    var last_div;
+    var last_editable;
     function summernote_ie_fix (event) {
-        var $editable = $(event.target).closest('.o_editable');
-        if (!$editable.length) {
-            $last_fix.removeAttr("contentEditable");
-            $last_editable.attr("contentEditable", "true");
+        var editable;
+        var div;
+        var node = event.target;
+        while(node.parentNode) {
+            if (!div && node.tagName === "DIV") {
+                div = node;
+            }
+            if (node.className && node.className.indexOf('o_editable') !== -1) {
+                editable = node;
+                break;
+            }
+            node = node.parentNode;
+        }
+
+        if (!editable) {
+            $(last_div).removeAttr("contentEditable").removeProp("contentEditable");
+            $(last_editable).attr("contentEditable", "true");
+            last_div = null;
+            last_editable = null;
             return;
         }
-        $last_editable = $editable;
-        var $div = $(event.target).closest('.o_editable div');
-        if ($div[0] === $last_fix[0]) {
+
+        if (div === last_div) {
             return;
         }
-        $last_fix.removeAttr("contentEditable");
-        if ($div.hasClass('o_editable') || $div.attr("contentEditable")) {
-            $last_fix = $();
-            $editable.attr("contentEditable", "true");
-            return;
+
+        $(last_div).removeAttr("contentEditable").removeProp("contentEditable");
+
+        last_editable = editable;
+        last_div = div;
+
+        if (div !== editable) {
+            $(editable).removeAttr("contentEditable").removeProp("contentEditable");
         }
-        $last_fix = $div.attr("contentEditable", "true");
-        $editable.removeAttr("contentEditable");
+        $(div).attr("contentEditable", "true");
     }
 
     var fn_attach = eventHandler.attach;

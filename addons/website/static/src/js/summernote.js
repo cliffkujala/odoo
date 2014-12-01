@@ -71,6 +71,24 @@
         while (!node.previousSibling || !pred(node)) { node = node.parentNode; }
         return node;
     };
+    dom.nextElementSibling = function (node) {
+        while (node && node.nextSibling) {
+            node = node.nextSibling;
+            if (node.tagName) {
+                break;
+            }
+        }
+        return node;
+    };
+    dom.previousElementSibling = function (node) {
+        while (node && node.previousSibling) {
+            node = node.previousSibling;
+            if (node.tagName) {
+                break;
+            }
+        }
+        return node;
+    };
     dom.lastChild = function (node) {
         while (node.lastChild) { node = node.lastChild; }
         return node;
@@ -78,6 +96,14 @@
     dom.firstChild = function (node) {
         while (node.firstChild) { node = node.firstChild; }
         return node;
+    };
+    dom.lastElementChild = function (node) {
+        node = dom.lastChild(node);
+        return node.tagName ? node : dom.previousElementSibling(node);
+    };
+    dom.firstElementChild = function (node) {
+        node = dom.firstChild(node);
+        return node.tagName ? node : dom.nextElementSibling(node);
     };
     dom.orderClass = function (node) {
         if (!node.className) return;
@@ -174,8 +200,8 @@
     };
     dom.doMerge = function (prev, cur) {
         if (prev.tagName) {
-            if (prev.childNodes.length && !prev.textContent.match(/\S/) && prev.firstElementChild && dom.isBR(prev.firstElementChild)) {
-                prev.removeChild(prev.firstElementChild);
+            if (prev.childNodes.length && !prev.textContent.match(/\S/) && dom.firstElementChild(prev) && dom.isBR(dom.firstElementChild(prev))) {
+                prev.removeChild(dom.firstElementChild(prev));
             }
             if (cur.tagName) {
                 while (cur.firstChild) {
@@ -350,7 +376,7 @@
                 temp.tagName === node.tagName &&
                 !dom.isText(node) &&
                 dom.isMergable(node) &&
-                !dom.isNotBreakable(node) && !dom.isNotBreakable(node.nextElementSibling)) {
+                !dom.isNotBreakable(node) && !dom.isNotBreakable(dom.nextElementSibling(node))) {
 
                 if (previous) {
                     dom.doMerge(temp, node);
@@ -944,10 +970,10 @@
         if (r.isCollapsed()) {
             if (r.isOnCell() && r.isOnCellFirst()) {
                 var td = dom.ancestor(r.sc, dom.isCell);
-                if (!outdent && !td.nextElementSibling && !td.parentNode.nextElementSibling) {
+                if (!outdent && !dom.nextElementSibling(td) && !dom.nextElementSibling(td.parentNode)) {
                     range.create(td.lastChild, td.lastChild.textContent.length, td.lastChild, td.lastChild.textContent.length).select();
                     eventHandler.editor.enter($editable, options);
-                } else if (outdent && !td.previousElementSibling && !$(td.parentNode).text().match(/\S/)) {
+                } else if (outdent && !dom.previousElementSibling(td) && !$(td.parentNode).text().match(/\S/)) {
                     eventHandler.editor.backspace($editable, options);
                 } else {
                     $editable.data('NoteHistory').splitNext();
@@ -999,7 +1025,7 @@
 
         // table: add a tr
         var td = dom.ancestor(r.sc, dom.isCell);
-        if (td && (r.sc === td || r.sc === td.lastChild || (dom.isBR(td.lastChild) && r.sc === td.lastChild.previousSibling)) && r.so === r.sc.textContent.length && r.isOnCell() && !td.nextElementSibling) {
+        if (td && (r.sc === td || r.sc === td.lastChild || (dom.isBR(td.lastChild) && r.sc === td.lastChild.previousSibling)) && r.so === r.sc.textContent.length && r.isOnCell() && !dom.nextElementSibling(td)) {
             var $node = $(td.parentNode);
             var $clone = $node.clone();
             $clone.children().html(dom.blank);
@@ -1010,7 +1036,7 @@
             return false;
         }
 
-        var contentBefore = r.sc.textContent.slice(0,r.so).match(/\S/);
+        var contentBefore = r.sc.textContent.slice(0,r.so).match(/\S|\u00A0/);
         var node = dom.node(r.sc);
         var last = node;
         while (dom.isSplitable(node)) {
@@ -1045,7 +1071,7 @@
             var $clone = $node.clone().text("");
             $node.after($clone);
             node = dom.node(dom.firstChild($clone[0].firstElementChild || $clone[0]));
-            $(node).html(br);            
+            $(node).html(br);
             node = br;
         } else {
             node = dom.splitTree(last, r.sc, r.so);
@@ -1060,7 +1086,7 @@
         }
 
         if (node) {
-            range.create(dom.lastChild(node),0).select();
+            range.create(dom.firstChild(node),0).select();
             dom.scrollIntoViewIfNeeded(node);
         }
 
@@ -1079,7 +1105,7 @@
         while (node.parentNode) {
             if (dom.isForbiddenNode(node)) {
                 var text = node.previousSibling;
-                if (text && dom.isText(text) && text.textContent.match(/\S/)) {
+                if (text && dom.isText(text) && text.textContent.match(/\S|\u00A0/)) {
                     range.create(text, text.textContent.length, text, text.textContent.length).select();
                 } else {
                     text = node.parentNode.insertBefore(document.createTextNode( "." ), node);
@@ -1287,7 +1313,7 @@
         target = r.sc;
         offset = r.so;
 
-        while (!dom.hasContentAfter(node) && !dom.hasContentBefore(node) && !dom.isImg(node)) {node = node.parentNode;}
+        while (node.parentNode && !dom.hasContentAfter(node) && !dom.hasContentBefore(node) && !dom.isImg(node)) {node = node.parentNode;}
 
         var contentBefore = target.textContent.slice(0,offset).match(/\S|\u00A0/);
         var content = target.textContent.replace(/[ \t\r\n]+$/, '');
@@ -1305,21 +1331,21 @@
         }
         // table tr td
         else if (r.isOnCell() && !offset && (target === (temp = dom.ancestor(target, dom.isCell)) || target === temp.firstChild)) {
-            if (temp.previousElementSibling) {
-                var td = temp.previousElementSibling;
+            if (dom.previousElementSibling(temp)) {
+                var td = dom.previousElementSibling(temp);
                 node = td.lastChild || td;
                 range.create(node, node.textContent.length, node, node.textContent.length).select();
             } else {
                 var tr = temp.parentNode;
-                var prevTr = tr.previousElementSibling;
+                var prevTr = dom.previousElementSibling(tr);
                 if (!$(temp.parentNode).text().match(/\S|\u00A0/)) {
                     if (prevTr) {
                         tr.parentNode.removeChild(tr);
-                        node = (prevTr.lastElementChild.lastChild && prevTr.lastElementChild.lastChild.tagName ? prevTr.lastElementChild.lastChild.previousSibling : prevTr.lastElementChild.lastChild) || prevTr.lastElementChild;
+                        node = (dom.lastElementChild(prevTr).lastChild && dom.lastElementChild(prevTr).lastChild.tagName ? dom.lastElementChild(prevTr).lastChild.previousSibling : dom.lastElementChild(prevTr).lastChild) || dom.lastElementChild(prevTr);
                         range.create(node, node.textContent.length, node, node.textContent.length).select();
                     }
                 } else {
-                    node = prevTr.lastElementChild.lastChild || prevTr.lastElementChild;
+                    node = dom.lastElementChild(prevTr).lastChild || dom.lastElementChild(prevTr);
                     range.create(node, node.textContent.length, node, node.textContent.length).select();
                 }
             }
@@ -1515,7 +1541,7 @@
                     flag = true;
                     node.parentNode.insertBefore(li, node);
                 }
-                next = node.nextElementSibling;
+                next = dom.nextElementSibling(node);
                 if (flag) {
                     ul.appendChild(node);
                 }
@@ -1526,16 +1552,16 @@
                 node = next;
             }
 
-            var prev = li.previousElementSibling;
-            if (prev && prev.tagName === "LI" && prev.firstElementChild && prev.firstElementChild.tagName === tagName) {
-                dom.doMerge(prev.firstElementChild || prev.firstChild, ul);
+            var prev = dom.previousElementSibling(li);
+            if (prev && prev.tagName === "LI" && dom.firstElementChild(prev) && dom.firstElementChild(prev).tagName === tagName) {
+                dom.doMerge(dom.firstElementChild(prev) || prev.firstChild, ul);
                 li = prev;
-                li.parentNode.removeChild(li.nextElementSibling);
+                li.parentNode.removeChild(dom.nextElementSibling(li));
             }
-            var next = li.nextElementSibling;
-            if (next && next.tagName === "LI" && next.firstElementChild && next.firstElementChild.tagName === tagName) {
-                dom.doMerge(li.firstElementChild, next.firstElementChild);
-                li.parentNode.removeChild(li.nextElementSibling);
+            var next = dom.nextElementSibling(li);
+            if (next && next.tagName === "LI" && dom.firstElementChild(next) && dom.firstElementChild(next).tagName === tagName) {
+                dom.doMerge(dom.firstElementChild(li), dom.firstElementChild(next));
+                li.parentNode.removeChild(dom.nextElementSibling(li));
             }
         }
         function outdenttUL (UL, start, end) {
@@ -1552,11 +1578,11 @@
             while (node) {
                 if (node === start || $.contains(node, start)) {
                     flag = true;
-                    if (UL.firstElementChild !== start && UL.lastElementChild !== end && li.tagName === "LI") {
+                    if (dom.firstElementChild(UL) !== start && dom.lastElementChild(UL) !== end && li.tagName === "LI") {
                         li = dom.splitTree(li, node, 0);
                     }
                 }
-                next = node.nextElementSibling;
+                next = dom.nextElementSibling(node);
                 if (flag) {
                     ul.insertBefore(node, li);
                 }
@@ -1567,11 +1593,11 @@
                 node = next;
             }
 
-            if (li.firstElementChild.tagName === tagName && !li.firstElementChild.firstElementChild) {
+            if (dom.firstElementChild(li).tagName === tagName && !dom.firstElementChild(dom.firstElementChild(li))) {
                 li.parentNode.removeChild( li );
             }
 
-            if (!UL.firstElementChild) {
+            if (!dom.firstElementChild(UL)) {
                 li = UL.parentNode.tagName === "LI" ? UL.parentNode : UL;
                 li.parentNode.removeChild( li );
             }
@@ -1631,12 +1657,12 @@
             }
             $ul.each(function () {
                 if (this.previousSibling &&
-                    this.previousSibling !== this.previousElementSibling &&
+                    this.previousSibling !== dom.previousElementSibling(this) &&
                     !this.previousSibling.textContent.match(/\S/)) {
                     this.parentNode.removeChild(this.previousSibling);
                 }
                 if (this.nextSibling &&
-                    this.nextSibling !== this.nextElementSibling &&
+                    this.nextSibling !== dom.nextElementSibling(this) &&
                     !this.nextSibling.textContent.match(/\S/)) {
                     this.parentNode.removeChild(this.nextSibling);
                 }
