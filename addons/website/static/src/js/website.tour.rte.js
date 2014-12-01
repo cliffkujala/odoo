@@ -277,7 +277,7 @@
                         '\n    </ul>';
                     $el.append(html);
                     var node = $el.find('ul li:first p')[0].firstChild;
-                    $.summernote.objects.range.create(node, 6, node, 6).select();
+                    $.summernote.objects.range.create(node, 6).select();
                 }
             },
             {
@@ -293,6 +293,10 @@
             {
                 element:   '.note-air-popover .note-style ul:visible a[data-value="h3"]',
                 title:     "select h3",
+                onload: function () {
+                    var node = $('#wrapwrap > main > div > section .row > div:first ul li p:eq(1)')[0].firstChild;
+                    $.summernote.objects.range.create(node, 0).select();
+                }
             },
             {
                 element:   '#wrapwrap > main > div > section .row > div:first > ul > li > h3',

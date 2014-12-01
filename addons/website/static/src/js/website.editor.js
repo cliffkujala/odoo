@@ -359,14 +359,12 @@
             }
         }
     }
+    var remember_selection;
     function summernote_mousedown (event) {
         history.splitNext();
         if (!!document.documentMode) {
             summernote_ie_fix(event);
         }
-    }
-    var remember_selection;
-    function summernote_click (event) {
         var r = range.create();
         if ($(r ? dom.node(r.sc) : event.srcElement || event.target).closest('#website-top-navbar, #oe_main_menu_navbar, .note-popover, .modal').length) {
             if (remember_selection && !$(event.target).is('input, select, label, button, a')) {
@@ -423,7 +421,6 @@
         oLayoutInfo.editor.on('dragstart', 'img', function (e) { e.preventDefault(); });
         $(document).on('mousedown', summernote_mousedown);
         $(document).on('mouseup', summernote_mouseup);
-        $(document).on('click', summernote_click);
         oLayoutInfo.editor.off('click').on('click', function (e) {e.preventDefault();}); // if the content editable is a link
         oLayoutInfo.editor.on('dblclick', 'img, .media_iframe_video, span.fa, i.fa, span.fa', function (event) {
             new website.editor.MediaDialog(oLayoutInfo.editor, event.target).appendTo(document.body);
@@ -474,7 +471,6 @@
         oLayoutInfo.editor.off("dragstart");
         $(document).off('mousedown', summernote_mousedown);
         $(document).off('mouseup', summernote_mouseup);
-        $(document).off('click', summernote_click);
         oLayoutInfo.editor.off("dblclick");
         $(document).off("keydown keyup", reRangeSelectKey);
     };
