@@ -9,6 +9,7 @@ openerp.pos_loyalty = function(instance){
         var model = models[i];
         if (model.model === 'res.partner') {
             model.fields.push('loyalty_points');
+            model.fields.push('loyalty_sale_history');
         } else if (model.model === 'product.product') {
             // load loyalty after products
             models.push(i+1,0,{
@@ -174,7 +175,7 @@ openerp.pos_loyalty = function(instance){
                         if (reward.type === 'gift') {
                             points += round_pr(line.get_quantity() * reward.point_cost, rounding);
                         } else if (reward.type === 'discount') {
-                            points += round_pr(-line.get_display_price() * reward.point_cost, rounding);
+                            points += reward.point_cost;
                         } else if (reward.type === 'resale') {
                             points += (-line.get_quantity());
                         }
@@ -194,6 +195,44 @@ openerp.pos_loyalty = function(instance){
             }
         },
 
+        /* The discount reward is based on the total amount of stuff the customer
+         * has bought in the past (history). A percentage of this number is discounted for
+         * the current receipt, and the history is then discarded.
+         *
+         * This method returns the contributions of this order to the customer's history. 
+         * Usually this is the the total with tax, but when there is a discount reward, the
+         * history is reset with a negative value. The history is not entirely reset if the
+         * order was not large enough for the whole discount to apply.
+         */ 
+
+        get_new_history: function() {
+            if (!this.pos.loyalty || !this.get_client()) {
+                return 0;
+            } else {
+                var lines = this.get_orderlines();
+                for (var i = 0; i < lines.length; i++) {
+                    var line = lines[i];
+                    var reward = line.get_reward();
+                    if (reward && reward.type === 'discount') {
+                        return - Math.min(
+                            round_pr(-line.get_price_with_tax() / reward.discount, this.pos.currency.rounding),
+                            this.get_client().loyalty_sale_history
+                        );
+                    }
+                }
+                return this.get_total_with_tax();
+            }
+        },
+
+        /* This returns the new total history value the client will have once this order is validated */
+        get_new_total_history: function() {
+            if (!this.pos.loyalty || !this.get_client()) {
+                return 0;
+            } else {
+                return round_pr(this.get_client().loyalty_sale_history + this.get_new_history(), this.pos.currency.rounding);
+            }
+        },
+
         /* The total number of points that the customer will have after this order is validated */
         get_new_total_points: function() {
             if (!this.pos.loyalty || !this.get_client()) {
@@ -202,6 +241,7 @@ openerp.pos_loyalty = function(instance){
                 return round_pr(this.get_client().loyalty_points + this.get_new_points(), this.pos.loyalty.rounding);
             }
         },
+
 
         /* The number of loyalty points currently owned by the customer */
         get_current_points: function(){
@@ -243,13 +283,6 @@ openerp.pos_loyalty = function(instance){
                 return;
             } else if (reward.type === 'gift') {
                 var product = this.pos.db.get_product_by_id(reward.gift_product_id[0]);
-                if (!product) {
-                    this.pos.pos_widget.screen_selector.show_popup('error',{
-                        'message':'Configuration Error',
-                        'comment':'The product associated with the reward "'+reward.name+'" could not be found. Make sure it is available for sale in the point of sale.',
-                    });
-                    return;
-                }
 
                 var line = this.add_product(product, { 
                     price: 0, 
@@ -262,22 +295,15 @@ openerp.pos_loyalty = function(instance){
                 
                 var lrounding = this.pos.loyalty.rounding;
                 var crounding = this.pos.currency.rounding;
-                var spendable = this.get_spendable_points();
+                var history   = this.get_client().loyalty_sale_history;
                 var order_total = this.get_total_with_tax();
-                var discount    = round_pr(order_total * reward.discount,crounding);
+                var discount    = round_pr(history * reward.discount,crounding);
 
-                if ( round_pr(discount * reward.point_cost,lrounding) > spendable ) { 
-                    discount = round_pr(Math.floor( spendable / reward.point_cost ), crounding);
+                if ( discount > order_total ) {
+                    discount = order_total;
                 }
 
                 var product   = this.pos.db.get_product_by_id(reward.discount_product_id[0]);
-                if (!product) { //FIXME, move this as a server side constraint
-                    this.pos.pos_widget.screen_selector.show_popup('error',{
-                        'message':'Configuration Error',
-                        'comment':'The product associated with the reward "'+reward.name+'" could not be found. Make sure it is available for sale in the point of sale.',
-                    });
-                    return;
-                }
 
                 var line = this.add_product(product, { 
                     price: -discount, 
@@ -321,6 +347,7 @@ openerp.pos_loyalty = function(instance){
             var client = this.get_client();
             if ( client ) {
                 client.loyalty_points = this.get_new_total_points();
+                client.loyalty_sale_history = this.get_new_total_history();
             }
             _super.prototype.validate.apply(this,arguments);
         },
@@ -341,6 +368,7 @@ openerp.pos_loyalty = function(instance){
         export_as_JSON: function(){
             var json = _super.prototype.export_as_JSON.apply(this,arguments);
             json.loyalty_points = this.get_new_points();
+            json.loyalty_sale_history = this.get_new_history();
             return json;
         },
     });

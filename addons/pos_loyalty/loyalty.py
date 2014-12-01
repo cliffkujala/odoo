@@ -70,11 +70,11 @@ class loyalty_reward(osv.osv):
         'loyalty_program_id':   fields.many2one('loyalty.program', 'Loyalty Program', help='The Loyalty Program this reward belongs to'),
         'minimum_points':       fields.float('Minimum Points', help='The minimum amount of points the customer must have to qualify for this reward'),
         'type':                 fields.selection((('gift','Gift'),('discount','Discount'),('resale','Resale')), 'Type', required=True, help='The type of the reward'),
-        'gift_product_id':           fields.many2one('product.product','Gift Product', help='The product given as a reward'),
+        'gift_product_id':      fields.many2one('product.product','Gift Product', help='The product given as a reward'),
         'point_cost':           fields.float('Point Cost', help='The cost of the reward'),
         'discount_product_id':  fields.many2one('product.product','Discount Product', help='The product used to apply discounts'),
-        'discount':             fields.float('Discount',help='The discount percentage'),
-        'point_product_id':    fields.many2one('product.product', 'Point Product', help='The product that represents a point that is sold by the customer'),
+        'discount':             fields.float('Discount',help="The discount is expressed as a percentage of the customer's sale history. The discount factor must be between zero and one."),
+        'point_product_id':     fields.many2one('product.product', 'Point Product', help='The product that represents a point that is sold by the customer'),
     }
 
     def _check_gift_product(self, cr, uid, ids, context=None):
@@ -112,11 +112,19 @@ class loyalty_reward(osv.osv):
             
             return True
 
+    def _check_discount(self, cr, uid, ids, context=None):
+        for reward in self.browse(cr, uid, ids, context=context):
+            if reward.type == 'discount':
+                return reward.discount >= 0 and reward.discount <= 1
+            else:
+                return True
+
     _constraints = [
         (_check_gift_product,     "The gift product field is mandatory for gift rewards",         ["type","gift_product_id"]),
         (_check_discount_product, "The discount product field is mandatory for discount rewards", ["type","discount_product_id"]),
         (_check_point_product,    "The point product field is mandatory for point resale rewards", ["type","point_product_id"]),
         (_check_product_availability, "The reward product must be saleable and available in the point of sale",['gift_product_id','discount_product_id','point_product_id']),
+        (_check_discount,         "The reward discount factor must be a number between zero and one.",["discount"]),
     ]
 
 class pos_config(osv.osv):
@@ -129,19 +137,27 @@ class pos_config(osv.osv):
 class res_partner(osv.osv):
     _inherit = 'res.partner'
     _columns = {
-        'loyalty_points': fields.float('Loyalty Points', help='The loyalty points the user won as part of a Loyalty Program')
+        'loyalty_points': fields.float('Loyalty Points', help='The loyalty points the user won as part of a Loyalty Program'),
+        'loyalty_sale_history': fields.float('Loyalty Sale History', help='The total amount of sales for this customer that will contribute to his next loyalty discount'), 
+    }
+
+    _defaults = {
+        'loyalty_points': 0,
+        'loyalty_sale_history': 0,
     }
 
 class pos_order(osv.osv):
     _inherit = 'pos.order'
 
     _columns = {
-        'loyalty_points': fields.float('Loyalty Points', help='The amount of Loyalty points the customer won or lost with this order'),
+        'loyalty_points':        fields.float('Loyalty Points', help='The amount of Loyalty points the customer won or lost with this order'),
+        'loyalty_sale_history': fields.float('Loyalty Sale History', help="The customer's total sale history used for the next loyalty discount will be increased / decreased by this amount"),
     }
 
     def _order_fields(self, cr, uid, ui_order, context=None):
         fields = super(pos_order,self)._order_fields(cr,uid,ui_order,context)
         fields['loyalty_points'] = ui_order.get('loyalty_points',0)
+        fields['loyalty_sale_history'] = ui_order.get('loyalty_sale_history',0)
         return fields
 
     def create_from_ui(self, cr, uid, orders, context=None):
@@ -151,10 +167,9 @@ class pos_order(osv.osv):
                 partner = self.pool.get('res.partner').browse(cr,uid,order['data']['partner_id'], context=context)
                 partner.write({'loyalty_points': partner['loyalty_points'] + order['data']['loyalty_points']})
 
+            if order['data']['loyalty_sale_history'] != 0 and order['data']['partner_id']:
+                partner = self.pool.get('res.partner').browse(cr,uid,order['data']['partner_id'], context=context)
+                partner.write({'loyalty_sale_history': partner['loyalty_sale_history'] + order['data']['loyalty_sale_history']})
+
         return ids
-            
-             
-    
-
-
 
