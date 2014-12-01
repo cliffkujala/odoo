@@ -595,12 +595,12 @@ var Tour = {
 
                 click_event("mouseover");
                 click_event("mousedown");
+                click_event("mouseup");
                 click_event("click");
 
                 // trigger after for step like: mouseenter, next step click on button display with mouseenter
                 setTimeout(function () {
                     if (!Tour.getState()) return;
-                    click_event("mouseup");
                     click_event("mouseout");
                 }, self.defaultDelay<<1);
             }

@@ -101,8 +101,7 @@
 
         $airPopover.find('.note-style').on('mousedown', function () {
             var $format = $airPopover.find('[data-event="formatBlock"]');
-            var r = range.create();
-            var node = r.sc;
+            var node = range.create().sc;
             var formats = $format.map(function () { return $(this).data("value"); }).get();
             while (node && (!node.tagName || (!node.tagName || formats.indexOf(node.tagName.toLowerCase()) === -1))) {
                 node = node.parentNode;
@@ -1577,11 +1576,10 @@
             this.options = options || {};
             this.media = media;
             this.isNewMedia = !media;
+            this.range = range.create();
         },
         start: function () {
             var self = this;
-
-            this.range = range.create();
 
             this.only_images = this.options.select_images || (this.media && $(this.media).parent().data("oe-field") === "image");
             if (this.only_images) {
@@ -2057,30 +2055,18 @@
          */
         save: function () {
             this.parent.trigger("save", this.media);
-            if (! this.media){
-                var $image = this.$el.find('.font-icons-selected');
-                var rng = range.create()
-                if($('.insert-media').length){
-                    rng = document.createRange();
-                    rng.selectNodeContents(document.getElementsByClassName('insert-media')[0]);
-                    $('p').removeClass('insert-media');
-                }
-                rng.insertNode($image[0]);
-                $('.popover').hide();
-            } else {
-                var style = this.media.attributes.style ? this.media.attributes.style.textContent : '';
-                var classes = (this.media.className||"").split(/\s+/);
-                var non_fa_classes = _.reject(classes, function (cls) {
-                    return cls === 'fa' || /^fa-/.test(cls);
-                });
-                var final_classes = non_fa_classes.concat(this.get_fa_classes());
-                if (this.media.tagName !== "SPAN") {
-                    var media = document.createElement('span');
-                    $(this.media).replaceWith(media);
-                    this.media = media;
-                }
-                $(this.media).attr("class", final_classes.join(' ')).attr("style", style);
+            var style = this.media.attributes.style ? this.media.attributes.style.textContent : '';
+            var classes = (this.media.className||"").split(/\s+/);
+            var non_fa_classes = _.reject(classes, function (cls) {
+                return cls === 'fa' || /^fa-/.test(cls);
+            });
+            var final_classes = non_fa_classes.concat(this.get_fa_classes());
+            if (this.media.tagName !== "SPAN") {
+                var media = document.createElement('span');
+                $(this.media).replaceWith(media);
+                this.media = media;
             }
+            $(this.media).attr("class", final_classes.join(' ')).attr("style", style);
         },
         /**
          * Looks up the various FontAwesome classes on the bound element and

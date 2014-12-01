@@ -1357,15 +1357,21 @@
      * @param {Number} eo - end offset
      */
     var WrappedRange = function (sc, so, ec, eo) {
-
-      if (dom.isBR(sc) || dom.isImg(sc)) { // hack from odoo (for ie)
+      // fix/hack from odoo (for ie)
+      //if (!!document.documentMode) {
+      if (dom.isBR(sc) || dom.isImg(sc)) {
         so = dom.listPrev(sc).length-1;
         sc = sc.parentNode;
       }
-      if (dom.isBR(ec) || dom.isImg(ec)) {
+      if (dom.isImg(ec)) {
+        eo = dom.listPrev(ec).length;
+        ec = ec.parentNode;
+      }
+      if (dom.isBR(ec)) {
         eo = dom.listPrev(ec).length-1;
         ec = ec.parentNode;
       }
+      //}
 
       this.sc = sc;
       this.so = so;
@@ -2965,7 +2971,7 @@
       //preventDefault Selection for FF, IE8+
       if (dom.isImg(event.target)) {
         event.preventDefault();
-        range.create(event.target, 0).select(); // fix by odoo
+        range.createFromNode(event.target).select(); // fix by odoo
       }
     };
 
@@ -3059,6 +3065,7 @@
     var hToolbarAndPopoverMousedown = function (event) {
       // prevent default event when insertTable (FF, Webkit)
       var $btn = $(event.target).closest('[data-event]');
+      
       if ($btn.length) {
         event.preventDefault();
       }

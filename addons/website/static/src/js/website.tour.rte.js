@@ -250,12 +250,12 @@
             {
                 waitNot:   '#link-preview',
                 waitFor:   '#wrapwrap > main > div > section .row > div:eq(1) > a > img',
-                element:   '#wrapwrap > main > div > section .row > div:first p:last',
+                element:   '#wrapwrap > main > div > section .row > div:first p:eq(2)',
                 title:     "triple enter",
                 keydown:   [13, 13, 66, 13], // enter
                 onload: function () {
-                    var $el = $(this.element);
-                    $.summernote.objects.range.create($el[0], 0, $el[0], 0).select();
+                    var p = $(this.element)[0].firstChild;
+                    $.summernote.objects.range.create(p, p.textContent.length, p, p.textContent.length).select();
                 },
             },
             {
@@ -288,7 +288,7 @@
             {
                 waitFor:   '#wrapwrap > main > div > section .row > div:first ul li p:eq(2)',
                 element:   '.note-air-popover .note-style button.dropdown-toggle',
-                title:     "apend style dropdown",
+                title:     "click on style dropdown",
             },
             {
                 element:   '.note-air-popover .note-style ul:visible a[data-value="h3"]',
