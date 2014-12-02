@@ -736,7 +736,7 @@
         if (color || bgcolor) {
             for (var i=0; i<nodes.length; i++) {
                 node = nodes[i];
-                if (!dom.isText(node)) {
+                if (!dom.isText(node) || !node.textContent.match(/\S|\u00A0/)) {
                     continue;
                 }
 
