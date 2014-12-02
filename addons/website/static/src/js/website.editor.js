@@ -394,7 +394,7 @@
 
         if (!editable) {
             $(last_div).removeAttr("contentEditable").removeProp("contentEditable");
-            $(last_editable).attr("contentEditable", "true");
+            $(last_editable).attr("contentEditable", "true").prop("contentEditable", "true");
             last_div = null;
             last_editable = null;
             return;
@@ -412,7 +412,7 @@
         if (div !== editable) {
             $(editable).removeAttr("contentEditable").removeProp("contentEditable");
         }
-        $(div).attr("contentEditable", "true");
+        $(div).attr("contentEditable", "true").prop("contentEditable", "true");
     }
 
     var fn_attach = eventHandler.attach;
@@ -495,7 +495,10 @@
 
         this.applySnap = function (oSnap) {
             var $editable = $(oSnap.editable);
-            $editable.trigger('mousedown');
+
+            if (!!document.documentMode) {
+                $editable.removeAttr("contentEditable").removeProp("contentEditable");
+            }
 
             $editable.html(oSnap.contents).scrollTop(oSnap.scrollTop);
             $(".oe_overlay").remove();
@@ -514,6 +517,10 @@
 
             setTimeout(function () {
                 var target = dom.isBR(r.sc) ? r.sc.parentNode : dom.node(r.sc);
+                var evt = document.createEvent("MouseEvents");
+                evt.initMouseEvent("mousedown", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, target);
+                target.dispatchEvent(evt);
+
                 var evt = document.createEvent("MouseEvents");
                 evt.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, target);
                 target.dispatchEvent(evt);
