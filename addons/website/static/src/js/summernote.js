@@ -1065,11 +1065,11 @@
                 node = dom.hasContentAfter(node);
             } while (node && dom.isBR(node));
 
-            // create a visible space because the user can't see the new line with only br in a block
+            // create an other br because the user can't see the new line with only br in a block
             if (!node) {
-                $(br).after(document.createTextNode('\u00A0'));
+                $(br).before($("<br/>")[0]);
             }
-            node = br;
+            node = br.nextSibling || br;
         } else if (last === node && dom.isBR(node)) {
             $(node).after(br);
             node = br;

@@ -6,7 +6,7 @@
     openerp.Tour.register({
         id:   'website_rte',
         name: "Test website RTE",
-        path: '/page/homepage?debug',
+        path: '/page/homepage',
         mode: 'test',
         steps: [
             {
