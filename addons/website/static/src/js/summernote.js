@@ -733,65 +733,78 @@
         nodes = _.uniq(nodes);
 
         // apply font
-        var node, font;
+        var node, font, $font, fonts = [];
         if (color || bgcolor) {
             for (var i=0; i<nodes.length; i++) {
                 node = nodes[i];
-                font = dom.ancestor(node, dom.isFont);
+                if (!dom.isText(node)) {
+                    continue;
+                }
 
+                font = dom.ancestor(node, dom.isFont);
                 if (!font) {
-                    if (!dom.isText(node)) {
-                        continue;
+                    if (node.textContent.match(/^[ ]|[ ]$/)) {
+                        node.textContent = node.textContent.replace(/^[ ]|[ ]$/g, '\u00A0');
                     }
+
                     font = document.createElement("font");
                     node.parentNode.insertBefore(font, node);
                     font.appendChild(node);
                 }
 
+                fonts.push(font);
+
+                var className = font.className.split(/\s+/);
+
                 if (color) {
-                    var className = font.className.split(/\s+/);
                     for (var k=0; k<className.length; k++) {
-                        if (!className[k].length || className[k].slice(0,3) === "text-") {
+                        if (!className[k].length && className[k].slice(0,5) === "text-") {
                             className.splice(k,1);
                             k--;
                         }
                     }
-                    font.className = className.join(" ");
-                    font.style.color = '';
 
                     if (color.indexOf('text-') !== -1) {
-                        font.className += ' ' + color;
-                    } else if (color !== 'inherit') {
+                        font.className = className + " " + color;
+                        font.style.color = "inherit";
+                    } else {
                         font.style.color = color;
                     }
                 }
                 if (bgcolor) {
-                    var className = font.className.split(/\s+/);
                     for (var k=0; k<className.length; k++) {
-                        if (!className[k].length || className[k].slice(0,3) === "bg-") {
+                        if (className[k].length && className[k].slice(0,3) === "bg-") {
                             className.splice(k,1);
                             k--;
                         }
                     }
-                    font.className = className.join(" ");
-                    font.style.backgroundColor = '';
 
                     if (bgcolor.indexOf('bg-') !== -1) {
-                        if (font.className.indexOf('bg-') === -1) {
-                            font.className += ' ' + bgcolor;
-                        }
-                    } else if (bgcolor !== 'inherit') {
+                        font.className = className + " " + bgcolor;
+                        font.style.backgroundColor = "inherit";
+                    } else {
                         font.style.backgroundColor = bgcolor;
                     }
                 }
+            }
+        }
 
+        for (var i=0; i<fonts.length; i++) {
+            font = fonts[i];
+            if (font.style.backgroundColor === "inherit") {
+                font.style.backgroundColor = "";
+            }
+            if (font.style.color === "inherit") {
+                font.style.color = "";
+            }
 
-                if (!font.style.color && !font.style.backgroundColor && !font.style.fontSize) {
-                    font.removeAttribute('style');
-                }
-                if (!font.className.length) {
-                    font.removeAttribute('class');
-                }
+            $font = $(font);
+
+            if (!$font.css("color") && !$font.css("background-color") && !$font.css("font-size")) {
+                $font.removeAttr("style");
+            }
+            if (!font.className.length) {
+                $font.removeAttr("class");
             }
         }
 
@@ -800,14 +813,16 @@
         var nodes = dom.listBetween(start, end);
         for (var i=0; i<nodes.length; i++) {
             node = nodes[i];
-            if (dom.isFont(node)) {
-                if ((!node.attributes.style && !node.className.length && node.parentNode && dom.isFont(node)) ||
-                    (!node.textContent.match(/[^ \t\n\r]/) &&
-                    (!dom.hasContentAfter(node) || !dom.hasContentBefore(node)))) {
-                    nodes.splice(i,1);
-                    nodes.push.apply(nodes, dom.moveTo(node, node.parentNode, node));
-                    i--;
-                }
+            if (!dom.isFont(node)) {
+                continue;
+            }
+            $font = $(nodes[i]);
+            if ((!node.parentNode && dom.isFont(node) && !$font.attr("class") && !$font.attr("style")) ||
+                (!node.textContent.match(/[^ \t\n\r]/) &&
+                (!dom.hasContentAfter(node) || !dom.hasContentBefore(node)))) {
+                nodes.splice(i,1);
+                nodes.push.apply(nodes, dom.moveTo(node, node.parentNode, node));
+                i--;
             }
         }
 

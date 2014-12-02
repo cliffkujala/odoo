@@ -76,7 +76,7 @@
                 title:     "change selection to change text bg-color again",
             },
             {
-                element:   'div[data-target-event="backColor"] .note-color-row:eq(1) button[data-event="backColor"]:eq(3)',
+                element:   'div[data-target-event="backColor"] .colorpicker button[data-event="backColor"]:first',
                 title:     "change text color again",
                 onload: function () {
                     var $el = $('#wrapwrap > main > div > section .row > div:first h1 font:eq(2)');
