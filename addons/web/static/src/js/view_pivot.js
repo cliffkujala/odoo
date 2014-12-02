@@ -211,7 +211,6 @@ instance.web.PivotView = instance.web.View.extend({
             col_id = $target.data('col_id'),
             row_domain = this.headers[row_id].domain,
             col_domain = this.headers[col_id].domain;
-        // debugger;
         return this.do_action({
             type: 'ir.actions.act_window',
             name: this.title,
@@ -250,7 +249,7 @@ instance.web.PivotView = instance.web.View.extend({
         }
         return $.when.apply(null, groupbys.map(function (groupby) {
             return self.model.query(fields)
-                .filter(header.domain)
+                .filter(header.domain.length ? header.domain : self.domain)
                 .context(self.context)
                 .lazy(false)
                 .group_by(groupby);
@@ -538,7 +537,7 @@ instance.web.PivotView = instance.web.View.extend({
                             .data('col_id', rows[i].col_ids[Math.floor(j / nbr_measures)])
                             .text(value);
                 if (((j >= length - this.active_measures.length) && display_total) || i === 0){
-                    $cell.css('font-weight', 'bold');   
+                    $cell.css('font-weight', 'bold');
                 }
                 $row.append($cell);
             }
@@ -633,6 +632,7 @@ instance.web.PivotView = instance.web.View.extend({
                 for (i = 0; i < self.active_measures.length; i++) {
                     values.push(aggregates && aggregates[self.active_measures[i]]);
                 }
+                col_ids.push( self.main_col.root.id);
             }
         });
         return result;

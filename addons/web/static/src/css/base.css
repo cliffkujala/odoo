@@ -1537,6 +1537,7 @@
 .openerp .oe_pivot td {
   border: 1px solid #bfbfb6;
   text-align: right;
+  cursor: pointer;
 }
 .openerp .oe_pivot .oe-closed, .openerp .oe_pivot .oe-opened {
   cursor: pointer;
