@@ -585,7 +585,7 @@
             }
 
             sc = before ? dom.lastChild(before) : dom.firstChild(after);
-            so = sc.textContent.length-1;
+            so = sc.textContent.length;
 
             if (before) {
                 var text = sc.textContent.replace(/[ \t\n\r]+$/, '\u00A0');
