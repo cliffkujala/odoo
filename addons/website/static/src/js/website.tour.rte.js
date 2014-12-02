@@ -251,18 +251,12 @@
                 waitNot:   '#link-preview',
                 waitFor:   '#wrapwrap > main > div > section .row > div:eq(1) > a > img',
                 element:   '#wrapwrap > main > div > section .row > div:first p:eq(2)',
-                title:     "triple enter",
-                keydown:   [13, 13, 66, 13], // enter
+                title:     "triple enter then double backspace",
+                keydown:   [66, 13, 66, 13, 13, 8, 8],
                 onload: function () {
                     var p = $(this.element)[0].firstChild;
                     $.summernote.objects.range.create(p, p.textContent.length, p, p.textContent.length).select();
                 },
-            },
-            {
-                waitFor:   '#wrapwrap > main > div > section .row > div:first p:eq(5)',
-                element:   '#wrapwrap > main > div.o_editable.note-editable',
-                title:     "double backspace",
-                keydown:   [8, 8] // backspace
             },
             {
                 waitNot:   '#wrapwrap > main > div > section .row > div:first p:eq(4), #wrapwrap > main > div > section .row > div:eq(3)',
@@ -310,6 +304,25 @@
             },
             {
                 waitFor:   '#wrapwrap > main > div > section .row > div:first ul > li > ul > li > ol > li > h3',
+                element:   '#wrapwrap > main > div > section .row > div:first ul li > p:last',
+                title:     "enter in list",
+                keydown:   13,
+                onload: function () {
+                    $.summernote.objects.range.create($(this.element)[0].firstChild, 7).select();
+                }
+            },
+            {
+                waitFor:   '#wrapwrap > main > div > section .row > div:first ul > li > ul > li > ol > li > h3',
+                element:   '#wrapwrap > main > div > section .row > div:first ul li > p:eq(2)',
+                title:     "backspace in list",
+                keydown:   8,
+                onload: function () {
+                    console.log($(this.element)[0].firstChild);
+                    $.summernote.objects.range.create($(this.element)[0].firstChild, 0).select();
+                }
+            },
+            {
+                waitNot:   '#wrapwrap > main > div > section .row > div:first ul li > p:eq(2)',
                 title:     "end",
             },
         ]

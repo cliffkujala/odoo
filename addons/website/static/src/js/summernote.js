@@ -97,13 +97,13 @@
         while (node.firstChild) { node = node.firstChild; }
         return node;
     };
-    dom.lastElementChild = function (node) {
-        node = dom.lastChild(node);
-        return node.tagName ? node : dom.previousElementSibling(node);
+    dom.lastElementChild = function (node, deep) {
+        node = deep ? dom.lastChild(node) : node.lastChild;
+        return !node || node.tagName ? node : dom.previousElementSibling(node);
     };
-    dom.firstElementChild = function (node) {
-        node = dom.firstChild(node);
-        return node.tagName ? node : dom.nextElementSibling(node);
+    dom.firstElementChild = function (node, deep) {
+        node = deep ? dom.firstChild(node) : node.firstChild;
+        return !node || node.tagName ? node : dom.nextElementSibling(node);
     };
     dom.orderClass = function (node) {
         if (!node.className) return;
@@ -388,7 +388,6 @@
     };
     dom.removeSpace = function (node, begin, so, end, eo) {
         var removed = false;
-        var offsetEnd = end && (dom.lastChild(end).textContent.length - eo);
         var add = node === begin;
 
         if (node === begin && begin === end && dom.isBR(node)) {
@@ -447,9 +446,9 @@
                         so -= temp.length - _temp.length;
                     }
                     if (cur === end) {
-                        var temp = cur.textContent.substr(-offsetEnd, cur.textContent.length);
+                        var temp = cur.textContent.substr(-eo, cur.textContent.length);
                         var _temp = temp.replace(exp1, ' ').replace(exp2, ' ');
-                        offsetEnd -= temp.length - _temp.length;
+                        eo -= temp.length - _temp.length;
                     }
                     var text = cur.textContent.replace(exp1, ' ').replace(exp2, ' ');
                     removed = removed || cur.textContent.length !== text.length;
@@ -463,7 +462,7 @@
             sc: begin,
             ec: end,
             so: !dom.isBR(begin) && so > 0 ? so : 0,
-            eo: !dom.isBR(end) && end && end.textContent.length > offsetEnd ? end.textContent.length - offsetEnd : 0
+            eo: eo
         };
     };
     dom.node = function (node) {
@@ -1045,7 +1044,7 @@
             var $clone = $node.clone();
             $clone.children().html(dom.blank);
             $node.after($clone);
-            var node = $clone[0].firstElementChild || $clone[0];
+            var node = dom.firstElementChild($clone[0]) || $clone[0];
             range.create(node, 0, node, 0).select();
             dom.scrollIntoViewIfNeeded(br);
             return false;
@@ -1085,7 +1084,7 @@
             var $node = $(last);
             var $clone = $node.clone().text("");
             $node.after($clone);
-            node = dom.node(dom.firstChild($clone[0].firstElementChild || $clone[0]));
+            node = dom.node(dom.firstElementChild($clone[0]) || $clone[0]);
             $(node).html(br);
             node = br;
         } else {
@@ -1400,10 +1399,11 @@
                 !dom.isNotBreakable(temp2)) {
             summernote_keydown_clean("sc");
 
+            var prev = dom.firstChild(target);
+
             dom.autoMerge(target, true);
 
-            var prev = dom.firstChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(target)));
-            range.create(prev, prev.textContent.length, prev, prev.textContent.length).select();
+            range.create(prev, 0).select();
         }
         // jump to previous node for delete
         else if ((temp = dom.ancestorHavePreviousSibling(target)) && (temp2 = dom.hasContentBefore(temp)) && dom.isContentEditable(temp2)) {
@@ -1506,7 +1506,8 @@
                 parent.removeChild(childNodes[i]);
                 i--;
             }
-            if ((!dom.isText(childNodes[i]) && !isFormatNode(childNodes[i])) || (!ul.firstChild && childNodes[i] !== p0)) {
+            if ((!dom.isText(childNodes[i]) && !isFormatNode(childNodes[i])) || (!ul.firstChild && childNodes[i] !== p0) ||
+                $.contains(ul, childNodes[i]) || (dom.isText(childNodes[i]) && !childNodes[i].textContent.match(/\S|u00A0/))) {
                 continue;
             }
             begin = true;
@@ -1567,14 +1568,15 @@
                 node = next;
             }
 
+            var temp;
             var prev = dom.previousElementSibling(li);
-            if (prev && prev.tagName === "LI" && dom.firstElementChild(prev) && dom.firstElementChild(prev).tagName === tagName) {
+            if (prev && prev.tagName === "LI" && (temp = dom.firstElementChild(prev)) && temp.tagName === tagName && ((dom.firstElementChild(prev) || prev.firstChild) !== ul)) {
                 dom.doMerge(dom.firstElementChild(prev) || prev.firstChild, ul);
                 li = prev;
                 li.parentNode.removeChild(dom.nextElementSibling(li));
             }
             var next = dom.nextElementSibling(li);
-            if (next && next.tagName === "LI" && dom.firstElementChild(next) && dom.firstElementChild(next).tagName === tagName) {
+            if (next && next.tagName === "LI" && (temp = dom.firstElementChild(next)) && temp.tagName === tagName && (dom.firstElementChild(li) !== dom.firstElementChild(next))) {
                 dom.doMerge(dom.firstElementChild(li), dom.firstElementChild(next));
                 li.parentNode.removeChild(dom.nextElementSibling(li));
             }

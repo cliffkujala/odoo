@@ -567,7 +567,7 @@ var Tour = {
                     step.keydown = [step.keydown];
                 }
                 var keydown = function (list) {
-                    var keyCode = list.pop();
+                    var keyCode = list.shift();
                     if (keyCode) {
                         setTimeout(function () {
                             $element.trigger({ type: 'keydown', keyCode: keyCode });
