@@ -188,7 +188,7 @@ class website_sale(http.Controller):
         styles = style_obj.browse(cr, uid, style_ids, context=context)
 
         category_obj = pool['product.public.category']
-        category_ids = category_obj.search(cr, uid, [], context=context)
+        category_ids = category_obj.search(cr, uid, [], order='sequence asc', context=context)
         categories = category_obj.browse(cr, uid, category_ids, context=context)
         categs = filter(lambda x: not x.parent_id, categories)
 
