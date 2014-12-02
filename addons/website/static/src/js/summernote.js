@@ -777,6 +777,7 @@
                         font.className = className + " " + color;
                         font.style.color = "inherit";
                     } else {
+                        font.className = className;
                         font.style.color = color;
                     }
                 }
@@ -792,6 +793,7 @@
                         font.className = className + " " + bgcolor;
                         font.style.backgroundColor = "inherit";
                     } else {
+                        font.className = className;
                         font.style.backgroundColor = bgcolor;
                     }
                 }
