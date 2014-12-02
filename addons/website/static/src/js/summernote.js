@@ -446,7 +446,7 @@
                         so -= temp.length - _temp.length;
                     }
                     if (cur === end) {
-                        var temp = cur.textContent.substr(-eo, cur.textContent.length);
+                        var temp = cur.textContent.substr(0, eo);
                         var _temp = temp.replace(exp1, ' ').replace(exp2, ' ');
                         eo -= temp.length - _temp.length;
                     }
@@ -523,7 +523,7 @@
         // move caret
         range.create(data.sc, data.so, data.ec, data.eo).select();
     };
-    dom.removeBetween = function (sc, so, ec, eo) {
+    dom.removeBetween = function (sc, so, ec, eo, towrite) {
         if (ec.tagName && ec.childNodes[eo]) {
             ec = ec.childNodes[eo];
             eo = 0;
@@ -537,6 +537,10 @@
                     eo++;
                 }
             }
+        }
+        if (!eo) {
+            ec = dom.lastChild(dom.hasContentBefore(dom.ancestorHavePreviousSibling(ec)));
+            eo = ec.textContent.length;
         }
 
         var ancestor = dom.commonAncestor(sc.tagName ? sc.parentNode : sc, ec.tagName ? ec.parentNode : ec);
@@ -591,6 +595,12 @@
                 var text = sc.textContent.replace(/[ \t\n\r]+$/, '\u00A0');
                 so -= sc.textContent.length - text.length;
                 sc.textContent = text;
+            }
+            if (towrite && !node.firstChild) {
+                var br = $("<br/>")[0];
+                node.appendChild(br);
+                sc = br;
+                so = 0;
             }
             dom.autoMerge(sc, false);
 
@@ -927,8 +937,8 @@
 
         return new range.WrappedRange(sc, so, ec, eo);
     };
-    range.WrappedRange.prototype.deleteContents = function () {
-        var prevBP = dom.removeBetween(this.sc, this.so, this.ec, this.eo);
+    range.WrappedRange.prototype.deleteContents = function (towrite) {
+        var prevBP = dom.removeBetween(this.sc, this.so, this.ec, this.eo, towrite);
 
         return new range.WrappedRange(
           prevBP.sc,
@@ -1111,7 +1121,7 @@
 
         var r = range.create();
         if (r && !r.isCollapsed()) {
-            r = r.deleteContents().select();
+            r = r.deleteContents(true).select();
         }
 
         // don't write in forbidden tag (like span for font awsome)
