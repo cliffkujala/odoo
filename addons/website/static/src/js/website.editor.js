@@ -308,13 +308,7 @@
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /* attach event to Summernote
-    * paste:
-    *  - change the default feature of contentEditable
-    * mousedown:
-    *  - re-active snippet and carret
-    *  - display editor popover
-    */
+    /* fix ie and re-range to don't break snippet*/
 
     function reRangeSelectKey (event) {
         if (!event.keyCode || event.shiftKey) {
@@ -1084,7 +1078,6 @@
                 }
             });
 
-
             $('.is-not-editable').attr("contentEditable", false);
 
             $('#wrapwrap [data-oe-model]')
@@ -1104,6 +1097,8 @@
                     self.trigger('change');
                 });
             });
+
+            $(document).trigger('mousedown');
 
             if (!restart) {
                 $('#wrapwrap, .o_editable').on('click', '*', function (event) {
