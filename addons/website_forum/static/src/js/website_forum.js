@@ -237,7 +237,6 @@
 
    function website_forum_IsKarmaValid(minKarma){
         "use strict";
-        console.log($("#karma").val(), minKarma);
         if(parseInt($("#karma").val()) >= minKarma){
             return true;
         }
