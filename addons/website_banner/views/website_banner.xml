@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <template id="assets_frontend" inherit_id="website.assets_frontend" name="Website Bounceexchange Theme">
+            <xpath expr="." position="inside">
+                <link rel="stylesheet" href="/website_banner/static/src/css/website_banner.css"/>
+                <script type="text/javascript" src="/website_banner/static/src/js/website_banner.js"/>
+            </xpath>
+        </template>
+
+        <template id="assets_editor" inherit_id="website.assets_editor" name="wesbite_banner Editor assets">
+            <xpath expr="/t" position="inside">
+                <script type="text/javascript" src="/website_banner/static/src/js/website.banner.editor.js" groups="base.group_website_publisher"></script>
+            </xpath>
+        </template>
+
+        <template id="website_banner_snippet" name="Banner snippet" inherit_id="website.snippets">
+            <xpath expr="//div[@id='snippet_feature']" position="inside">
+                <div>
+                    <div class="oe_snippet_thumbnail">
+                        <img class="oe_snippet_thumbnail_img" />
+                        <span class="oe_snippet_thumbnail_title">Bounce Banner</span>
+                    </div>
+                    <section class="oe_snippet_body banner_display banner" data-list-id="0" contenteditable="False">
+                        <div class="alert alert-warning alert-dismissible" role="alert">
+                            <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">x</span><span class="sr-only">Close</span></button>
+                            You have Subscription For the Bounce Banner. To change Newsletter click customize > Change Newsletter
+                            </div>
+                            <div class="modal fade fade-custom" id="banner_modal" tabindex="-1" role="dialog">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal">
+                                                <span aria-hidden="true">&amp;times;</span>
+                                                <span class="sr-only">Close</span>
+                                            </button>
+                                            <h2 class="modal-title">Odoo</h2>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="banner">
+                                                        <div type="button" data-dismiss="modal" data-toggle="modal" data-target="#accept_banner" class="banner_box accept">
+                                                            Yes
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="banner">
+                                                        <div type="button" class="banner_box decline" data-dismiss="modal">
+                                                            No
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal fade fade-custom" id="accept_banner" role="dialog">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&amp;times;</span><span class="sr-only">Close</span></button>
+                                            <h2 class="modal-title" id="myModalLabel">Odoo</h2>
+                                        </div>
+                                        <div class="modal-body text-center">
+                                            <h1>Grow Your Business With Odoo Apps</h1>
+                                            <h3>One need, one app. Integration has never been so smooth.</h3>
+                                            <a type="button" href="#demo" data-dismiss="modal" class="btn btn-primary btn-block">Request a Demo</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                    </section>
+                </div>
+            </xpath>
+        </template>
+
+        <template id="website_banner_options" name="Banner Options" inherit_id="website.snippet_options">
+            <xpath expr="//div" position="after">
+                <div data-js='banner'
+                    data-selector=".banner"
+                    data-drop-in=".oe_structure, [data-oe-type=html]">
+                    <li data-choose_mailing_list=""><a>Change Newsletter</a></li>
+                </div>
+            </xpath>
+        </template>
+    </data>
+</openerp>
