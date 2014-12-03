@@ -221,7 +221,7 @@ instance.web.PivotView = instance.web.View.extend({
             type: 'ir.actions.act_window',
             name: this.title,
             res_model: this.model.name,
-            views: [[false, 'list']],
+            views: [[false, 'list'], [false, 'form']],
             view_type : "list",
             view_mode : "list",
             target: 'current',
