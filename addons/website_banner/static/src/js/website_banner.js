@@ -40,7 +40,7 @@
             var ms = days*24*60*60*1000;
             var date = new Date();
             date.setTime(date.getTime() + ms);
-            //document.cookie = "expires=" + date.toUTCString();
+            document.cookie = "expires=" + date.toUTCString();
         },
         check_cookievalue: function(cookie_name, current_date) {
             var self = this;
