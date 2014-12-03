@@ -1001,6 +1001,13 @@
         <li data-toggle_class="o_ul_folded"> <a href="#">Folded list</a> </li>
     </div>
 
+    <!-- t-field -->
+
+    <div data-js='many2one'
+        data-selector="[data-oe-many2one-model]"
+        data-no-check="true">
+    </div>
+
 </template>
 
 

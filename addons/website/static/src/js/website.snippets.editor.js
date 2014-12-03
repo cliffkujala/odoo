@@ -1979,4 +1979,127 @@
         },
     });
 
+    /* t-field options */
+
+    website.snippet.options.many2one = website.snippet.Option.extend({
+        start: function () {
+            var self = this;
+            this.$target.attr('contentEditable', 'false');
+
+            this.Model = this.$target.data('oe-many2one-model');
+            this.ID = +this.$target.data('oe-many2one-id');
+
+            // create search button and bind search bar
+            this.$btn = $(openerp.qweb.render("website.many2one.button"))
+                .insertAfter(this.$overlay.find('.oe_options'));
+
+            this.$ul = this.$btn.find("ul");
+            this.$search = this.$ul.find('li:first');
+            this.$search.find('input').on('mousedown click mouseup keyup keydown', function (e) {
+                e.stopPropagation();
+            });
+
+            // move menu item
+            setTimeout(function () {
+                if (self.$overlay.find('.oe_options').hasClass('hidden')) {
+                    self.$btn.css('height', '0').find('> a').addClass('hidden');
+                    self.$ul.show().css({
+                        'top': '-24px', 'margin': '0', 'padding': '2px 0', 'position': 'relative'
+                    });
+                } else {
+                    self.$btn.find('a').on('click', function (e) {
+                        self.clear();
+                    });
+                }
+            },0);
+
+            // bind search input
+            this.$search.find('input')
+                .focus()
+                .on('keyup', function(e) {
+                    self.find_existing($(this).val());
+                });
+
+            function render_contact(options) {
+                return openerp.jsonRpc('/web/dataset/call_kw', 'call', {
+                    model: 'website.qweb.field.contact',
+                    method: 'get_record_to_html',
+                    args: [[self.ID]],
+                    kwargs: {
+                        options: options,
+                        context: website.get_context(),
+                    }
+                });
+            }
+
+            // bind result
+            this.$ul.on('click', "li:not(:first) a", function (e) {
+                self.ID = +$(this).data("id");
+                self.$target.attr('data-oe-many2one-id', self.ID).data('oe-many2one-id', self.ID);
+
+                if (self.$target.data('oe-type') === "contact") {
+                    $('[data-oe-contact-options]')
+                        .filter('[data-oe-model="'+self.$target.data('oe-model')+'"]')
+                        .filter('[data-oe-id="'+self.$target.data('oe-id')+'"]')
+                        .filter('[data-oe-field="'+self.$target.data('oe-field')+'"]')
+                        .filter('[data-oe-contact-options!="'+self.$target.data('oe-contact-options')+'"]')
+                        .add(self.$target)
+                        .attr('data-oe-many2one-id', self.ID).data('oe-many2one-id', self.ID)
+                        .each(function () {
+                            var $node = $(this);
+                            render_contact($node.data('oe-contact-options'))
+                                .then(function (html){
+                                    $node.html(html);
+                                });
+                        });
+                } else {
+                    self.$target.html($(this).data("name"));
+                }
+
+                self.$target.html(self.$target.data('oe-type') !== "contact" ? $(this).data("name") : $(this).html());
+                self.clear();
+            });
+        },
+
+        on_focus: function () {
+            this.clear();
+            this._super();
+        },
+
+        clear: function () {
+            var self = this;
+            this.$search.siblings().remove();
+            self.$search.find('input').val("");
+            setTimeout(function () {
+                self.$search.find('input').focus();
+            },0);
+        },
+
+        find_existing: function (name) {
+            var self = this;
+            var domain = [];
+            if (!name || !name.length) {
+                self.$search.siblings().remove();
+                return;
+            }
+            domain.push(isNaN(+name) ? ['name', 'ilike', name] : ['id', '=', name]);
+            openerp.jsonRpc('/web/dataset/call_kw', 'call', {
+                model: this.Model,
+                method: 'search_read',
+                args: [domain, ['name', 'display_name', 'city', 'country_id']],
+                kwargs: {
+                    order: 'name DESC',
+                    limit: 5,
+                    context: website.get_context(),
+                }
+            }).then(function (result){
+                self.$search.siblings().remove();
+                self.$search.after(openerp.qweb.render("website.many2one.search",{contacts:result}));
+            });
+        },
+    });
+
+
+    /* end*/
+
 })();
