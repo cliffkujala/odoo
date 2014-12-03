@@ -169,7 +169,7 @@ function openerp_pos_models(instance, module){ //module is instance.point_of_sal
         },{
             model:  'res.partner',
             fields: ['name','street','city','state_id','country_id','vat','phone','zip','mobile','email','ean13','write_date'],
-            domain: null,
+            domain: [['customer','=',true]],
             loaded: function(self,partners){
                 self.partners = partners;
                 self.db.add_partners(partners);
@@ -270,7 +270,7 @@ function openerp_pos_models(instance, module){ //module is instance.point_of_sal
             fields: ['display_name', 'list_price','price','pos_categ_id', 'taxes_id', 'ean13', 'default_code', 
                      'to_weight', 'uom_id', 'uos_id', 'uos_coeff', 'mes_type', 'description_sale', 'description',
                      'product_tmpl_id'],
-            domain:  function(self){ return [['sale_ok','=',true],['available_in_pos','=',true]]; },
+            domain: [['sale_ok','=',true],['available_in_pos','=',true]],
             context: function(self){ return { pricelist: self.pricelist.id, display_default_code: false }; },
             loaded: function(self, products){
                 self.db.add_products(products);
@@ -438,7 +438,7 @@ function openerp_pos_models(instance, module){ //module is instance.point_of_sal
                     } else {
                         def.reject();
                     }
-                }, function(){ def.reject(); });    
+                }, function(err,event){ event.preventDefault(); def.reject(); });    
             return def;
         },
 
@@ -736,7 +736,7 @@ function openerp_pos_models(instance, module){ //module is instance.point_of_sal
         },
         // return the unit of measure of the product
         get_unit: function(){
-            var unit_id = (this.product.uos_id || this.product.uom_id);
+            var unit_id = this.product.uom_id;
             if(!unit_id){
                 return undefined;
             }
@@ -811,9 +811,12 @@ function openerp_pos_models(instance, module){ //module is instance.point_of_sal
         get_unit_price: function(){
             return this.price;
         },
-        get_display_price: function(){
+        get_base_price:    function(){
             var rounding = this.pos.currency.rounding;
             return  round_pr(round_pr(this.get_unit_price() * this.get_quantity(),rounding) * (1- this.get_discount()/100.0),rounding);
+        },
+        get_display_price: function(){
+            return this.get_base_price();
         },
         get_price_without_tax: function(){
             return this.get_all_prices().priceWithoutTax;
@@ -830,7 +833,7 @@ function openerp_pos_models(instance, module){ //module is instance.point_of_sal
         get_all_prices: function(){
             var self = this;
             var currency_rounding = this.pos.currency.rounding;
-            var base = round_pr(this.get_quantity() * this.get_unit_price() * (1.0 - (this.get_discount() / 100.0)), currency_rounding);
+            var base = this.get_base_price();
             var totalTax = base;
             var totalNoTax = base;
             

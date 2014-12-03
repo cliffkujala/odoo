@@ -317,7 +317,6 @@
                 title:     "backspace in list",
                 keydown:   8,
                 onload: function () {
-                    console.log($(this.element)[0].firstChild);
                     $.summernote.objects.range.create($(this.element)[0].firstChild, 0).select();
                 }
             },
