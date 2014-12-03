@@ -26,14 +26,19 @@ import calendar
 import datetime
 from datetime import date
 from dateutil.relativedelta import relativedelta
+import logging
 import math
 import time
+import pytz
 from operator import attrgetter
 
 from openerp.exceptions import Warning
+from openerp import SUPERUSER_ID
 from openerp import tools
 from openerp.osv import fields, osv
 from openerp.tools.translate import _
+
+_logger = logging.getLogger(__name__)
 
 
 class hr_holidays_status(osv.osv):
@@ -562,12 +567,28 @@ class hr_employee(osv.Model):
             res[employee_id] = {'leaves_count': leaves, 'approved_leaves_count': approved_leaves}
         return res
 
+    def _subtract_timezone(self, cr, uid, timestamp, context=None):
+        utc = pytz.timezone('UTC')
+        tz_name = context and context.get('tz') or self.pool['res.users'].browse(cr, SUPERUSER_ID, uid).tz
+        if tz_name:
+            try:
+                context_tz = pytz.timezone(tz_name)
+                context_timestamp = context_tz.localize(timestamp, is_dst=False)
+                return context_timestamp.astimezone(utc)
+            except Exception:
+                _logger.debug("Failed to subtract/add timzone difference in UTC value", exc_info=True)
+        return timestamp
+
     def _absent_employee(self, cr, uid, ids, field_name, arg, context=None):
         return {}
 
     def _search_absent_employee(self, cr, uid, obj, name, args, context=None):
-        today_start = datetime.date.today().strftime(tools.DEFAULT_SERVER_DATETIME_FORMAT)
-        today_end = (datetime.date.today() + relativedelta(hours=23, minutes=59, seconds=59)).strftime(tools.DEFAULT_SERVER_DATETIME_FORMAT)
+        today_date = datetime.date.today().strftime(
+            tools.DEFAULT_SERVER_DATETIME_FORMAT)
+        today_start = self._subtract_timezone(cr, uid, datetime.datetime.strptime(today_date, tools.DEFAULT_SERVER_DATETIME_FORMAT), context=context)
+        today_end = (today_start + relativedelta(
+            hours=23, minutes=59, seconds=59)).strftime(tools.DEFAULT_SERVER_DATETIME_FORMAT)
+        today_start = today_start.strftime(tools.DEFAULT_SERVER_DATETIME_FORMAT)
         absent_emp_ids = []
         holiday_ids = self.pool['hr.holidays'].search_read(cr, uid, [
             ('state', 'not in', ['cancel', 'refuse']),

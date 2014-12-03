@@ -13,21 +13,25 @@ class hr_department(models.Model):
     @api.multi
     def _leave_count(self):
         Holiday = self.env['hr.holidays']
-
-        today_start = datetime.date.today().strftime(
+        today_date = datetime.date.today().strftime(
             DEFAULT_SERVER_DATETIME_FORMAT)
-        today_end = (datetime.date.today() + relativedelta(
+        today_start = self.env['hr.employee']._subtract_timezone(
+            datetime.datetime.strptime(today_date, DEFAULT_SERVER_DATETIME_FORMAT))
+        today_end = (today_start + relativedelta(
             hours=23, minutes=59, seconds=59)).strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+        today_start = today_start.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
 
         leave_data = Holiday.read_group(
-            [('department_id', 'in', self.ids), ('state', '=', 'confirm'), ('type', '=', 'remove')],
+            [('department_id', 'in', self.ids),
+             ('state', '=', 'confirm'), ('type', '=', 'remove')],
             ['department_id'], ['department_id'])
         allocation_data = Holiday.read_group(
-            [('department_id', 'in', self.ids), ('state', '=', 'confirm'), ('type', '=', 'add')],
+            [('department_id', 'in', self.ids),
+             ('state', '=', 'confirm'), ('type', '=', 'add')],
             ['department_id'], ['department_id'])
         absence_data = Holiday.read_group(
             [('department_id', 'in', self.ids), ('state', 'not in', ['cancel', 'refuse']),
-            ('date_from', '<=', today_end), ('date_to', '>=', today_start), ('type', '=', 'remove')],
+             ('date_from', '<=', today_end), ('date_to', '>=', today_start), ('type', '=', 'remove')],
             ['department_id'], ['department_id'])
 
         res_leave = dict((data['department_id'][0], data['department_id_count']) for data in leave_data)
