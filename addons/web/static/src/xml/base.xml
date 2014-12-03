@@ -933,6 +933,17 @@
     </div>
 </t>
 
+<div t-name="GraphView.nodata" class="oe_view_nocontent" >
+    <div class="oe_empty_custom_dashboard">
+        <p><b>No data to display.</b></p>
+        <p>
+                No data available for this chart.  Try to add some records, or make sure
+                that there is no active filter in the search bar.
+        </p>
+    </div>
+</div>
+
+
 <div t-name="PivotView" class="oe_pivot">
     <div class="o-field-selection"/>
     <div class="o-pivot-table"/>
@@ -1721,7 +1732,7 @@
             <span><input type="checkbox"/>Use by default</span>
         </li>
         <li class="oe-save-name">
-            <span><input type="checkbox"/>Share with all users</span>
+            <span class="oe-share-filter"><input type="checkbox"/>Share with all users</span>
         </li>
         <li class="oe-save-name"><button class="btn btn-default">Save</button></li>
     </ul>

@@ -133,7 +133,11 @@ instance.web.PivotView = instance.web.View.extend({
         this.measures.__count__ = {string: "Quantity", type: "integer"};
     },
     do_search: function (domain, context, group_by) {
-        this.main_row.groupbys = group_by.length ? group_by : (context.pivot_row_groupby || this.initial_row_groupby.slice(0));
+        if (!this.ready) {
+            this.initial_row_groupby = context.pivot_row_groupby || this.initial_row_groupby;
+            this.initial_col_groupby = context.pivot_col_groupby || this.initial_col_groupby;
+        }
+        this.main_row.groupbys = group_by.length ? group_by : this.initial_row_groupby.slice(0);
         this.main_col.groupbys = context.pivot_column_groupby || this.initial_col_groupby.slice(0);
         this.active_measures = context.pivot_measures || this.active_measures;
 
@@ -206,11 +210,13 @@ instance.web.PivotView = instance.web.View.extend({
     },
     on_cell_click: function (event) {
         var $target = $(event.target);
-        if ($target.hasClass('oe-closed') || $target.hasClass('oe-opened')) return;
+        if ($target.hasClass('oe-closed') || $target.hasClass('oe-opened') || $target.hasClass('oe-empty')) return;
         var row_id = $target.data('id'),
             col_id = $target.data('col_id'),
             row_domain = this.headers[row_id].domain,
-            col_domain = this.headers[col_id].domain;
+            col_domain = this.headers[col_id].domain,
+            context = _.omit(_.clone(this.context), 'group_by');
+
         return this.do_action({
             type: 'ir.actions.act_window',
             name: this.title,
@@ -219,7 +225,7 @@ instance.web.PivotView = instance.web.View.extend({
             view_type : "list",
             view_mode : "list",
             target: 'current',
-            context: this.context,
+            context: context,
             domain: this.domain.concat(row_domain, col_domain),
         });
     },
@@ -496,12 +502,9 @@ instance.web.PivotView = instance.web.View.extend({
                     $cell.data('id', cell.id);
                 }
                 if (cell.measure) {
-                    $cell.addClass('measure-row')
+                    $cell.addClass('measure-row text-muted')
                         .text(cell.measure)
                         .toggleClass('oe-total', cell.is_bold);
-                    // if (display_total && (j >= headers[i].length - this.active_measures.length)) {
-                    //     $cell.addClass('oe-total');
-                    // }
                 }
                 $row.append($cell);
             }
@@ -535,6 +538,7 @@ instance.web.PivotView = instance.web.View.extend({
                 $cell = $('<td>')
                             .data('id', rows[i].id)
                             .data('col_id', rows[i].col_ids[Math.floor(j / nbr_measures)])
+                            .toggleClass('oe-empty', !value)
                             .text(value);
                 if (((j >= length - this.active_measures.length) && display_total) || i === 0){
                     $cell.css('font-weight', 'bold');

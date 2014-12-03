@@ -191,11 +191,17 @@ instance.web.GraphWidget = instance.web.Widget.extend({
         return value;
     },
     display_graph: function () {
+        console.log('display_graph');
         if (this.to_remove) {
             nv.utils.offWindowResize(this.to_remove);
         }
         this.$el.empty();
-        this['display_' + this.mode]();
+        console.log(this.data);
+        if (!this.data.length) {
+            this.$el.append(QWeb.render('GraphView.nodata'));
+        } else {
+            this['display_' + this.mode]();
+        }
     },
     display_bar: function () {
         // prepare data for bar chart
@@ -300,7 +306,6 @@ instance.web.GraphWidget = instance.web.Widget.extend({
         chart(svg);
         this.to_remove = chart.update;
         nv.utils.onWindowResize(chart.update);
-
     },
     display_line: function () {
         var self = this,
