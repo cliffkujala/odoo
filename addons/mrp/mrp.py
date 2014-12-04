@@ -973,6 +973,12 @@ class mrp_production(osv.osv):
                 if remaining_qty:
                     #consumed more in wizard than previously planned
                     product = self.pool.get('product.product').browse(cr, uid, consume['product_id'], context=context)
+                    available_qty = product.product_tmpl_id.qty_available
+                    
+                    #check for product quantity available in a stock
+                    if remaining_qty > available_qty:
+                        raise osv.except_osv(_('Warning!'), _('[%s] %s - Quantity are not in available stock.') % (product.default_code, product.name_template))
+
                     extra_move_id = self._make_consume_line_from_data(cr, uid, production, product, product.uom_id.id, remaining_qty, False, 0, context=context)
                     if extra_move_id:
                         if consume['lot_id']:
