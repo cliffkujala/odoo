@@ -117,56 +117,29 @@ class note_note(osv.osv):
     _order = 'sequence'
 
     def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, lazy=True):
-        if groupby and groupby[0]=="stage_id":
+        if groupby and groupby[0] == "stage_id":
+            current_stage_ids = self.pool.get('note.stage').search(cr, uid, [('user_id', '=', uid)], context=context)
+            stages = self.pool['note.stage'].browse(cr, uid, current_stage_ids, context=context)
+            result = [
+                {  # notes by user stages
+                    '__context': {'group_by': groupby[1:]},
+                    '__domain': domain + [('stage_ids.id', '=', stage.id)],
+                    'stage_id': (stage.id, stage.name),
+                    'stage_id_count': self.search(cr, uid, domain + [('stage_ids', '=', stage.id)], context=context, count=True),
+                    '__fold': stage.fold,
+                } for stage in stages
+            ]
 
-            #search all stages
-            current_stage_ids = self.pool.get('note.stage').search(cr,uid,[('user_id','=',uid)], context=context)
-
-            if current_stage_ids: #if the user have some stages
-                stages = self.pool['note.stage'].browse(cr, uid, current_stage_ids, context=context)
-
-                result = [{ #notes by stage for stages user
-                        '__context': {'group_by': groupby[1:]},
-                        '__domain': domain + [('stage_ids.id', '=', stage.id)],
-                        'stage_id': (stage.id, stage.name),
-                        'stage_id_count': self.search(cr,uid, domain+[('stage_ids', '=', stage.id)], context=context, count=True),
-                        '__fold': stage.fold,
-                    } for stage in stages]
-
-                #note without user's stage
-                nb_notes_ws = self.search(cr,uid, domain+[('stage_ids', 'not in', current_stage_ids)], context=context, count=True)
-                if nb_notes_ws:
-                    # add note to the first column if it's the first stage
-                    dom_not_in = ('stage_ids', 'not in', current_stage_ids)
-                    if result and result[0]['stage_id'][0] == current_stage_ids[0]:
-                        dom_in = result[0]['__domain'].pop()
-                        result[0]['__domain'] = domain + ['|', dom_in, dom_not_in]
-                        result[0]['stage_id_count'] += nb_notes_ws
-                    else:
-                        # add the first stage column
-                        result = [{
-                            '__context': {'group_by': groupby[1:]},
-                            '__domain': domain + [dom_not_in],
-                            'stage_id': (stages[0].id, stages[0].name),
-                            'stage_id_count':nb_notes_ws,
-                            '__fold': stages[0].name,
-                        }] + result
-
-            else: # if stage_ids is empty
-
-                #note without user's stage
-                nb_notes_ws = self.search(cr,uid, domain, context=context, count=True)
-                if nb_notes_ws:
-                    result = [{ #notes for unknown stage
-                        '__context': {'group_by': groupby[1:]},
-                        '__domain': domain,
-                        'stage_id': False,
-                        'stage_id_count':nb_notes_ws
-                    }]
-                else:
-                    result = []
+            shared_notes = self.search(cr, uid, domain + [('stage_ids', 'not in', current_stage_ids), ('create_uid', '!=', uid)], context=context, count=True)
+            if shared_notes:
+                domain.append(('create_uid', '!=', uid))
+                result.append({
+                    '__context': {'group_by': groupby[1:]},
+                    '__domain': domain,
+                    'stage_id': False,
+                    'stage_id_count': shared_notes,
+                })
             return result
-
         else:
             return super(note_note, self).read_group(self, cr, uid, domain, fields, groupby, 
                 offset=offset, limit=limit, context=context, orderby=orderby,lazy=lazy)
