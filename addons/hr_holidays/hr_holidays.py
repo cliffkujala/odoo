@@ -94,7 +94,25 @@ class hr_holidays_status(osv.osv):
         'color_name': 'red',
         'active': True,
     }
-
+    
+    def _search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False, access_rights_uid=None):
+        if context is None:
+            context = {}
+        ids = super(hr_holidays_status, self)._search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=False, access_rights_uid=access_rights_uid)
+        if context.get('employee_id', False):
+            to_consume_ids = []
+            consumed_leave_ids = []
+            for record in self.browse(cr, uid, ids, context=context):
+                if record.max_leaves <= record.leaves_taken and record.limit is False:
+                    consumed_leave_ids.append((record.id, record.max_leaves, record.leaves_taken))
+                else:
+                    to_consume_ids.append((record.id, record.max_leaves, record.leaves_taken, int(not record.limit)))
+            to_consume_ids = [x[0] for x in sorted(to_consume_ids, key=lambda res_values: (res_values[1], res_values[2], res_values[3]), reverse=True)]
+            consumed_leave_ids = [x[0] for x in sorted(consumed_leave_ids, key=lambda res_values: (res_values[1], res_values[2]), reverse=True)]
+            to_consume_ids.extend(consumed_leave_ids)
+            return to_consume_ids
+        return ids
+    
     def name_get(self, cr, uid, ids, context=None):
 
         if not context.get('employee_id',False):
