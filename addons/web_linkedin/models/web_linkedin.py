@@ -398,10 +398,10 @@ class linkedin(models.AbstractModel):
     @api.model
     def test_linkedin_keys(self):
         res = self.get_param_parameter('web.linkedin.apikey') and self.get_param_parameter('web.linkedin.secretkey') and True
-        if not self.env['res.users'].has_group('base.group_system'):
-            return {'is_access_right': False}
         if res:
             return {'is_key_set': res}
+        if not self.env['res.users'].has_group('base.group_system'):
+            return {'show_warning': True}
         action = self.env['ir.model.data'].get_object_reference('base_setup', 'action_sale_config')[1]
         base_url = self.get_param_parameter('web.base.url')
         return {'redirect_url': base_url + '/web?#action=' + str(action)}

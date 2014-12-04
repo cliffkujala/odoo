@@ -475,7 +475,7 @@ openerp.web_linkedin = function(instance) {
                     $linkedin_button.appendTo(self.$buttons);
                     if (!result.redirect_url) {
                         $linkedin_button.click(function() {
-                            if (!result.is_access_right && !result.is_key_set) {
+                            if (result.show_warning) {
                                 var dialog = new instance.web.Dialog(self, {
                                     title: _t("LinkedIn is not configured"),
                                     buttons: [

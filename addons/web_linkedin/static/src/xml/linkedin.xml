@@ -65,7 +65,7 @@
         </t>
         <div class="oe_kanban_import_contact">
             <a t-if="result.redirect_url" t-attf-href="#{result.redirect_url}" class="oe_bold">Import Contacts from Linkedin</a>
-            <a t-if="!result.redirect_url or result.is_key_set" href="#" class="oe_bold">Import Contacts from Linkedin</a>
+            <a t-if="!result.redirect_url" href="#" class="oe_bold">Import Contacts from Linkedin</a>
         </div>
     </t>
 
