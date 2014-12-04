@@ -102,7 +102,7 @@ class calendar_attendee(osv.Model):
     }
 
     def copy(self, cr, uid, id, default=None, context=None):
-        raise UserError(_('Warning!'), _('You cannot duplicate a calendar attendee.'))
+        raise UserError( _('You cannot duplicate a calendar attendee.'))
 
     def onchange_partner_id(self, cr, uid, ids, partner_id, context=None):
         """
@@ -139,7 +139,7 @@ class calendar_attendee(osv.Model):
         cal = vobject.iCalendar()
         event = cal.add('vevent')
         if not event_obj.start or not event_obj.stop:
-            raise UserError(_('Warning!'), _("First you have to specify the date of the invitation."))
+            raise UserError( _("First you have to specify the date of the invitation."))
         event.add('created').value = ics_datetime(time.strftime(DEFAULT_SERVER_DATETIME_FORMAT))
         event.add('dtstart').value = ics_datetime(event_obj.start, event_obj.allday)
         event.add('dtend').value = ics_datetime(event_obj.stop, event_obj.allday)
@@ -859,7 +859,7 @@ class calendar_event(osv.Model):
                 else:
                     allday = False
                     _logger.info("Calendar - All day is not specified, arbitrarily set to False")
-                    #raise UserError(_('Error!'), ("Need to know if it's an allday or not..."))
+                    #raise UserError( ("Need to know if it's an allday or not..."))
 
             key = "date" if allday else "datetime"
             notkey = "datetime" if allday else "date"
@@ -1234,9 +1234,9 @@ class calendar_event(osv.Model):
         @return: string containing recurring rule (empty if no rule)
         """
         if data['interval'] and data['interval'] < 0:
-            raise UserError(_('warning!'), _('interval cannot be negative.'))
+            raise UserError( _('interval cannot be negative.'))
         if data['count'] and data['count'] <= 0:
-            raise UserError(_('warning!'), _('count cannot be negative or 0.'))
+            raise UserError( _('count cannot be negative or 0.'))
 
         def get_week_string(freq, data):
             weekdays = ['mo', 'tu', 'we', 'th', 'fr', 'sa', 'su']
@@ -1249,7 +1249,7 @@ class calendar_event(osv.Model):
         def get_month_string(freq, data):
             if freq == 'monthly':
                 if data.get('month_by') == 'date' and (data.get('day') < 1 or data.get('day') > 31):
-                    raise UserError(_('Error!'), ("Please select a proper day of the month."))
+                    raise UserError( ("Please select a proper day of the month."))
 
                 if data.get('month_by') == 'day':  # Eg : Second Monday of the month
                     return ';BYDAY=' + data.get('byday') + data.get('week_list')
@@ -1605,7 +1605,7 @@ class calendar_event(osv.Model):
         context = dict(context or {})
 
         if 'date' in groupby:
-            raise UserError(_('Warning!'), _('Group by date is not supported, use the calendar view instead.'))
+            raise UserError( _('Group by date is not supported, use the calendar view instead.'))
         virtual_id = context.get('virtual_id', True)
         context.update({'virtual_id': False})
         res = super(calendar_event, self).read_group(cr, uid, domain, fields, groupby, offset=offset, limit=limit, context=context, orderby=orderby, lazy=lazy)
