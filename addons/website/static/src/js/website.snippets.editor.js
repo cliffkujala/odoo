@@ -51,11 +51,15 @@
     $.extend($.expr[':'],{
         o_editable: function(node,i,m){
             while (node) {
-                if (node.className && node.className.indexOf('o_editable')!==-1) {
-                    return true;
-                } else {
-                    node = node.parentNode;
+                if (node.className) {
+                    if (node.className.indexOf('o_not_editable')!==-1 ) {
+                        return false;
+                    }
+                    if (node.className.indexOf('o_editable')!==-1 ) {
+                        return true;
+                    }
                 }
+                node = node.parentNode;
             }
             return false;
         },
@@ -2019,44 +2023,9 @@
                     self.find_existing($(this).val());
                 });
 
-            function render_contact(options) {
-                return openerp.jsonRpc('/web/dataset/call_kw', 'call', {
-                    model: 'website.qweb.field.contact',
-                    method: 'get_record_to_html',
-                    args: [[self.ID]],
-                    kwargs: {
-                        options: options,
-                        context: website.get_context(),
-                    }
-                });
-            }
-
             // bind result
             this.$ul.on('click', "li:not(:first) a", function (e) {
-                self.ID = +$(this).data("id");
-                self.$target.attr('data-oe-many2one-id', self.ID).data('oe-many2one-id', self.ID);
-
-                if (self.$target.data('oe-type') === "contact") {
-                    $('[data-oe-contact-options]')
-                        .filter('[data-oe-model="'+self.$target.data('oe-model')+'"]')
-                        .filter('[data-oe-id="'+self.$target.data('oe-id')+'"]')
-                        .filter('[data-oe-field="'+self.$target.data('oe-field')+'"]')
-                        .filter('[data-oe-contact-options!="'+self.$target.data('oe-contact-options')+'"]')
-                        .add(self.$target)
-                        .attr('data-oe-many2one-id', self.ID).data('oe-many2one-id', self.ID)
-                        .each(function () {
-                            var $node = $(this);
-                            render_contact($node.data('oe-contact-options'))
-                                .then(function (html){
-                                    $node.html(html);
-                                });
-                        });
-                } else {
-                    self.$target.html($(this).data("name"));
-                }
-
-                self.$target.html(self.$target.data('oe-type') !== "contact" ? $(this).data("name") : $(this).html());
-                self.clear();
+                self.select_record(this);
             });
         },
 
@@ -2097,6 +2066,46 @@
                 self.$search.after(openerp.qweb.render("website.many2one.search",{contacts:result}));
             });
         },
+
+        get_contact_rendering: function (options) {
+            return openerp.jsonRpc('/web/dataset/call_kw', 'call', {
+                model: 'website.qweb.field.contact',
+                method: 'get_record_to_html',
+                args: [[this.ID]],
+                kwargs: {
+                    options: options,
+                    context: website.get_context(),
+                }
+            });
+        },
+
+        select_record: function (li) {
+            var self = this;
+
+            self.ID = +$(li).data("id");
+            self.$target.attr('data-oe-many2one-id', self.ID).data('oe-many2one-id', self.ID);
+
+            if (self.$target.data('oe-type') === "contact") {
+                $('[data-oe-contact-options]')
+                    .filter('[data-oe-model="'+self.$target.data('oe-model')+'"]')
+                    .filter('[data-oe-id="'+self.$target.data('oe-id')+'"]')
+                    .filter('[data-oe-field="'+self.$target.data('oe-field')+'"]')
+                    .filter('[data-oe-contact-options!="'+self.$target.data('oe-contact-options')+'"]')
+                    .add(self.$target)
+                    .attr('data-oe-many2one-id', self.ID).data('oe-many2one-id', self.ID)
+                    .each(function () {
+                        var $node = $(this);
+                        self.get_contact_rendering($node.data('oe-contact-options'))
+                            .then(function (html){
+                                $node.html(html);
+                            });
+                    });
+            } else {
+                self.$target.html($(li).data("name"));
+            }
+
+            self.clear();
+        }
     });
 
 

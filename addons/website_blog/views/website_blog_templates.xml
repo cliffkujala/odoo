@@ -203,7 +203,7 @@
             <h2 t-field="blog_post.subtitle"/>
             <p class="post-meta text-muted text-center" name="blog_post_data"/>
             <div>
-                <span t-field="blog_post.author_avatar" t-field-options='{"widget": "image", "class": "img-circle", "style":"width: 30px; margin-right: 10px; display:inline"}' />
+                <span t-field="blog_post.author_avatar" class="o_not_editable" t-field-options='{"widget": "image", "class": "img-circle", "style":"width: 30px; margin-right: 10px; display:inline"}' />
                 <span t-field="blog_post.author_id" style="display: inline-block;" t-field-options='{
                     "widget": "contact",
                     "fields": ["name"]

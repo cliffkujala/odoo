@@ -40,6 +40,15 @@
                 return res;
             },
         });
+        
+        website.snippet.options.many2one.include({
+            select_record: function (li) {
+                this._super(li);
+                if (this.$target.is('.blog_title div [data-oe-field="author_id"]')) {
+                    this.$target.prev('[data-oe-field="author_avatar"]').find("img").attr("src", "/website/image/res.partner/"+this.ID+"/image");
+                }
+            }
+        });
     }
 
     website.snippet.options.website_blog = website.snippet.Option.extend({

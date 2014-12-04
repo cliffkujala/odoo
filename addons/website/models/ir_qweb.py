@@ -472,7 +472,7 @@ class Contact(orm.AbstractModel):
         node = self.record_to_html(cr, uid,
             'record', {'record': self.pool['res.partner'].browse(cr, uid, ids[0], context=context)},
             options=options, context=context)
-        return node.__html__()
+        return node and node.__html__()
 
 class QwebView(orm.AbstractModel):
     _name = 'website.qweb.field.qweb'

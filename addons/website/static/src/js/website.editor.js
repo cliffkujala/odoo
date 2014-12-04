@@ -1079,9 +1079,13 @@
                 }
             });
 
-            $('.is-not-editable').attr("contentEditable", false);
+            $('.o_not_editable').attr("contentEditable", false);
 
             $('#wrapwrap [data-oe-model]')
+                .not('.o_not_editable')
+                .filter(function () {
+                    return !$(this).closest('.o_not_editable').length;
+                })
                 .not('link, script')
                 .not('[data-oe-readonly]')
                 .not('img[data-oe-field="arch"], br[data-oe-field="arch"], input[data-oe-field="arch"]')
