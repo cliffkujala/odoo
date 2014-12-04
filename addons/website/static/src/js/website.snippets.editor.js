@@ -1984,7 +1984,6 @@
     website.snippet.options.many2one = website.snippet.Option.extend({
         start: function () {
             var self = this;
-            this.$target.attr('contentEditable', 'false');
 
             this.Model = this.$target.data('oe-many2one-model');
             this.ID = +this.$target.data('oe-many2one-id');
@@ -2062,6 +2061,7 @@
         },
 
         on_focus: function () {
+            this.$target.attr('contentEditable', 'false');
             this.clear();
             this._super();
         },
