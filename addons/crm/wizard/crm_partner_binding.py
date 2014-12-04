@@ -29,11 +29,11 @@ class crm_partner_binding(models.TransientModel):
         """
         active_model = False
         partner_id = False
-        partner_obj = self.pool['res.partner']
+        partner_obj = self.env['res.partner']
 
         # The active model has to be a lead or a phonecall
         if (self._context.get('active_model') == 'crm.lead') and self._context.get('active_id'):
-            active_model = self.pool['crm.lead'].browse(self._cr, self._uid, self._context.get('active_id'), context=self._context)
+            active_model = self.env['crm.lead'].browse(self._context.get('active_id'))
         elif (self._context.get('active_model') == 'crm.phonecall') and self._context.get('active_id'):
             active_model = self.env['crm.phonecall'].browse(self._context.get('active_id'))
 
@@ -42,33 +42,31 @@ class crm_partner_binding(models.TransientModel):
 
             # A partner is set already
             if active_model.partner_id:
-                partner_id = active_model.partner_id.id
+                partner_id = active_model.partner_id
 
             # Search through the existing partners based on the lead's email
             elif active_model.email_from:
-                partner_ids = partner_obj.search(self._cr, self._uid, [('email', '=', active_model.email_from)], context=self._context)
+                partner_ids = partner_obj.search([('email', '=', active_model.email_from)])
                 if partner_ids:
                     partner_id = partner_ids[0]
             # Search through the existing partners based on the lead's partner or contact name
             elif active_model.partner_name:
-                partner_ids = partner_obj.search(self._cr, self._uid, [('name', 'ilike', '%'+active_model.partner_name+'%')], context=self._context)
+                partner_ids = partner_obj.search([('name', 'ilike', '%'+active_model.partner_name+'%')])
                 if partner_ids:
                     partner_id = partner_ids[0]
             elif active_model.contact_name:
-                partner_ids = partner_obj.search(self._cr, self._uid, [('name', 'ilike', '%'+active_model.contact_name+'%')], context=self._context)
+                partner_ids = partner_obj.search([('name', 'ilike', '%'+active_model.contact_name+'%')])
                 if partner_ids:
                     partner_id = partner_ids[0]
-
         return partner_id
 
     @api.model
     def default_get(self, fields):
         res = super(crm_partner_binding, self).default_get(fields)
-        partner_id = self._find_matching_partner()
+        partner = self._find_matching_partner()
         if 'action' in fields:
-            res['action'] = partner_id and 'exist' or 'create'
+            res['action'] = partner and 'exist' or 'create'
         if 'partner_id' in fields:
-            res['partner_id'] = partner_id
-
+            res['partner_id'] = partner and partner.id or False
         return res
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

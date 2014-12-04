@@ -2400,7 +2400,6 @@ class BaseModel(object):
         default = self._defaults.get(column_name)
         if callable(default):
             default = default(self, cr, SUPERUSER_ID, context)
-
         column = self._columns[column_name]
         ss = column._symbol_set
         db_default = ss[1](default)

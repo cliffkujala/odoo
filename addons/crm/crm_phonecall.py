@@ -11,14 +11,14 @@ class crm_phonecall(models.Model):
     _order = "id desc"
     _inherit = ['mail.thread']
 
-    @api.multi
+    @api.model
     def _get_default_state(self):
         if self._context.get('default_state'):
             return self._context.get('default_state')
         return 'open'
 
-    date_action_last = fields.Datetime('Last Action', readonly=1)
-    date_action_next = fields.Datetime('Next Action', readonly=1)
+    date_action_last = fields.Datetime('Last Action', readonly=True)
+    date_action_next = fields.Datetime('Next Action', readonly=True)
     create_date = fields.Datetime('Creation Date' , readonly=True)
     team_id = fields.Many2one('crm.team', 'Sales Team', oldname='section_id', 
                 select=True, help='Sales team to which Case belongs to.')
@@ -40,7 +40,7 @@ class crm_phonecall(models.Model):
     date_open = fields.Datetime('Opened', readonly=True)
     # phonecall fields
     name = fields.Char('Call Summary', required=True)
-    active = fields.Boolean('Active', required=False, default=1)
+    active = fields.Boolean('Active', required=False, default=True)
     duration = fields.Float('Duration', help='Duration in minutes and seconds.')
     categ_id = fields.Many2one('crm.phonecall.category', 'Category')
     partner_phone = fields.Char('Phone')
@@ -253,8 +253,7 @@ class crm_phonecall(models.Model):
 
         opportunity_dict = self.convert_opportunity()
         return opportunity_dict.values()[0].redirect_opportunity_view()
-        #return self.pool['crm.lead'].redirect_opportunity_view(self._cr, self._uid, opportunity_dict.values()[0], self._context)
-
+       
     # ----------------------------------------
     # OpenChatter
     # ----------------------------------------

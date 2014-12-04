@@ -244,7 +244,6 @@ class MergePartnerAutomatic(models.TransientModel):
     @api.multi
     def _update_values(self, src_partners, dst_partner):
         _logger.debug('_update_values for dst_partner: %s for src_partners: %r', dst_partner.id, list(map(operator.attrgetter('id'), src_partners)))
-
         columns = dst_partner._columns
         def write_serializer(column, item):
             if isinstance(item, browse_record):
@@ -272,11 +271,8 @@ class MergePartnerAutomatic(models.TransientModel):
 
     @api.model
     @mute_logger('openerp.osv.expression', 'openerp.models')
-    def _merge(self, partner_ids):
-        dst_partner = self.dst_partner_id or None 
-        proxy = self.pool['res.partner']
-
-        partner_ids = proxy.exists(self._cr, self._uid, partner_ids, context=self._context)
+    def _merge(self, partner_ids, dst_partner=None):
+        partner_ids = self.pool['res.partner'].exists(self._cr, self._uid, partner_ids, context=self._context)
         if len(partner_ids) < 2:
             return
 
@@ -287,7 +283,7 @@ class MergePartnerAutomatic(models.TransientModel):
             raise except_orm(_('Error'), _("All contacts must have the same email. Only the Administrator can merge contacts with different emails."))
 
         if dst_partner and dst_partner.id in partner_ids:
-            src_partners = proxy.browse(self._cr, self._uid, [id for id in partner_ids if id != dst_partner.id], context=self._context)
+            src_partners = self.env['res.partner'].browse([id for id in partner_ids if id != dst_partner.id])
         else:
             ordered_partners = self._get_ordered_partner(partner_ids)
             dst_partner = ordered_partners[-1]
@@ -319,16 +315,16 @@ class MergePartnerAutomatic(models.TransientModel):
         information of the previous one and will copy the new cleaned email into
         the email field.
         """
-        proxy_model = self.pool['ir.model.fields']
-        fields = proxy_model.search_read(self._cr, self._uid, 
-            [('model', '=', 'res.partner'),('ttype', 'like', '%2many')],context=self._context)
+        fields = self.env['ir.model.fields'].search_read([('model', '=', 'res.partner'),('ttype', 'like', '%2many')])
         reset_fields = dict((field['name'], []) for field in fields)
-        proxy_partner = self.pool['res.partner']
+
         self = self.with_context(active_test=False)
-        partners = proxy_partner.search_read(self._cr, self._uid, [], context=self._context)
         fields = ['name', 'var' 'partner_id' 'is_company', 'email']
+        partners = self.env['res.partner'].search_read([], fields)
+
         partners.sort(key=operator.itemgetter('id'))
         partners_len = len(partners)
+
         _logger.info('partner_len: %r', partners_len)
 
         for idx, partner in enumerate(partners):
@@ -341,12 +337,10 @@ class MergePartnerAutomatic(models.TransientModel):
                 emails = sanitize_email(partner['email'])
                 head, tail = emails[:1], emails[1:]
                 email = head[0] if head else False
-                proxy_partner.write(self._cr, self._uid, [partner['id']],
-                                    {'email': email}, context=self._context)
+                partner.write({'email': email})
                 for email in tail:
                     values = dict(reset_fields, email=email)
-                    proxy_partner.copy(self._cr, self._uid, partner['id'], values,
-                                       context=self._context)
+                    partner.copy(values)
             except Exception:
                 _logger.exception("There is a problem with this partner: %r", partner)
                 raise
@@ -429,11 +423,12 @@ class MergePartnerAutomatic(models.TransientModel):
             self.current_line_id.unlink()
         return self._next_screen()
 
+
     @api.multi
     def _get_ordered_partner(self, partner_ids):
-        partners = self.env['res.partner'].browse(partner_ids)
-        ordered_partners =  sorted(sorted(partners,key=operator.attrgetter('create_date'), reverse=True),key=operator.attrgetter('active'), reverse=True)
-        return ordered_partners
+        partners = self.env['res.partner'].search([('id','in',partner_ids)], order='create_date')
+        # ordered_partners =  sorted(sorted(partners,key=operator.attrgetter('create_date'), reverse=True),key=operator.attrgetter('active'), reverse=True)
+        return partners
 
     @api.multi
     def _next_screen(self):
@@ -658,7 +653,7 @@ class MergePartnerAutomatic(models.TransientModel):
                 'target': 'new',
             }
 
-        self._merge(partner_ids)
+        self._merge(partner_ids, self.dst_partner_id)
 
         if self.current_line_id:
             self.current_line_id.unlink()

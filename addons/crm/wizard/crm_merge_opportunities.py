@@ -1,5 +1,4 @@
-from openerp import models, api, fields
-
+from openerp import models, api, fields, _
 
 class crm_merge_opportunity(models.TransientModel):
     """
@@ -23,12 +22,12 @@ class crm_merge_opportunity(models.TransientModel):
         opportunity2merge_ids = self.opportunity_ids
         #TODO: why is this passed through the context ?
         self = self.with_context(lead_ids = [opportunity2merge_ids[0].id])
-        merge_rec = self.opportunity_ids.merge_opportunity(self.user_id.id, self.team_id.id)
+        merge_result = self.opportunity_ids.merge_opportunity(self.user_id.id, self.team_id.id)
         # The newly created lead might be a lead or an opp: redirect toward the right view
-        if merge_rec.type == 'opportunity':
-            return merge_rec.redirect_opportunity_view()
+        if merge_result.type == 'opportunity':
+            return merge_result.redirect_opportunity_view()
         else:
-            return merge_rec.redirect_lead_view()
+            return merge_result.redirect_lead_view()
 
     @api.model
     def default_get(self, fields):

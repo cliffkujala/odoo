@@ -22,7 +22,7 @@ class crm_team(models.Model):
             monthly_open_leads: number of open lead during the last months
             monthly_planned_revenue: planned revenu of opportunities during the last months
         """
-        obj = self.pool['crm.lead']
+        obj = self.env['crm.lead']
         month_begin = date.today().replace(day=1)
         date_begin = month_begin - relativedelta.relativedelta(months=self._period_number - 1)
         date_end = month_begin.replace(day=calendar.monthrange(month_begin.year, month_begin.month)[1])
@@ -51,7 +51,7 @@ class crm_team(models.Model):
         string='Planned Revenue per Month')
     alias_id = fields.Many2one('mail.alias', 'Alias', ondelete="restrict", required=True, help="The email address associated with this team. New emails received will automatically create new leads assigned to the team.")
 
-#Need to migrate
+    @api.v7
     def _auto_init(self, cr, context=None):
         """Installation hook to create aliases for all lead and avoid constraint errors."""
         return self.pool.get('mail.alias').migrate_to_alias(cr, self._name, self._table, super(crm_team, self)._auto_init,

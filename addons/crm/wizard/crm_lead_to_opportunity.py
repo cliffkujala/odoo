@@ -34,13 +34,12 @@ class crm_lead2opportunity_partner(models.TransientModel):
         If there is an exisitng partner link to the lead, find all existing
         opportunities links with this partner to merge all information together
         """
-        lead_obj = self.env['crm.lead']
         res = super(crm_lead2opportunity_partner, self).default_get(fields)
 
         if self._context.get('active_id'):
             tomerge = [int(self._context['active_id'])]
             partner_id = res.get('partner_id')
-            lead = lead_obj.browse(self._context['active_id'])
+            lead = self.env['crm.lead'].browse(int(self._context['active_id']))
             email = lead.partner_id and lead.partner_id.email or lead.email_from
 
             tomerge.extend([rec.id for rec in self._get_duplicated_leads(partner_id, email, include_lost=True)])
@@ -76,7 +75,7 @@ class crm_lead2opportunity_partner(models.TransientModel):
                 team_id = result.get('value') and result['value'].get('team_id') and result['value']['team_id'] or False
         self.team_id = team_id
 
-    @api.model
+    @api.multi
     def view_init(self, fields):
         """
         Check some preconditions before the wizard executes.
@@ -95,7 +94,7 @@ class crm_lead2opportunity_partner(models.TransientModel):
         team_id = vals.get('team_id', False)
         
         for lead in lead_rec:
-            partner_id = self._create_partner(lead)
+            partner_id = self._create_partner(lead, self.action, lead.partner_id)
             res = lead.convert_opportunity(partner_id, [], False)
         user_ids = vals.get('user_ids', False)
         
@@ -139,7 +138,7 @@ class crm_lead2opportunity_partner(models.TransientModel):
 
 
     @api.multi
-    def _create_partner(self, lead):
+    def _create_partner(self, lead, action, partner):
         """
         Create partner based on action.
         :return dict: dictionary organized as followed: {lead_id: partner_assigned_id}
@@ -147,14 +146,12 @@ class crm_lead2opportunity_partner(models.TransientModel):
         #TODO this method in only called by crm_lead2opportunity_partner
         #wizard and would probably diserve to be refactored or at least
         #moved to a better place
-        partner_id = lead.partner_id.id
-        action=self.action
         if self.action == 'each_exist_or_create':
             self = self.with_context(active_id = lead.id)
-            partner_id = self._find_matching_partner()
+            partner = self._find_matching_partner()
             action = 'create'
 
-        res = lead.handle_partner_assignation(action, partner_id)
+        res = lead.handle_partner_assignation(action, partner)
         return res.get(lead.id)
 
 
@@ -235,7 +232,6 @@ class crm_lead2opportunity_mass_convert(models.TransientModel):
                     lead = self.env['crm.lead'].browse(lead_id)
                     duplicated_lead_rec = self._get_duplicated_leads(lead.partner_id.id, lead.partner_id and lead.partner_id.email or lead.email_from)
                     if len(duplicated_lead_rec) > 1:
-                        # lead_data = self.pool['crm.lead'].browse(self._cr, self._uid, duplicated_lead_ids)
                         lead = duplicated_lead_rec.merge_opportunity()
                         merged_lead_ids.extend([rec.id for rec in duplicated_lead_rec])
                         remaining_lead_ids.append(lead.id)
