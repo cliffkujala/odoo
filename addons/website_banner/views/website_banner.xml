@@ -22,7 +22,7 @@
                         <span class="oe_snippet_thumbnail_title">Bounce Banner</span>
                     </div>
 
-                    <div class="bounce_banner modal-dialog readable" id="banner_modal" role="dialog" data-list-id="0">
+                    <div class="bounce_banner modal-dialog" id="banner_modal" role="dialog" data-list-id="0">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&amp;times;</span></button>
@@ -53,6 +53,17 @@
                     data-selector=".bounce_banner"
                     data-drop-in=".oe_structure, [data-oe-type=html]">
                     <li data-choose_mailing_list=""><a>Change Newsletter</a></li>
+                </div>
+                <div data-js='bounce_banner'
+                     data-selector=".bounce_banner">
+                    <li class="dropdown-submenu">
+                        <a tabindex="-1" href="#">Style</a>
+                        <ul class="dropdown-menu">
+                            <li data-toggle_class="modal-lg"><a>Bigger Dialog</a></li>
+                            <li data-toggle_class="modal-md"><a>Medium Dialog</a></li>
+                            <li data-toggle_class="modal-sm"><a>Small Dialog</a></li>
+                        </ul>
+                    </li>
                 </div>
             </xpath>
         </template>

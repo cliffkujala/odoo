@@ -58,24 +58,19 @@
         },
         handle_mouseleave: function(e) {
             var self =  this;
-            if (e.clientY > self.opts.sensitivity || (self.check_cookievalue('visited_snippet', new Date()) && !self.opts.aggressive)) return;
+            if (e.clientY > self.opts.sensitivity || (self.check_cookievalue('visited_snippet') && !self.opts.aggressive)) return;
             setTimeout(_.bind(self.show_banner,self), self.opts.delay);
         },
         set_cookie_expire: function(days) {
-            var ms = days*24*60*60*1000;
-            var date = new Date();
-            date.setTime(date.getTime() + ms);
             var visited_snippet_list = [this.parse_cookies()['visited_snippet']]
             visited_snippet_list.push(this.opts.el.data('list-id')).toString()
-            document.cookie = "expires=" + date.toUTCString();
-            document.cookie = "visited_snippet=" + _.uniq(_.without(visited_snippet_list, undefined, NaN)) + ";path=/"
+            document.cookie = "visited_snippet=" + _.without(visited_snippet_list, undefined, NaN) + ";path=/"
         },
-        check_cookievalue: function(cookie_name, current_date) {
+        check_cookievalue: function(cookie_name) {
             var self = this;
-            var expire_date = self.parse_cookies()['expires']
             var visited_snippet = self.parse_cookies()[cookie_name]
             if(visited_snippet) {
-                if (new Date(expire_date) >= current_date || self.opts.el.data('list-id') in visited_snippet.split(',') || self.opts.el.data('list-id') == visited_snippet) {
+                if (self.opts.el.data('list-id') in visited_snippet.split(',') || self.opts.el.data('list-id') == visited_snippet) {
                     return true;
                 }
             }
