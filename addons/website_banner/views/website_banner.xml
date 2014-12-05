@@ -18,69 +18,39 @@
             <xpath expr="//div[@id='snippet_feature']" position="inside">
                 <div>
                     <div class="oe_snippet_thumbnail">
-                        <img class="oe_snippet_thumbnail_img" />
+                        <img class="oe_snippet_thumbnail_img" src="/website_banner/static/src/img/bounce.png" />
                         <span class="oe_snippet_thumbnail_title">Bounce Banner</span>
                     </div>
-                    <section class="oe_snippet_body banner_display banner" data-list-id="0" contenteditable="False">
-                        <div class="alert alert-warning alert-dismissible" role="alert">
-                            <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">x</span><span class="sr-only">Close</span></button>
-                            You have Subscription For the Bounce Banner. To change Newsletter click customize > Change Newsletter
+
+                    <div class="bounce_banner modal-dialog readable" id="banner_modal" role="dialog" data-list-id="0">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&amp;times;</span></button>
+                                <h2 class="modal-title" id="myModalLabel">Odoo</h2>
                             </div>
-                            <div class="modal fade fade-custom" id="banner_modal" tabindex="-1" role="dialog">
-                                <div class="modal-dialog modal-lg">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <button type="button" class="close" data-dismiss="modal">
-                                                <span aria-hidden="true">&amp;times;</span>
-                                                <span class="sr-only">Close</span>
-                                            </button>
-                                            <h2 class="modal-title">Odoo</h2>
-                                        </div>
-                                        <div class="modal-body">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="banner">
-                                                        <div type="button" data-dismiss="modal" data-toggle="modal" data-target="#accept_banner" class="banner_box accept">
-                                                            Yes
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="banner">
-                                                        <div type="button" class="banner_box decline" data-dismiss="modal">
-                                                            No
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                            <div class="modal-body text-center">
+                                <h3>Where Should We Send Your</h3>
+                                <h1>FREE</h1>
+                                Guide with sample Theme
+                                <h1> Odoo Design Templates</h1>
+                                <div class="input-group">
+                                    <input type="email" name="email" class="banner_subscribe_email form-control" placeholder="your email..."/>
+                                    <span class="input-group-btn">
+                                    <a href="#" class="btn btn-primary banner_subscribe_btn">Subscribe</a>
+                                    <a href="#" class="btn btn-success banner_subscribed_btn hidden" disabled="disabled">Thanks</a>
+                                    </span>
                                 </div>
                             </div>
-                            <div class="modal fade fade-custom" id="accept_banner" role="dialog">
-                                <div class="modal-dialog modal-lg">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&amp;times;</span><span class="sr-only">Close</span></button>
-                                            <h2 class="modal-title" id="myModalLabel">Odoo</h2>
-                                        </div>
-                                        <div class="modal-body text-center">
-                                            <h1>Grow Your Business With Odoo Apps</h1>
-                                            <h3>One need, one app. Integration has never been so smooth.</h3>
-                                            <a type="button" href="#demo" data-dismiss="modal" class="btn btn-primary btn-block">Request a Demo</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                    </section>
+                        </div>
+                    </div>
                 </div>
             </xpath>
         </template>
 
         <template id="website_banner_options" name="Banner Options" inherit_id="website.snippet_options">
             <xpath expr="//div" position="after">
-                <div data-js='banner'
-                    data-selector=".banner"
+                <div data-js='bounce_banner'
+                    data-selector=".bounce_banner"
                     data-drop-in=".oe_structure, [data-oe-type=html]">
                     <li data-choose_mailing_list=""><a>Change Newsletter</a></li>
                 </div>

@@ -3,7 +3,7 @@
     var website = openerp.website;
     var _t = openerp._t;
 
-    website.snippet.options.banner = website.snippet.Option.extend({
+    website.snippet.options.bounce_banner = website.snippet.Option.extend({
         choose_mailing_list: function (type, value) {
             var self = this;
             if (type !== "click") return;
@@ -27,7 +27,7 @@
             });
         },
         clean_for_save: function () {
-            this.$target.addClass("hidden");
+            this.$target.addClass('modal fade fade-custom')
         },
     });
 })();
