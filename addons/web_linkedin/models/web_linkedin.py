@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 import base64
+from datetime import datetime, timedelta
 import logging
-import openerp
 import requests
 import simplejson
 import urllib2
+from urlparse import urlparse, urlunparse
 import werkzeug.urls
 
-from urlparse import urlparse, urlunparse
-from datetime import datetime, timedelta
 from openerp import models, fields, api, _
 from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT
-from openerp.exceptions import Warning
+from openerp.exceptions import Warning, AccessError
 
 BASE_API_URL = "https://api.linkedin.com/v1"
 COMPANY_FIELDS = ["id", "name", "logo-url", "description", "industry", "website-url", "locations", "universal-name"]
@@ -45,7 +44,7 @@ class web_linkedin_settings(models.TransientModel):
     server_domain = fields.Char(string="Server Domain")
     redirect_url = fields.Char(related='server_domain', string="Server Domain")
     linkedin_cus_sync = fields.Boolean("Show tutorial to know how to get my 'API key' and my 'Secret key'")
-    company_name = fields.Char("Company", default=lambda self:self.env.user.company_id.name)
+    company_name = fields.Char("Company", default=lambda self: self.env.user.company_id.name)
 
     @api.model
     def get_default_linkedin(self, fields):
@@ -106,7 +105,6 @@ class web_linkedin_fields(models.Model):
 class linkedin(models.AbstractModel):
     _name = 'linkedin'
 
-    @api.model
     def check_valid_api_key(self, api_key):
         status = ""
         params = {
@@ -128,7 +126,6 @@ class linkedin(models.AbstractModel):
                 raise Warning(_('Something went wrong!, Please check your API Key.'))
         return True
 
-    @api.model
     def sync_linkedin_contacts(self, from_url):
         """
             This method will import all first level contact from LinkedIn,
@@ -146,7 +143,6 @@ class linkedin(models.AbstractModel):
             return self.update_contacts(res) if not isinstance(res, str) else False
         return {'status': 'need_auth', 'url': self._get_authorize_uri(from_url=from_url, scope=True)}
 
-    @api.model
     def update_contacts(self, records):
         li_records = dict((d['id'], d) for d in records.get('values', []))
         result = {'_total': len(records.get('values', [])), 'fail_warnings': [], 'status': ''}
@@ -154,17 +150,16 @@ class linkedin(models.AbstractModel):
         #Do not raise exception for AccessError, if user doesn't have one of the right from create or write
         try:
             self.create_contacts(records_to_create)
-        except openerp.exceptions.AccessError, e:
+        except AccessError, e:
             result['fail_warnings'].append((e[0], str(len(records_to_create)) + " records are not created\n" + e[1]))
             result['status'] = "AccessError"
         try:
             self.write_contacts(records_to_update)
-        except openerp.exceptions.AccessError, e:
+        except AccessError, e:
             result['fail_warnings'].append((e[0], str(len(records_to_update)) + " records are not updated\n" + e[1]))
             result['status'] = "AccessError"
         return result
 
-    @api.model
     def check_create_or_update(self, records):
         records_to_update = {}
         records_to_create = []
@@ -187,7 +182,6 @@ class linkedin(models.AbstractModel):
         return True
 
     #Currently all fields are re-written
-    @api.model
     def write_contacts(self, records_to_update):
         for id, record in records_to_update.iteritems():
             vals = self.create_data_dict(record)
@@ -195,7 +189,6 @@ class linkedin(models.AbstractModel):
             partner.write(vals)
         return True
 
-    @api.model
     def create_data_dict(self, record):
         data_dict = {
             'name': record.get('formattedName', record.get("firstName", "")),
@@ -213,7 +206,7 @@ class linkedin(models.AbstractModel):
                 #To avoid recursion, it is quite possible that connection name and company_name is same
                 #in such cases import goes fail meanwhile due to osv exception, hence skipped such connection for parent_id
                 if company_name != data_dict['name']:
-                    parent = self.env['res.partner'].search([('name', '=', company_name)])
+                    parent = self.env['res.partner'].search([('name', '=', company_name)], limit=1)
                     if parent:
                         data_dict['parent_id'] = parent.id
 
@@ -228,7 +221,6 @@ class linkedin(models.AbstractModel):
                 data_dict['phone'] = phone['phoneNumber']
         return data_dict
 
-    @api.model
     def get_search_popup_data(self, offset=0, limit=5, **kw):
         """
             This method will return all needed data for LinkedIn Search Popup.
@@ -259,8 +251,17 @@ class linkedin(models.AbstractModel):
 
     @api.model
     def get_company_data(self, offset=0, limit=5, params={}, headers={}, **kw):
+        """This method will fetch company data for LinkedIn Company Search Popup
+            :param offset: no of company load after show more
+            :param limit: No of companies to load
+            :param params: send request Param data like Access token etc
+            :param headers: headers of requests
+            :param kw: arguments to controller to search
+            :returns: linkedin company search data, status if error and warnings
+        """
         companies = {}
         universal_company = {}
+        warnings = []
         if not params:
             params = {'oauth2_access_token': self.env.user.linkedin_token}
         if not headers:
@@ -275,10 +276,18 @@ class linkedin(models.AbstractModel):
         status, companies = self.with_context(kw.get('local_context') or {}).send_request(company_search_uri, params=search_params, headers=headers, type="GET")
         if companies and companies['companies'].get('values') and universal_company:
             companies['companies']['values'].append(universal_company)
-        return status, companies, []
+        return status, companies, warnings
 
     @api.model
     def get_people_data(self, offset=0, limit=5, params={}, headers={}, **kw):
+        """This method will fetch people data for LinkedIn people Search Popup
+            :param offset: no of people load after show more
+            :param limit: No of people to load
+            :param params: send request Param data like Access token etc
+            :param headers: headers of requests
+            :param kw: arguments to controller to search
+            :returns: linkedin people search data, status if error and warnings
+        """
         people = {}
         public_profile = {}
         warnings = []
@@ -324,7 +333,6 @@ class linkedin(models.AbstractModel):
         else:
             return {'status': 'need_auth', 'url': self._get_authorize_uri(from_url=from_url)}
 
-    @api.model
     def send_request(self, uri, pre_uri=BASE_API_URL, params={}, headers={}, type="GET"):
         result = ""
         status = ""
@@ -351,7 +359,7 @@ class linkedin(models.AbstractModel):
                 raise e
 
             if e.code == 401:
-                raise except_auth('AuthorizationError', {'url': self._get_authorize_uri(from_url=self.env.context.get('from_url'),scope=self.env.context.get('scope'))})
+                raise except_auth('AuthorizationError', {'url': self._get_authorize_uri(from_url=self.env.context.get('from_url'), scope=self.env.context.get('scope'))})
             #TODO: Should handle 403 for throttle limit and should display user freindly message
             status = e.code
             _logger.exception("Bad linkedin request : %s !" % e.read())
@@ -359,7 +367,6 @@ class linkedin(models.AbstractModel):
             _logger.exception("Either there is no connection or remote server is down !")
         return (status, result)
 
-    @api.model
     def _get_authorize_uri(self, from_url, scope=False):
         """ This method return the url needed to allow this instance of OpenErp to access linkedin application """
         state_obj = dict(d=scope, f=from_url)
@@ -376,7 +383,6 @@ class linkedin(models.AbstractModel):
         uri = self.get_uri_oauth(a='authorization') + "?%s" % werkzeug.url_encode(params)
         return uri
 
-    @api.model
     def set_all_tokens(self, token_datas):
         data = {
             'linkedin_token': token_datas.get('access_token'),
@@ -384,14 +390,12 @@ class linkedin(models.AbstractModel):
         }
         self.env.user.sudo().write(data)
 
-    @api.model
     def need_authorization(self):
         if not self.env.user.linkedin_token_validity or \
                 datetime.strptime(self.env.user.linkedin_token_validity.split('.')[0], DEFAULT_SERVER_DATETIME_FORMAT) < (datetime.now() + timedelta(minutes=1)):
             return True
         return False
 
-    @api.model
     def get_param_parameter(self, parameter):
         return self.env['ir.config_parameter'].sudo().get_param(parameter)
 
@@ -405,7 +409,6 @@ class linkedin(models.AbstractModel):
         action = self.env['ir.model.data'].get_object_reference('base_setup', 'action_sale_config')[1]
         base_url = self.get_param_parameter('web.base.url')
         return {'redirect_url': base_url + '/web?#action=' + str(action)}
-
 
     @api.multi
     def get_uri_oauth(self, a=''):  # a = action

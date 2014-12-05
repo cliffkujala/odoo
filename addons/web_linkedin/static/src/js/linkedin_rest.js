@@ -466,11 +466,9 @@ openerp.web_linkedin = function(instance) {
         init: function() {
             return this._super.apply(this, arguments);
         },
-        load_kanban: function() {
+        import_linkedin_contact: function() {
             var self = this;
-            var super_res = this._super.apply(this, arguments);
-            if(this.dataset.model == 'res.partner' && !this.dataset.child_name) {
-               instance.web_linkedin.tester.test_linkedin(false).done(function(result) {
+            instance.web_linkedin.tester.test_linkedin(false).done(function(result) {
                     $linkedin_button = $(QWeb.render("KanbanView.linkedinButton", {'widget': self, 'result': result}));
                     $linkedin_button.appendTo(self.$buttons);
                     if (!result.redirect_url) {
@@ -482,7 +480,7 @@ openerp.web_linkedin = function(instance) {
                                         {text: _t("Ok"), click: function() { dialog.$dialog_box.modal('hide'); }}
                                     ]
                                 }, $("<p />").text(_t("Sorry, your Odoo is not configured to get access to LinkedIn. Please ask your administrator to configure it in the Sales Settings."))).open();
-                                return super_res;
+                                return true;
                             }
                             var context = _.extend(instance.web.pyeval.eval('context'), {'from_url': window.location.href, 'scope': true});
                             var res = self.rpc("/linkedin/sync_linkedin_contacts", {
@@ -512,6 +510,12 @@ openerp.web_linkedin = function(instance) {
                         });
                     }
                 });
+        },
+        load_kanban: function() {
+            var self = this;
+            var super_res = this._super.apply(this, arguments);
+            if(this.dataset.model == 'res.partner' && !this.dataset.child_name) {
+               self.import_linkedin_contact();
             }
             return super_res;
         }

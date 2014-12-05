@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-import openerp
 import simplejson
 import urllib2
 import werkzeug
 
 from openerp.addons.web import http
 from openerp.addons.web.http import request
+import openerp
 
 
 class Linkedin(http.Controller):
