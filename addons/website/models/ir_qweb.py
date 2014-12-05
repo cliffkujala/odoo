@@ -69,6 +69,29 @@ class QWeb(orm.AbstractModel):
 
         return super(QWeb, self).render_attribute(element, name, value, qwebcontext)
 
+    def render_tag_snippet(self, element, template_attributes, generated_attributes, qwebcontext):
+        d = qwebcontext.copy()
+        d[0] = self.render_element(element, template_attributes, generated_attributes, d)
+        cr = d.get('request') and d['request'].cr or None
+        uid = d.get('request') and d['request'].uid or None
+
+        template = self.eval_format(template_attributes["snippet"], d)
+        elements = html.fragments_fromstring(self.render(cr, uid, template, d))
+
+        id = elements[0].get('data-oe-id', None)
+        if id:
+            elements[0].set('data-oe-name', self.pool['ir.ui.view'].browse(cr, uid, int(id), context=qwebcontext.context).name)
+            elements[0].set('data-oe-type', "snippet")
+
+        for el in elements:
+            className = "o_block_%s" % template.split(".")[1]
+            if el.get('class'):
+                el.set('class', "%s %s" % (className, el.get('class', "")))
+            else:
+                el.set('class', className)
+
+        return "".join(map(html.tostring, elements))
+
     def render_tag_call_assets(self, element, template_attributes, generated_attributes, qwebcontext):
         if request and request.website and request.website.cdn_activated:
             if qwebcontext.context is None:

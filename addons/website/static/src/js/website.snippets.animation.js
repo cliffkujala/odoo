@@ -7,6 +7,22 @@
     if (!website.snippet) website.snippet = {};
     website.snippet.readyAnimation = [];
 
+    function load_called_snippet () {
+        var ids_or_xml_ids = _.uniq($("[data-snippet]").map(function () {return $(this).data('snippet');}).get());
+        if (ids_or_xml_ids.length) {
+            openerp.jsonRpc('/website/multi_render', 'call', {
+                    'ids_or_xml_ids': ids_or_xml_ids
+                }).then(function (data) {
+                    for (var k in data) {
+                        var $data = $(data[k]).addClass('o_block_'+k);
+                        $("[data-snippet='"+k+"']").each(function () {
+                            $(this).replaceWith($data.clone());
+                        });
+                    }
+                });
+        }
+    }
+
     website.snippet.start_animation = function (editable_mode, $target) {
         for (var k in website.snippet.animationRegistry) {
             var Animation = website.snippet.animationRegistry[k];
@@ -47,6 +63,7 @@
             website.add_template_file('/website/static/src/xml/website.gallery.xml');
         }
 
+        load_called_snippet();
         website.snippet.start_animation();
     });
 

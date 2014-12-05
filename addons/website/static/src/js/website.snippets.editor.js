@@ -182,6 +182,22 @@
                 .then(function (html) {
                     var $html = $(html);
 
+                    // t-snippet
+                    $html.find('> .tab-content > div > [data-oe-type="snippet"]').each(function () {
+                        var $div = $('<div/>').insertAfter(this).append(this)
+                            .attr('name', $(this).data('oe-name'))
+                            .attr('class', $(this).attr('class').match(/^o_block_\S+/)[0] );
+                    });
+                    $html.find('[data-oe-model]').each(function () {
+                        for (var k=0; k<this.attributes.length; k++) {
+                            if (this.attributes[k].name.indexOf('data-oe-') === 0) {
+                                $(this).removeAttr(this.attributes[k].name);
+                                k--;
+                            }
+                        }
+                    });
+                    // end
+
                     var selector = [];
                     var $styles = $html.find("[data-js], [data-selector]");
                     $styles.each(function () {

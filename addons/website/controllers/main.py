@@ -421,6 +421,15 @@ class Website(openerp.addons.web.controllers.main.Home):
         self.theme_customize(enable and enable.split(",") or [],disable and disable.split(",") or [])
         return request.redirect(href + ("&theme=true" if "#" in href else "#theme=true"))
 
+    @http.route(['/website/multi_render'], type='json', auth="public", website=True)
+    def multi_render(self, ids_or_xml_ids, values=None):
+        cr, uid, context, pool = request.cr, request.uid, request.context, request.registry
+        view = pool["ir.ui.view"]
+        res = {}
+        for id_or_xml_id in ids_or_xml_ids:
+            res[id_or_xml_id] = view.render(cr, uid, id_or_xml_id, values=values, engine='ir.qweb', context=context)
+        return res
+
     #------------------------------------------------------
     # Helpers
     #------------------------------------------------------
