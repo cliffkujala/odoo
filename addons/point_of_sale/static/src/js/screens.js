@@ -666,7 +666,8 @@ function openerp_pos_screens(instance, module){ //module is instance.point_of_sa
             this._super();
             var self = this;
 
-            this.product_categories_widget.reset_category();
+            this.product_categories_widget.set_category(this.pos.config.iface_def_categ_id[0]);
+            this.product_categories_widget.renderElement();
 
             this.pos_widget.order_widget.set_editable(true);
         },

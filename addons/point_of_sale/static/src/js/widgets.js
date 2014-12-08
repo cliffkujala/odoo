@@ -362,11 +362,14 @@ function openerp_pos_widgets(instance, module){ //module is instance.point_of_sa
         // changes the category. if undefined, sets to root category
         set_category : function(category){
             var db = this.pos.db;
-            if(!category){
+            if (!category) {
                 this.category = db.get_category_by_id(db.root_category_id);
-            }else{
+            } else if (typeof category === 'number') {
+                this.category = db.get_category_by_id(category);
+            } else {
                 this.category = category;
             }
+
             this.breadcrumb = [];
             var ancestors_ids = db.get_category_ancestors_ids(this.category.id);
             for(var i = 1; i < ancestors_ids.length; i++){
@@ -469,12 +472,6 @@ function openerp_pos_widgets(instance, module){ //module is instance.point_of_sa
             }
         },
         
-        // resets the current category to the root category
-        reset_category: function(){
-            this.set_category();
-            this.renderElement();
-        },
-
         // empties the content of the search box
         clear_search: function(){
             var products = this.pos.db.get_product_by_category(this.category.id);
