@@ -121,6 +121,132 @@ class procurement_order(osv.osv):
             return {'value': {'location_id': warehouse.lot_stock_id.id}}
         return {}
 
+    #Doing assignation, ... in multi
+    def _assign_multi(self, cr, uid, procurements, context=None):
+        res = {}
+        todo_procs = []
+        context = context or {}
+        for procurement in procurements:
+            if procurement.rule_id:
+                res[procurement.id] = True
+            elif procurement.product_id.type != 'service':
+                todo_procs += [procurement]
+
+        res_dict = self._find_suitable_rule_multi(cr, uid, todo_procs, context=context)
+        rule_dict = {}
+        for proc in res_dict.keys():
+            if res_dict[proc]:
+                if rule_dict.get(res_dict[proc]):
+                    rule_dict[res_dict[proc]] += [proc]
+                else:
+                    rule_dict[res_dict[proc]] = [proc]
+
+        for rule in rule_dict.keys():
+            self.write(cr, uid, rule_dict[rule], {'rule_id': rule}, context=context)
+
+
+    def _get_route_group_dict(self, cr, uid, procurements, context=None):
+        """
+            Returns a dictionary with key the routes and values the products associated
+        """
+        ids = [x.id for x in procurements]
+        cr.execute("""
+            SELECT proc_id, route_id FROM
+            ((SELECT p.id AS proc_id, route_id
+                FROM stock_route_product AS link, procurement_order AS p, product_template AS pt, product_product pp
+                WHERE pp.product_tmpl_id = pt.id AND link.product_id = pt.id AND pp.id = p.product_id
+                    AND p.id in %s)
+             UNION (SELECT p.id AS proc_id, link.route_id AS route_id
+                    FROM stock_location_route_categ AS link, product_product AS pp, procurement_order AS p,
+                         product_template AS pt, product_category AS pc, product_category AS pc_product
+                    WHERE p.product_id = pp.id AND pp.product_tmpl_id = pt.id AND pc_product.id = pt.categ_id AND
+                    pc.parent_left <= pc_product.parent_left AND pc.parent_right >= pc_product.parent_left
+                    AND link.categ_id = pc.id AND pp.id IN %s)) p ORDER BY proc_id, route_id
+        """, (tuple(ids), tuple(ids), ))
+        product_routes = cr.fetchall()
+        old_proc = False
+        key = tuple()
+        key_routes = {}
+        for proc, route in product_routes:
+            key += (route,)
+            if old_proc != proc:
+                if key:
+                    if key_routes.get(key):
+                        key_routes[key] += [proc]
+                    else:
+                        key_routes[key] = [proc]
+                old_proc = proc
+                key = tuple()
+        return key_routes
+
+
+    def _get_wh_loc_dict(self, cr, uid, procurements, context=None):
+        wh_dict = {}
+        for procurement in procurements:
+            if wh_dict.get(procurement.warehouse_id.id):
+                if wh_dict[procurement.warehouse_id.id].get(procurement.location_id):
+                    wh_dict[procurement.warehouse_id.id][procurement.location_id] += [procurement]
+                else:
+                    wh_dict[procurement.warehouse_id.id][procurement.location_id] = [procurement]
+            else:
+                wh_dict[procurement.warehouse_id.id] = {}
+                wh_dict[procurement.warehouse_id.id][procurement.location_id] = [procurement]
+        return wh_dict
+
+
+    def _find_suitable_rule_multi(self, cr, uid, procurements, domain = [], context=None):
+        '''we try to first find a rule among the ones defined on the procurement order group and if none is found, we try on the routes defined for the product, and finally we fallback on the default behavior'''
+        results_dict = {}
+        pull_obj = self.pool.get('procurement.rule')
+        warehouse_route_ids = []
+        for procurement in procurements: #Could be replaced by one query for all route_ids
+            if procurement.route_ids:
+                procurement_route_ids = [x.id for x in procurement.route_ids]
+                loc = procurement.location_id
+                loc_domain = [('location_id.parent_left', '<=', loc.parent_left),
+                                ('location_id.parent_right', '>=', loc.parent_left)]
+                if procurement.warehouse_id:
+                    domain += ['|', ('warehouse_id', '=', procurement.warehouse_id.id), ('warehouse_id', '=', False)]
+                res = pull_obj.search(cr, uid, loc_domain + [('route_id', 'in', procurement_route_ids)], order='route_sequence, sequence', context=context)
+                if res and res[0]:
+                    results_dict[procurement.id] = res[0]
+
+
+        procurements_to_check = [x for x in procurements if x not in results_dict.keys()]
+        #group by warehouse_id:
+        wh_dict = self._get_wh_loc_dict(cr, uid, procurements_to_check, context=context)
+        for wh in wh_dict.keys():
+            warehouse_route_ids = []
+            domain = []
+            check_wh = False
+            for loc in wh_dict[wh].keys():
+                procurement = wh_dict[wh][loc][0]
+                loc_domain = [('location_id.parent_left', '<=', loc.parent_left),
+                                ('location_id.parent_right', '>=', loc.parent_left)]
+                if wh and not check_wh:
+                    domain += ['|', ('warehouse_id', '=', procurement.warehouse_id.id), ('warehouse_id', '=', False)]
+                    warehouse_route_ids = [x.id for x in procurement.warehouse_id.route_ids]
+                check_wh = True
+                key_routes = self._get_route_group_dict(cr, uid, wh_dict[wh][loc], context=context)
+                for key in key_routes.keys():
+                    procurements = self.browse(cr, uid, key_routes[key], context=context)
+                    domain = loc_domain + domain
+                    res = pull_obj.search(cr, uid, domain + [('route_id', 'in', list(key))], order='route_sequence, sequence', context=context)
+                    result = False
+                    if res and res[0]:
+                        result = res[0]
+                    elif warehouse_route_ids:
+                        res = pull_obj.search(cr, uid, domain + [('route_id', 'in', warehouse_route_ids)], order='route_sequence, sequence', context=context)
+                        result = res and res[0]
+                    if not result:
+                        res = pull_obj.search(cr, uid, domain + [('route_id', '=', False)], order='sequence', context=context)
+                        result = res and res[0]
+                    for proc in key_routes[key]:
+                        results_dict[proc] = result
+        return results_dict
+
+
+
     def _search_suitable_rule(self, cr, uid, procurement, domain, context=None):
         '''we try to first find a rule among the ones defined on the procurement order group and if none is found, we try on the routes defined for the product, and finally we fallback on the default behavior'''
         pull_obj = self.pool.get('procurement.rule')
