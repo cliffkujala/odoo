@@ -254,6 +254,10 @@ class WebsiteForum(http.Controller):
         question.active = True
         return werkzeug.utils.redirect("/forum/%s/question/%s" % (slug(forum), slug(question)))
 
+    @http.route('/forum/<model("forum.forum"):forum>/question/<model("forum.post"):question>/bump', type='json', auth="public", website=True)
+    def question_bump(self, forum, question, **kwarg):
+        return question.update_write_date()
+
     # Post
     # --------------------------------------------------
     @http.route(['/forum/<model("forum.forum"):forum>/ask'], type='http', auth="public", website=True)

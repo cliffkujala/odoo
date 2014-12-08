@@ -19,6 +19,7 @@
         <link rel='stylesheet' href="/web/static/lib/jquery.textext/jquery.textext.css"/>
         <link rel='stylesheet' href='/website_forum/static/src/css/website_forum.css'/>
         <script type="text/javascript" src="/website_forum/static/src/js/website_forum.js"/>
+        <script type="text/javascript" src="/website_forum/static/src/js/website_forum.share.js"/>
         <script type="text/javascript" src="/web/static/lib/jquery.textext/jquery.textext.js"/>
         <script type="text/javascript">
             var CKEDITOR_BASEPATH = '/web/static/lib/ckeditor/';
@@ -398,7 +399,7 @@
             </div>
             <div class="form-group">
                 <div class="col-sm-offset-2 col-sm-8">
-                    <button class="btn btn-primary" disabled="True" id="btn_post_your_article">Post</button>
+                    <button class="btn btn-primary social_share_call" t-att-data-hashtag-list="['link']" t-att-data-social-template="['other']" disabled="True" id="btn_post_your_article">Post</button>
                 </div>
             </div>
         </form>
@@ -423,7 +424,7 @@
             <input type="hidden" name="karma_retag" t-attf-value="#{forum.karma_retag}" id="karma_retag"/>
             <input type="text" name="post_tags" placeholder="Tags" class="form-control js_select2"/>
             <br/><br/>
-            <button class="btn btn-primary">Post Your Topic</button>
+            <button class="btn btn-primary social_share_call" t-att-data-hashtag-list="['discussion']" t-att-data-social-template="['other']">Post Your Topic</button>
         </form>
     </t>
 </template>
@@ -458,8 +459,8 @@
             <input type="hidden" name="karma_retag" t-attf-value="#{forum.karma_retag}" id="karma_retag"/>
             <input type="hidden" name="post_tags" placeholder="Tags" class="form-control js_select2"/>
             <br/><br/>
-            <button t-attf-class="btn btn-primary #{(user.karma &lt; forum.karma_ask) and 'karma_required' or ''}"
-                t-att-data-karma="forum.karma_ask">Post Your Question</button>
+            <button t-attf-class="btn btn-primary social_share_call #{(user.karma &lt; forum.karma_ask) and 'karma_required' or ''}"
+                t-att-data-hashtag-list="['question']" t-att-data-social-template="['question']" t-att-data-karma="forum.karma_ask">Post Your Question</button>
         </form>
     </t>
 </template>
@@ -554,8 +555,12 @@
     <form t-attf-action="/forum/#{ slug(forum) }/#{slug(question)}/reply" method="post" role="form">
         <input type="hidden" name="karma" t-attf-value="#{user.karma}" id="karma"/>
         <textarea name="content" t-attf-id="content-#{str(question.id)}" class="form-control load_editor" required="True"/>
+        <button t-attf-class="btn btn-primary social_share_call mt16 #{not question.can_answer and 'karma_required' or ''}"
+                t-att-data-karma="question.forum_id.karma_answer" t-att-data-social-template="['answer']"
+                t-if="question.post_type == 'question'">Post Answer</button>
         <button t-attf-class="btn btn-primary mt16 #{not question.can_answer and 'karma_required' or ''}"
-            t-att-data-karma="question.forum_id.karma_answer">Post Answer</button>
+                t-att-data-karma="question.forum_id.karma_answer" t-att-data-social-template="['answer']"
+                t-if="question.post_type != 'question'">Post Answer</button>
     </form>
 </template>
 
@@ -575,7 +580,7 @@
 <!-- Specific Post Layout -->
 <template id="post_description_full" name="Question Navigation">
     <t t-call="website_forum.header">
-        <div t-attf-class="question">
+        <div t-attf-class="question" t-att-data-type="question.post_type" t-att-data-last-update="question.write_date" t-att-data-id="question.id" >
             <div class="pull-left">
                 <t t-call="website_forum.vote">
                     <t t-set="post" t-value="question"/>
@@ -585,7 +590,7 @@
                     </div>
                 </t>
             </div>
-            <div t-attf-class="question-block #{not question.active and 'alert alert-danger' or ''}">
+            <div itemscope="itemscope" itemtype="http://schema.org/Question" t-attf-class="question-block #{not question.active and 'alert alert-danger' or ''}">
                 <h1 class="mt0 mb0">
                     <t t-if="question.post_type == 'link'">
                         <a t-att-href="question.content_link">
@@ -690,6 +695,11 @@
                                 t-attf-data-karma="#{not question.can_comment and question.karma_comment or 0}"
                                 t-attf-data-target="#comment#{ question._name.replace('.','') + '-' + str(question.id) }">
                                 Comment
+                            </a>
+                        </li>
+                        <li t-if="question.post_type == 'question'">
+                            <a href="javascript:void(0)" class="social_share fa fa-share-square-o" t-att-data-hashtag_list="['question']">
+                                 Share
                             </a>
                         </li>
                     </ul>
