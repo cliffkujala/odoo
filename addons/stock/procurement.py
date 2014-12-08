@@ -95,7 +95,7 @@ class procurement_order(osv.osv):
                 move_cancel += [m.id for m in procurement.move_ids]
         if move_cancel:
             self.pool.get('stock.move').action_cancel(cr, uid, move_cancel, context=context)
-        return super(procurement_order, self).propagate_cancel(cr, uid, ids, context=context)
+        return super(procurement_order, self).propagate_cancels(cr, uid, ids, context=context)
 
     def cancel(self, cr, uid, ids, context=None):
         if context is None:
