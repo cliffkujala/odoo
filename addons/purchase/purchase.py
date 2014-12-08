@@ -1499,22 +1499,14 @@ class procurement_order(osv.osv):
 
             #Create purchase order itself:
             procurement = procurements[0]
-            if procurement.next_delivery_date:
-                next_deliv_date = procurement.next_delivery_date
-                schedule_date = datetime.strptime(next_deliv_date, DEFAULT_SERVER_DATETIME_FORMAT)
-            else:
-                schedule_date = self._get_purchase_schedule_date(cr, uid, procurement, procurement.company_id, context=context)
-
-            if procurement.next_purchase_date:
-                purchase_date = datetime.strptime(procurement.next_purchase_date, DEFAULT_SERVER_DATETIME_FORMAT)
-            else:
-                purchase_date = self._get_purchase_order_date(cr, uid, procurement, procurement.company_id, schedule_date, context=context)
+            schedule_date = self._get_purchase_schedule_date(cr, uid, procurement, procurement.company_id, context=context)
+            purchase_date = self._get_purchase_order_date(cr, uid, procurement, procurement.company_id, schedule_date, context=context)
 
             value_lines = self._get_po_line_values_from_procs(cr, uid, procurements, partner, schedule_date, context=context)
             line_values += [(0, 0, value_lines[x]) for x in value_lines.keys()]
             name = seq_obj.get(cr, uid, 'purchase.order') or _('PO: %s') % procurement.name
             gpo = procurement.rule_id.group_propagation_option
-            group = (gpo == 'fixed' and procurement.rule_id.group_id.id) or (gpo=='propagate' and procurement.group_id.id),
+            group = (gpo == 'fixed' and procurement.rule_id.group_id.id) or (gpo=='propagate' and procurement.group_id.id) or False,
             po_vals = {
                 'name': name,
                 'origin': procurement.origin,
@@ -1527,7 +1519,7 @@ class procurement_order(osv.osv):
                 'fiscal_position': partner.property_account_position.id,
                 'payment_term_id': partner.property_supplier_payment_term.id,
                 'dest_address_id': procurement.partner_dest_id.id,
-                'group_id': (procurement.group_id and procurement.group_id.propagate_to_purchase and procurement.group_id.id) or False,
+                'group_id': group,
                 'order_line': line_values,
                 }
             new_po = po_obj.create(cr, uid, po_vals, context=context)
