@@ -460,6 +460,7 @@ class account_analytic_account(osv.osv):
             res[account.id]['invoiced_total'] =  self._get_total_invoiced(account)
             res[account.id]['remaining_total'] = self._get_total_remaining(account)
             res[account.id]['toinvoice_total'] =  self._get_total_toinvoice(account)
+            res[account.id]['amount'] =  self._get_total_toinvoice(account)
          return res
 
     _columns = {
@@ -533,6 +534,7 @@ class account_analytic_account(osv.osv):
             ], 'Recurrency', help="Invoice automatically repeat at specified interval"),
         'recurring_interval': fields.integer('Repeat Every', help="Repeat every (Days/Week/Month/Year)"),
         'recurring_next_date': fields.date('Date of Next Invoice'),
+        'amount' : fields.function(_sum_of_fields, type="float", multi="sum_of_all", string="To Invoice"),
     }
 
     _defaults = {
