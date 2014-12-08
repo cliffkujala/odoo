@@ -1443,8 +1443,8 @@ function openerp_pos_screens(instance, module){ //module is instance.point_of_sa
                 }
             }
 
-            if (order.is_paid_with_cash() && this.pos.config.iface_cashdrawer) { 
-            
+            if ( (this.pos.config.iface_cashdrawer === 'auto') ||
+                 (this.pos.config.iface_cashdrawer === 'cash' && order.is_paid_with_cash()) ) {
                     this.pos.proxy.open_cashbox();
             }
 
