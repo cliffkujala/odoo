@@ -84,11 +84,11 @@ class hr_expense_report(osv.osv):
                      sum(l.unit_quantity*l.unit_amount) as price_total,
                      (sum(l.unit_quantity*l.unit_amount)/sum(case when l.unit_quantity=0 or u.factor=0 then 1 else l.unit_quantity * u.factor end))::decimal(16,2) as price_average,
                      count(*) as nbr,
-                     (select unit_quantity from hr_expense_line where id=l.id and product_id is not null) as no_of_products,
-                     (select analytic_account from hr_expense_line where id=l.id and analytic_account is not null) as no_of_account,
+                     (select unit_quantity from expense where id=l.id and product_id is not null) as no_of_products,
+                     (select analytic_account from expense where id=l.id and analytic_account is not null) as no_of_account,
                      s.state
-                 from hr_expense_line l
-                 left join hr_expense_expense s on (s.id=l.expense_id)
+                 from expense l
+                 left join expense_sheet s on (s.id=l.expense_id)
                  left join product_uom u on (u.id=l.uom_id)
                  group by
                      s.date,

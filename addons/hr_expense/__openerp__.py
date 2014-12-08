@@ -58,12 +58,9 @@ This module also uses analytic accounting and is compatible with the invoice on 
         'report/hr_expense_report_view.xml',
         'hr_expense_installer_view.xml',
         'views/report_expense.xml',
+        'expense_web_tip.xml'
     ],
     'demo': ['hr_expense_demo.xml'],
-    'test': [
-        'test/expense_demo.yml',
-        'test/expense_process.yml',
-    ],
     'installable': True,
     'auto_install': False,
     'application': True,

@@ -6,7 +6,7 @@
 
         <record id="wkf_expenses" model="workflow">
             <field name="name">hr.wkf.expenses</field>
-            <field name="osv">hr.expense.expense</field>
+            <field name="osv">expense.sheet</field>
             <field name="on_create">True</field>
         </record>
 

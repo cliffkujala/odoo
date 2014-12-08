@@ -40,10 +40,9 @@
                         </thead>
                         <tbody>
                             <tr t-foreach="o.line_ids" t-as="line">
-                                <td><span t-field="line.date_value"/></td>
+                                <td><span t-field="line.date"/></td>
                                 <td>
                                     <span t-field="line.name"/> 
-                                    <span t-field="line.description"/><br/>
                                     <span t-field="line.analytic_account.complete_name" t-if="line.analytic_account"/>
                                 </td>
                                 <td style="text-center">
