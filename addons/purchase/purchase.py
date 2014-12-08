@@ -296,7 +296,8 @@ class purchase_order(osv.osv):
                                            states={'confirmed': [('readonly', True)], 'approved': [('readonly', True)], 'done': [('readonly', True)]}),
         'related_location_id': fields.related('picking_type_id', 'default_location_dest_id', type='many2one', relation='stock.location', string="Related location", store=True),        
         'shipment_count': fields.function(_count_all, type='integer', string='Incoming Shipments', multi=True),
-        'invoice_count': fields.function(_count_all, type='integer', string='Invoices', multi=True)
+        'invoice_count': fields.function(_count_all, type='integer', string='Invoices', multi=True),
+        'group_id': fields.many2one('procurement.group', string="Procurement Group"),
     }
     _defaults = {
         'date_order': fields.datetime.now,
@@ -783,7 +784,10 @@ class purchase_order(osv.osv):
         """
         stock_move = self.pool.get('stock.move')
         todo_moves = []
-        new_group = self.pool.get("procurement.group").create(cr, uid, {'name': order.name, 'partner_id': order.partner_id.id}, context=context)
+        if order.group_id:
+            new_group = order.group_id.id
+        else:
+            new_group = self.pool.get("procurement.group").create(cr, uid, {'name': order.name, 'partner_id': order.partner_id.id}, context=context)
 
         for order_line in order_lines:
             if not order_line.product_id:
@@ -1380,7 +1384,7 @@ class procurement_order(osv.osv):
         # Regroup POs
         cr.execute("""
             SELECT psi.name, p.id, pr.id, pr.picking_type_id, p.location_id, p.partner_dest_id, p.company_id, p.group_id,
-            pg.propagate_to_purchase, psi.qty
+            pr.group_propagation_option, pr.group_id, psi.qty
              FROM procurement_order AS p
                 LEFT JOIN procurement_rule AS pr ON pr.id = p.rule_id
                 LEFT JOIN procurement_group AS pg ON p.group_id = pg.id,
@@ -1397,18 +1401,19 @@ class procurement_order(osv.osv):
         create_purchase_procs = {} # Lines to add to a newly to create po
         add_purchase_procs = {} # Lines to add/adjust in an existing po
         proc_seller = {} # To check we only process one po
-        for partner, proc, rule, pick_type, location, partner_dest, company, group, propagate_to_purchase, qty in res:
+        for partner, proc, rule, pick_type, location, partner_dest, company, group, group_propagation, fixed_group, qty in res:
             if not proc_seller.get(proc):
                 proc_seller[proc] = partner
-                new = partner, rule, pick_type, location, company, group, propagate_to_purchase
+                new = partner, rule, pick_type, location, company, group, group_propagation, fixed_group
                 if new != old:
                     old = new
-                    available_draft_po = False
                     dom = [
                         ('partner_id', '=', partner), ('state', '=', 'draft'), ('picking_type_id', '=', pick_type),
                         ('location_id', '=', location), ('company_id', '=', company), ('dest_address_id', '=', partner_dest)]
-                    if group and propagate_to_purchase:
+                    if group_propagation == 'propagate':
                         dom += [('group_id', '=', group)]
+                    elif group_propagation == 'fixed':
+                        dom += [('group_id', '=', fixed_group)]
                     available_draft_po_ids = po_obj.search(cr, uid, dom, context=context)
                     available_draft_po = available_draft_po_ids and available_draft_po_ids[0] or False
                 # Add to dictionary
@@ -1469,7 +1474,6 @@ class procurement_order(osv.osv):
                     procs += [proc]
                 line_values += [(1, line.id, {'product_qty': line.product_qty + tot_qty, 'procurement_ids': [(4, x[0]) for x in lines_to_update[line]]})]
             if procs:
-                print procs
                 self.message_post(cr, uid, procs, body=_("Quantity added in existing Purchase Order Line"), context=context)
 
             # Create lines for which no line exists yet
@@ -1509,6 +1513,8 @@ class procurement_order(osv.osv):
             value_lines = self._get_po_line_values_from_procs(cr, uid, procurements, partner, schedule_date, context=context)
             line_values += [(0, 0, value_lines[x]) for x in value_lines.keys()]
             name = seq_obj.get(cr, uid, 'purchase.order') or _('PO: %s') % procurement.name
+            gpo = procurement.rule_id.group_propagation_option
+            group = (gpo == 'fixed' and procurement.rule_id.group_id.id) or (gpo=='propagate' and procurement.group_id.id),
             po_vals = {
                 'name': name,
                 'origin': procurement.origin,
