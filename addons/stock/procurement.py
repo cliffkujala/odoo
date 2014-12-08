@@ -95,7 +95,7 @@ class procurement_order(osv.osv):
                 move_cancel += [m.id for m in procurement.move_ids]
         if move_cancel:
             self.pool.get('stock.move').action_cancel(cr, uid, move_cancel, context=context)
-        return super(procurement_order, self).propagate_cancels(cr, uid, ids, context=context)
+        return True
 
     def cancel(self, cr, uid, ids, context=None):
         if context is None:
@@ -325,13 +325,7 @@ class procurement_order(osv.osv):
             'group_id': orderpoint.group_id.id,
         }
 
-    def _product_virtual_get(self, cr, uid, order_point):
-        product_obj = self.pool.get('product.product')
-        return product_obj._product_available(cr, uid,
-                [order_point.product_id.id],
-                context={'location': order_point.location_id.id})[order_point.product_id.id]['virtual_available']
-
-    def _procure_orderpoint_confirm(self, cr, uid, use_new_cursor=False, company_id = False, context=None):
+    def _procure_orderpoint_confirm(self, cr, uid, use_new_cursor=False, company_id=False, context=None):
         '''
         Create procurement based on Orderpoint
 
@@ -343,46 +337,79 @@ class procurement_order(osv.osv):
         if use_new_cursor:
             cr = openerp.registry(cr.dbname).cursor()
         orderpoint_obj = self.pool.get('stock.warehouse.orderpoint')
-
         procurement_obj = self.pool.get('procurement.order')
+        product_obj = self.pool.get('product.product')
+
         dom = company_id and [('company_id', '=', company_id)] or []
-        orderpoint_ids = orderpoint_obj.search(cr, uid, dom)
+        orderpoint_ids = orderpoint_obj.search(cr, uid, dom, order="location_id")
         prev_ids = []
+        tot_procs = []
         while orderpoint_ids:
-            ids = orderpoint_ids[:100]
-            del orderpoint_ids[:100]
-            for op in orderpoint_obj.browse(cr, uid, ids, context=context):
-                try:
-                    prods = self._product_virtual_get(cr, uid, op)
-                    if prods is None:
-                        continue
-                    if prods < op.product_min_qty:
-                        qty = max(op.product_min_qty, op.product_max_qty) - prods
+            ids = orderpoint_ids[:1000]
+            del orderpoint_ids[:1000]
+            product_dict = {}
+            ops_dict = {}
+            ops = orderpoint_obj.browse(cr, uid, ids, context=context)
 
-                        reste = op.qty_multiple > 0 and qty % op.qty_multiple or 0.0
-                        if reste > 0:
-                            qty += op.qty_multiple - reste
+            #Calculate groups that can be executed together
+            for op in ops:
+                key = (op.location_id.id,)
+                if not product_dict.get(key):
+                    product_dict[key] = [op.product_id]
+                    ops_dict[key] = [op]
+                else:
+                    product_dict[key] += [op.product_id]
+                    ops_dict[key] += [op]
 
-                        if qty <= 0:
+            for key in product_dict.keys():
+                ctx = context.copy()
+                ctx.update({'location': ops_dict[key][0].location_id.id})
+                prod_qty = product_obj._product_available(cr, uid, [x.id for x in product_dict[key]],
+                                                          context=ctx)
+                subtract_qty = orderpoint_obj.subtract_procurements_from_orderpoints(cr, uid, [x.id for x in ops_dict[key]], context=context)
+                for op in ops_dict[key]:
+                    try:
+                        prods = prod_qty[op.product_id.id]['virtual_available']
+                        if prods is None:
                             continue
+                        if prods <= op.product_min_qty:
+                            qty = max(op.product_min_qty, op.product_max_qty) - prods
+                            reste = op.qty_multiple > 0 and qty % op.qty_multiple or 0.0
+                            if reste > 0:
+                                qty += op.qty_multiple - reste
 
-                        qty -= orderpoint_obj.subtract_procurements(cr, uid, op, context=context)
+                            if qty < 0:
+                                continue
 
-                        if qty > 0:
-                            proc_id = procurement_obj.create(cr, uid,
-                                                             self._prepare_orderpoint_procurement(cr, uid, op, qty, context=context),
-                                                             context=context)
-                            self.check(cr, uid, [proc_id])
-                            self.run(cr, uid, [proc_id])
-                    if use_new_cursor:
-                        cr.commit()
-                except OperationalError:
-                    if use_new_cursor:
-                        orderpoint_ids.append(op.id)
-                        cr.rollback()
-                        continue
-                    else:
-                        raise
+                            qty -= subtract_qty[op.id]
+
+                            if qty >= 0:
+                                proc_id = procurement_obj.create(cr, uid,
+                                                                 self._prepare_orderpoint_procurement(cr, uid, op, qty, context=context),
+                                                                 context=context)
+                                tot_procs.append(proc_id)
+                            if use_new_cursor:
+                                cr.commit()
+                    except OperationalError:
+                        if use_new_cursor:
+                            orderpoint_ids.append(op.id)
+                            cr.rollback()
+                            continue
+                        else:
+                            raise
+            try:
+                tot_procs.reverse()
+                self.run(cr, uid, tot_procs, context=context)
+                tot_procs = []
+                if use_new_cursor:
+                    cr.commit()
+            except OperationalError:
+                if use_new_cursor:
+                    cr.rollback()
+                    continue
+                else:
+                    raise
+
             if use_new_cursor:
                 cr.commit()
             if prev_ids == ids:
