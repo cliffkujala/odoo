@@ -46,9 +46,11 @@ class purchase_order(osv.osv):
             val = val1 = 0.0
             cur = order.pricelist_id.currency_id
             for line in order.order_line:
-               val1 += line.price_subtotal
-               for c in self.pool.get('account.tax').compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, line.product_id, order.partner_id)['taxes']:
-                    val += c.get('amount', 0.0)
+               taxes = self.pool.get('account.tax').compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, line.product_id, order.partner_id)
+               val1 += cur_obj.round(cr, uid, cur, taxes['total']) #Decimal precision?
+               for c in taxes['taxes']:
+                   val += c.get('amount', 0.0)
+
             res[order.id]['amount_tax']=cur_obj.round(cr, uid, cur, val)
             res[order.id]['amount_untaxed']=cur_obj.round(cr, uid, cur, val1)
             res[order.id]['amount_total']=res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
@@ -266,7 +268,7 @@ class purchase_order(osv.osv):
                 "Based on generated invoice: create a draft invoice you can validate later.\n" \
                 "Based on incoming shipments: let you create an invoice when receipts are validated."
         ),
-        'minimum_planned_date':fields.function(_minimum_planned_date, fnct_inv=_set_minimum_planned_date, string='Expected Date', type='date', select=True, help="This is computed as the minimum scheduled date of all purchase order lines' products.",
+        'minimum_planned_date':fields.function(_minimum_planned_date, fnct_inv=_set_minimum_planned_date, string='Expected Date', type='datetime', select=True, help="This is computed as the minimum scheduled date of all purchase order lines' products.",
             store = {
                 'purchase.order.line': (_get_order, ['date_planned'], 10),
             }
@@ -721,7 +723,7 @@ class purchase_order(osv.osv):
             'product_uom': order_line.product_uom.id,
             'product_uos': order_line.product_uom.id,
             'date': order.date_order,
-            'date_expected': fields.date.date_to_datetime(self, cr, uid, order_line.date_planned, context),
+            'date_expected': order_line.date_planned,
             'location_id': order.partner_id.property_stock_supplier.id,
             'location_dest_id': order.location_id.id,
             'picking_id': picking_id,
@@ -748,7 +750,6 @@ class purchase_order(osv.osv):
                 'product_uom_qty': min(procurement_qty, diff_quantity),
                 'product_uos_qty': min(procurement_qty, diff_quantity),
                 'move_dest_id': procurement.move_dest_id.id,  #move destination is same as procurement destination
-                'group_id': procurement.group_id.id or group_id,  #move group is same as group of procurements if it exists, otherwise take another group
                 'procurement_id': procurement.id,
                 'invoice_state': procurement.rule_id.invoice_state or (procurement.location_id and procurement.location_id.usage == 'customer' and procurement.invoice_state=='picking' and '2binvoiced') or (order.invoice_method == 'picking' and '2binvoiced') or 'none', #dropship case takes from sale
                 'propagate': procurement.rule_id.propagate,
@@ -1506,7 +1507,7 @@ class procurement_order(osv.osv):
             line_values += [(0, 0, value_lines[x]) for x in value_lines.keys()]
             name = seq_obj.get(cr, uid, 'purchase.order') or _('PO: %s') % procurement.name
             gpo = procurement.rule_id.group_propagation_option
-            group = (gpo == 'fixed' and procurement.rule_id.group_id.id) or (gpo=='propagate' and procurement.group_id.id) or False,
+            group = (gpo == 'fixed' and procurement.rule_id.group_id.id) or (gpo == 'propagate' and procurement.group_id.id) or False
             po_vals = {
                 'name': name,
                 'origin': procurement.origin,
