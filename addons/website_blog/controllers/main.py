@@ -186,14 +186,9 @@ class WebsiteBlog(http.Controller):
         visited_ids = map(lambda x: int(x), visited_ids)
         if blog_post.id not in visited_ids:
             visited_ids.append(blog_post.id)
-        blog_ranking =  blog_post_obj.search_read([('id', 'not in', visited_ids)], ['ranking'])
-        if not blog_ranking:
-            blog_ranking =  blog_post_obj.search_read([('id', '!=', blog_post.id)], ['ranking'])
-        # use search_read and sort because orderby on compute field store=False not working
-        next_post = False
-        if blog_ranking:
-            sorted_dict = max(blog_ranking, key=lambda k: k['ranking'])
-            next_post = blog_post_obj.browse(sorted_dict['id'])
+        next_post =  blog_post_obj.search([('id', 'not in', visited_ids)], order='ranking desc', limit=1)
+        if not next_post:
+            next_post =  blog_post_obj.search([('id', '!=', blog_post.id)], order='ranking desc', limit=1)
         values = {
             'tags': tags,
             'blog': blog,
@@ -313,8 +308,7 @@ class WebsiteBlog(http.Controller):
     def change_bg(self, post_id=0, image=None, **post):
         if not post_id:
             return False
-        blog_post = request.env['blog.post'].browse(int(post_id))
-        return  blog_post.write({'background_image': image})
+        return request.env['blog.post'].browse(int(post_id)).write({'background_image': image})
 
     @http.route('/blog/get_user/', type='json', auth="public", website=True)
     def get_user(self, **post):

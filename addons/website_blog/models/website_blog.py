@@ -61,7 +61,9 @@ class BlogPost(models.Model):
     _order = 'id DESC'
 
     @api.multi
+    @api.depends('visits')
     def _compute_ranking(self):
+        #fix me Might be not worked properly due to Store=True and used now()
         for blog_post in self:
             if blog_post.visits:
                 age = datetime.now() - datetime.strptime(blog_post.create_date, tools.DEFAULT_SERVER_DATETIME_FORMAT)
@@ -95,7 +97,7 @@ class BlogPost(models.Model):
     )
     author_avatar = fields.Binary(related="author_id.image_small", string="Avatar")
     visits = fields.Integer(string='No of Views')
-    ranking = fields.Float(compute='_compute_ranking', string='Ranking')
+    ranking = fields.Float(compute='_compute_ranking', store=True, string='Ranking')
 
     @api.model
     def html_tag_nodes(self, html, attribute=None, tags=None):
