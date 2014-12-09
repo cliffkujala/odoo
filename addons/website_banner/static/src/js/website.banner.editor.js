@@ -27,7 +27,52 @@
             });
         },
         clean_for_save: function () {
-            this.$target.addClass('modal fade fade-custom')
+            //this.$target.addClass('hidden')
         },
     });
+    
+    website.EditorBar.include({
+            edit: function () {
+                var self = this;
+                $('.popover').remove();
+                this._super();
+                var vHeight = $(window).height();
+                $('body').on('click','#edit_dialog',_.bind(this.edit_dialog, self.rte.editor, vHeight));
+                $('body').on('click','.dialog-close',_.bind(this.close_dialog, self.rte.editor));
+            },
+            save : function() {
+                var res = this._super();
+                console.log('11111111111',$('.bouncebanner-content.active'))
+                //debugger
+                $('.bouncebanner-content.active').removeClass('active');
+                return res;
+            },
+            edit_dialog : function(vHeight) {
+                var self  = this;
+
+                var $target = $($('#edit_dialog').data('target'));
+                var $button = $('#edit_dialog')
+
+                $target.css({
+                    top:          $button.offset().top - $(window).scrollTop(),
+                    left:         $button.offset().left - $(window).scrollLeft(),
+                    width:        $button.css('width'),
+                    maxHeight:    $button.css('height'),
+                    opacity:      1,
+                    transition:   'none'
+                });
+
+                $('body').addClass('morphbutton-modal-active');
+                $('.bouncebanner-content').addClass('active');
+
+            },
+            close_dialog: function() {
+                var self  = this;
+
+                var $target = $($('#edit_dialog').data('target'));
+                var $button = $('#edit_dialog')
+                $('body').removeClass('morphbutton-modal-active');
+                $('.bouncebanner-content').removeClass('active');
+            },
+        });
 })();

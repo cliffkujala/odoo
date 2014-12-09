@@ -22,3 +22,82 @@
 .banner .decline {
     background: #8a8683;
 }
+
+.bouncebanner-content {
+    background-color: white;
+    position: fixed;
+    z-index: 801;
+    overflow: hidden;
+    opacity: 0;
+    transition: all .5s ease-in-out;
+    pointer-events: none;
+    transform: translate(0%, 0%);
+    overflow-y: auto;
+    border-color: black;
+    border-style: groove;
+/*    border-bottom-width: 15px;*/
+/*    border-top-width: 20px;*/
+/*    border-left-width: 15px;*/
+/*    border-right-width: 5px;*/
+}
+.bouncebanner-content.active {
+    top: 60%     !important;
+    left: 50%     !important;
+    bottom: inherit;
+    width: 55%  !important;
+    min-height: 70%  !important;
+    pointer-events: auto;
+    visibility: visible;
+    opacity: 1;
+}
+@media (min-width: 600px) {
+    .bouncebanner-content.active {
+        width: 55% !important;
+        top: 60%          !important;
+        left: 50%         !important;
+        bottom: inherit;
+        min-height: 70% !important;
+        transform: translate(-50%, -50%);
+        opacity: 1;
+    }
+}
+
+.bouncebanner-header {
+    min-height: 16px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.banner_image {
+    width: 90px;
+}
+
+.bouncebanner-cascade {
+    background: ghostwhite;
+}
+
+/*body::before {*/
+/*    position: fixed;*/
+/*    top: 0;*/
+/*    left: 0;*/
+/*    right: 0;*/
+/*    bottom: 0;*/
+/*    background-color: rgba(0, 0, 0, 0.5);*/
+/*    content: '';*/
+/*    z-index: 800;*/
+/*    opacity: 0;*/
+/*    transition: opacity .5s .2s;*/
+/*    pointer-events: none;*/
+/*}*/
+
+body.morphbutton-modal-active::before {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.dialog-close {
+    top: 0;
+    right: 0;
+    background: none;
+    border: none;
+    position: absolute;
+}

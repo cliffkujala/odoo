@@ -4,7 +4,7 @@
     'description': 'Website Banner',
     'category': 'Theme',
     'version': '1.0',
-    'author': 'OpenERP SA',
+    'author': 'Odoo SA',
     'depends': ['website', 'mass_mailing'],
     'data': [
         'views/website_banner.xml',

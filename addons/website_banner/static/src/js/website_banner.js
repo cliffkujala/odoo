@@ -8,15 +8,26 @@
         selector: ".bounce_banner",
         start: function (editable_mode) {
             var self = this;
-            if(self.$target[0].isContentEditable) {
-                self.$target.removeClass('modal fade fade-custom')
-            }
-            new openerp.website.banner({'el': $('#banner_modal')});
+//            if(self.$target[0].isContentEditable) {
+//                self.$target.removeClass('modal fade fade-custom')
+//            }
+            //new openerp.website.banner({'el': $('#banner_modal')});
 
-            this.$target.find('.banner_subscribe_btn').on('click', function (event) {
-                event.preventDefault();
-                self.on_click();
-            });
+//            this.$target.find('#edit_dialog').on('click', function (event) {
+//                event.preventDefault();
+//                console.log('1111111')
+//                return website.prompt({
+//                    id: "editor_new_mailing_list_subscribe_Banner",
+//                    window_title: ("Add a Newsletter Subscribe Banner"),
+//                    select: ("Newsletter"),
+//                init: function (field) {
+////                    return website.session.model('mail.mass_mailing.list')
+////                            .call('name_search', ['', []], { context: website.get_context() });
+//                },
+//            }).then(function (mailing_list_id) {
+////                self.$target.attr("data-list-id", mailing_list_id);
+//            });
+//            });
         },
         on_click: function () {
             var self = this;

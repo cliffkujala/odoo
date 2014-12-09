@@ -22,24 +22,18 @@
                         <span class="oe_snippet_thumbnail_title">Bounce Banner</span>
                     </div>
 
-                    <div class="bounce_banner modal-dialog" id="banner_modal" role="dialog" data-list-id="0">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&amp;times;</span></button>
-                                <h2 class="modal-title" id="myModalLabel">Odoo</h2>
+                    <div class="bounce_banner" id="banner_modal" data-list-id="0">
+                        <div class="alert alert-warning alert-dismissible fade in" role="alert" contenteditable="false">
+                            <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                            <strong>Bounce Banner! </strong> Bounce banner snippet effect is active on this page. Click Here To <a id="edit_dialog" data-target="#bounce_banner"> Edit Dialog</a>
+                        </div>
+                        <div id="bounce_banner" class="bouncebanner-content">
+                            <div class="bouncebanner-header">
+                                <center><h2 class=""><img src="/logo.png" alt="Logo of YourCompany" title="YourCompany" class="banner_image"/> Presents:</h2></center>
+                                <button type="button" class="dialog-close"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
                             </div>
-                            <div class="modal-body text-center">
-                                <h3>Where Should We Send Your</h3>
-                                <h1>FREE</h1>
-                                Guide with sample Theme
-                                <h1> Odoo Design Templates</h1>
-                                <div class="input-group">
-                                    <input type="email" name="email" class="banner_subscribe_email form-control" placeholder="your email..."/>
-                                    <span class="input-group-btn">
-                                    <a href="#" class="btn btn-primary banner_subscribe_btn">Subscribe</a>
-                                    <a href="#" class="btn btn-success banner_subscribed_btn hidden" disabled="disabled">Thanks</a>
-                                    </span>
-                                </div>
+                            <div class="bouncebanner-cascade">
+                                <p>TEstingm the element Wit hofoo .</p>
                             </div>
                         </div>
                     </div>
@@ -53,17 +47,6 @@
                     data-selector=".bounce_banner"
                     data-drop-in=".oe_structure, [data-oe-type=html]">
                     <li data-choose_mailing_list=""><a>Change Newsletter</a></li>
-                </div>
-                <div data-js='bounce_banner'
-                     data-selector=".bounce_banner">
-                    <li class="dropdown-submenu">
-                        <a tabindex="-1" href="#">Style</a>
-                        <ul class="dropdown-menu">
-                            <li data-toggle_class="modal-lg"><a>Bigger Dialog</a></li>
-                            <li data-toggle_class="modal-md"><a>Medium Dialog</a></li>
-                            <li data-toggle_class="modal-sm"><a>Small Dialog</a></li>
-                        </ul>
-                    </li>
                 </div>
             </xpath>
         </template>
