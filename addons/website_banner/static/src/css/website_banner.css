@@ -75,21 +75,16 @@
     background: ghostwhite;
 }
 
-/*body::before {*/
-/*    position: fixed;*/
-/*    top: 0;*/
-/*    left: 0;*/
-/*    right: 0;*/
-/*    bottom: 0;*/
-/*    background-color: rgba(0, 0, 0, 0.5);*/
-/*    content: '';*/
-/*    z-index: 800;*/
-/*    opacity: 0;*/
-/*    transition: opacity .5s .2s;*/
-/*    pointer-events: none;*/
-/*}*/
-
-body.morphbutton-modal-active::before {
+body.bouncebanner-modal-active::before {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    content: '';
+    z-index: 800;
+    transition: opacity .5s .2s;
     opacity: 1;
     pointer-events: auto;
 }

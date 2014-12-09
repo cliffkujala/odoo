@@ -42,7 +42,6 @@
             },
             save : function() {
                 var res = this._super();
-                console.log('11111111111',$('.bouncebanner-content.active'))
                 //debugger
                 $('.bouncebanner-content.active').removeClass('active');
                 return res;
@@ -62,7 +61,7 @@
                     transition:   'none'
                 });
 
-                $('body').addClass('morphbutton-modal-active');
+                $('body').addClass('bouncebanner-modal-active');
                 $('.bouncebanner-content').addClass('active');
 
             },
@@ -71,7 +70,7 @@
 
                 var $target = $($('#edit_dialog').data('target'));
                 var $button = $('#edit_dialog')
-                $('body').removeClass('morphbutton-modal-active');
+                $('body').removeClass('bouncebanner-modal-active');
                 $('.bouncebanner-content').removeClass('active');
             },
         });
