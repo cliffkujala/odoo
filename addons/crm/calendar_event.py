@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from openerp import models, api, fields, _
 import logging
 _logger = logging.getLogger(__name__)

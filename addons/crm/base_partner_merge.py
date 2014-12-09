@@ -416,11 +416,11 @@ class MergePartnerAutomatic(models.TransientModel):
         """
         Don't compute any thing
         """
-        this = self[0]
-        this = this.with_context(active_test=False)
-        if this.current_line_id:
-            this.current_line_id.unlink()
-        return this._next_screen()[0]
+        self.ensure_one()
+        self = self.with_context(active_test=False)
+        if self.current_line_id:
+            self.current_line_id.unlink()
+        return self._next_screen()[0]
 
     @api.model
     def _get_ordered_partner(self, partner_ids):
@@ -475,38 +475,35 @@ class MergePartnerAutomatic(models.TransientModel):
                 return True
         return False
 
-    @api.multi
+    @api.one
     def compute_models(self):
         """
         Compute the different models needed by the system if you want to exclude
         some partners.
         """
         models = {}
-        this = self[0]
-        if this.exclude_contact:
+        if self.exclude_contact:
             models['res.users'] = 'partner_id'
 
-        if self._model_is_installed('account.move.line') and this.exclude_journal_item:
+        if self._model_is_installed('account.move.line') and self.exclude_journal_item:
             models['account.move.line'] = 'partner_id'
-
         return models
 
-    @api.multi
+    @api.one
     def _process_query(self, query):
         """
         Execute the select request and write the result in this wizard
         """
         proxy = self.env['base.partner.merge.line']
-        this = self[0]
         models = self.compute_models()
         self._cr.execute(query)
 
         counter = 0
         for min_id, aggr_ids in self._cr.fetchall():
-            if models and self._partner_use_in(aggr_ids, models):
+            if models and self._partner_use_in(aggr_ids, models[0]):
                 continue
             values = {
-                'wizard_id': this.id,
+                'wizard_id': self.id,
                 'min_id': min_id,
                 'aggr_ids': aggr_ids,
             }
@@ -519,7 +516,7 @@ class MergePartnerAutomatic(models.TransientModel):
             'number_group': counter,
         }
 
-        this.write(values)
+        self.write(values)
 
         _logger.info("counter: %s", counter)
         
@@ -530,23 +527,24 @@ class MergePartnerAutomatic(models.TransientModel):
         * Compute the selected groups (with duplication)
         * If the user has selected the 'exclude_XXX' fields, avoid the partners.
         """
-        this = self[0]
-        groups = this._compute_selected_groupby()
-        query = self._generate_query(groups, this.maximum_group)
-        self.with_context(active_test=False)._process_query(query)
-        return this.with_context(active_test=False)._next_screen()[0]
+        self.ensure_one()
+        self = self.with_context(active_test=False)
+        groups = self._compute_selected_groupby()
+        query = self._generate_query(groups, self.maximum_group)
+        self._process_query(query)
+        return self._next_screen()[0]
 
     @api.multi
     def automatic_process_cb(self):
-        this = self[0]
-        this.start_process_cb()
-        for line in this.line_ids:
+        self.ensure_one()
+        self.start_process_cb()
+        for line in self.line_ids:
             partner_ids = literal_eval(line.aggr_ids)
             self._merge(partner_ids)
             line.unlink()
             self._cr.commit()
 
-        this.write({'state': 'finished'})
+        self.write({'state': 'finished'})
         return {
             'type': 'ir.actions.act_window',
             'res_model': self._name,
@@ -555,10 +553,9 @@ class MergePartnerAutomatic(models.TransientModel):
             'target': 'new',
         }
 
-    @api.multi
+    @api.one
     def parent_migration_process_cb(self):
         self = self.with_context(active_test=False)
-        this = self[0]
         query = """
             SELECT
                 min(p1.id),
@@ -586,7 +583,7 @@ class MergePartnerAutomatic(models.TransientModel):
 
         self._process_query(query)
 
-        for line in this.line_ids:
+        for line in self.line_ids:
             partner_ids = literal_eval(line.aggr_ids)
             self._merge(partner_ids)
             line.unlink()
@@ -614,7 +611,7 @@ class MergePartnerAutomatic(models.TransientModel):
 
     @api.multi
     def update_all_process_cb(self):
-        this = self[0]
+        self.ensure_one()
         self.parent_migration_process_cb()
 
         list_merge = [
@@ -634,28 +631,28 @@ class MergePartnerAutomatic(models.TransientModel):
                 parent_id IS NOT NULL AND
                 is_company IS NOT NULL
         """)
-        return this._next_screen()[0]
+        return self._next_screen()[0]
 
     @api.multi
     def merge_cb(self):
+        self.ensure_one()
         self = self.with_context(active_test=False)
-        this = self[0]
-        partner_ids = set(map(int, this.partner_ids))
+        partner_ids = set(map(int, self.partner_ids))
         if not partner_ids:
-            this.write({'state': 'finished'})
+            self.write({'state': 'finished'})
             return {
                 'type': 'ir.actions.act_window',
-                'res_model': this._name,
-                'res_id': this.id,
+                'res_model': self._name,
+                'res_id': self.id,
                 'view_mode': 'form',
                 'target': 'new',
             }
-        self._merge(partner_ids, this.dst_partner_id)
+        self._merge(partner_ids, self.dst_partner_id)
 
-        if this.current_line_id:
-            this.current_line_id.unlink()
+        if self.current_line_id:
+            self.current_line_id.unlink()
 
-        return this._next_screen()[0]
+        return self._next_screen()[0]
 
     @api.model
     def auto_set_parent_id(self):
