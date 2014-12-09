@@ -19,7 +19,6 @@
             $('.share').on('click', $.proxy(updateDateWrite));
         }
         function updateDateWrite() {
-            var record_id = $('.question').data('id');
             openerp.jsonRpc(window.location.pathname+'/bump', 'call', {});
         };
     });})();
