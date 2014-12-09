@@ -697,8 +697,8 @@
                                 Comment
                             </a>
                         </li>
-                        <li t-if="question.post_type == 'question'">
-                            <a href="javascript:void(0)" class="social_share fa fa-share-square-o" t-att-data-hashtag_list="['question']">
+                        <li>
+                            <a href="javascript:void(0)" class="social_share fa fa-share-square-o" t-attf-data-hashtag_list="['#{question.post_type}']">
                                  Share
                             </a>
                         </li>
