@@ -1,4 +1,4 @@
-$(document).ready(function() {
+(function() {
     "use strict";
 
     var website = openerp.website;
@@ -31,12 +31,11 @@ $(document).ready(function() {
             },
             save : function() {
                 var res = this._super();
-                if ($('.cover').length) {
+                var $cover = $('#title.cover');
+                if ($cover.length) {
                     openerp.jsonRpc("/blogpost/change_background", 'call', {
                         'post_id' : $('#blog_post_name').attr('data-oe-id'),
-                        'image' : $('.cover').css('background-image').replace(/url\(|\)|"|'/g,''),
-                    });
-                }
+                        'image' : $cover.css('background-image').replace(/url\(|\)|"|'/g,''),
                 return res;
             },
             clean_bg : function(vHeight) {
@@ -51,8 +50,29 @@ $(document).ready(function() {
                     $('.js_fullheight').css({"background-image": !_.isUndefined(url) ? 'url(' + url + ')' : "", 'min-height': vHeight});
                     $('.cover-storage').hide();
                 });
-                editor.appendTo('body');
-            },
-        });
-    }
-});
+            }
+            return res;
+        }
+    });
+
+    website.snippet.options.website_blog = website.snippet.Option.extend({
+        clear : function(type, value, $li) {
+            if (type !== 'click') return;
+
+            this.$target.css({"background-image":'none', 'min-height': $(window).height()});
+        },
+        change : function(type, value, $li) {
+            if (type !== 'click') return;
+
+            var self  = this;
+            var $image = this.$target.find('.cover-storage');
+            var editor  = new website.editor.MediaDialog(this.BuildingBlock.parent, $image[0]);
+            editor.appendTo('body');
+            $image.on('saved', self, function (o) {
+                var url = $image.attr('src');
+                self.$target.css({"background-image": !_.isUndefined(url) ? 'url(' + url + ')' : "", 'min-height': $(window).height()});
+            });
+        },
+    });
+
+})();

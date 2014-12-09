@@ -51,6 +51,74 @@
 .mb0
     margin-bottom: 0px !important
 
+img, .img, span.fa, iframe, div.media_iframe_video
+    &.img-responsive
+        max-width: 100%
+    &.img-responsive-50
+        max-width: 50%
+    &.img-responsive-25
+        max-width: 25%
+img, .img, span.fa, iframe
+    &.padding-small
+        padding: 4px
+    &.padding-medium
+        padding: 8px
+    &.padding-large
+        padding: 16px
+    &.padding-xl
+        padding: 32px
+div.media_iframe_video
+    &.padding-small iframe
+        padding: 4px
+    &.padding-medium iframe
+        padding: 8px
+    &.padding-large iframe
+        padding: 16px
+    &.padding-xl iframe
+        padding: 32px
+
+p,ul,ol,h1,h2,h3,h4,h5,h6
+    &.indent0
+        margin-left: 0em
+    &.indent1
+        margin-left: 1.5em
+    &.indent2
+        margin-left: 3em
+    &.indent3
+        margin-left: 4.5em
+    &.indent4
+        margin-left: 6em
+    &.indent5
+        margin-left: 7.5em
+    &.indent6
+        margin-left: 9em
+ul
+    &.indent0
+        list-style-type: disc
+    &.indent1
+        list-style-type: circle
+    &.indent2
+        list-style-type: square
+    &.indent3
+        list-style-type: disc
+    &.indent4
+        list-style-type: circle
+    &.indent5
+        list-style-type: square
+ol
+    &.indent0
+        list-style-type: decimal
+    &.indent1
+        list-style-type: lower-alpha
+    &.indent2
+        list-style-type: lower-greek
+    &.indent3
+        list-style-type: decimal
+    &.indent4
+        list-style-type: lower-alpha
+    &.indent5
+        list-style-type: lower-greek
+
 /* Extra Styles */
 
 img.shadow
@@ -86,17 +154,6 @@ header
     margin-right: auto
 
 /* ----- EDITOR ----- */
-#oe_main_menu_navbar
-    min-height: 34px
-    z-index: 1001
-    +border-radius(0px)
-    margin-bottom: 0px
-    li a, li button
-        padding: 4px 8px 4px 8px
-        margin-top: 2px
-        font-size: 13px
-    .navbar-nav.navbar-right:last-child
-        margin-right: 0 !important
 
 .css_non_editable_mode_hidden
     display: none !important
@@ -128,6 +185,8 @@ html,body, #wrapwrap
 #wrapwrap
     display: table
     width: 100%
+    > main
+        min-height: 6px
 
 header, main, footer
     display: table-row
@@ -568,8 +627,6 @@ div.media_iframe_video
     iframe
         width: 100%
         height: 100%
-        position: absolute
-        margin-left: -50%
     .css_editable_mode_display
         position: absolute
         width: 100%

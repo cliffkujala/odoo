@@ -79,6 +79,102 @@
   margin-bottom: 0px !important;
 }
 
+img.img-responsive, .img.img-responsive, span.fa.img-responsive, iframe.img-responsive, div.media_iframe_video.img-responsive {
+  max-width: 100%;
+}
+img.img-responsive-50, .img.img-responsive-50, span.fa.img-responsive-50, iframe.img-responsive-50, div.media_iframe_video.img-responsive-50 {
+  max-width: 50%;
+}
+img.img-responsive-25, .img.img-responsive-25, span.fa.img-responsive-25, iframe.img-responsive-25, div.media_iframe_video.img-responsive-25 {
+  max-width: 25%;
+}
+
+img.padding-small, .img.padding-small, span.fa.padding-small, iframe.padding-small {
+  padding: 4px;
+}
+img.padding-medium, .img.padding-medium, span.fa.padding-medium, iframe.padding-medium {
+  padding: 8px;
+}
+img.padding-large, .img.padding-large, span.fa.padding-large, iframe.padding-large {
+  padding: 16px;
+}
+img.padding-xl, .img.padding-xl, span.fa.padding-xl, iframe.padding-xl {
+  padding: 32px;
+}
+
+div.media_iframe_video.padding-small iframe {
+  padding: 4px;
+}
+div.media_iframe_video.padding-medium iframe {
+  padding: 8px;
+}
+div.media_iframe_video.padding-large iframe {
+  padding: 16px;
+}
+div.media_iframe_video.padding-xl iframe {
+  padding: 32px;
+}
+
+p.indent0, ul.indent0, ol.indent0, h1.indent0, h2.indent0, h3.indent0, h4.indent0, h5.indent0, h6.indent0 {
+  margin-left: 0em;
+}
+p.indent1, ul.indent1, ol.indent1, h1.indent1, h2.indent1, h3.indent1, h4.indent1, h5.indent1, h6.indent1 {
+  margin-left: 1.5em;
+}
+p.indent2, ul.indent2, ol.indent2, h1.indent2, h2.indent2, h3.indent2, h4.indent2, h5.indent2, h6.indent2 {
+  margin-left: 3em;
+}
+p.indent3, ul.indent3, ol.indent3, h1.indent3, h2.indent3, h3.indent3, h4.indent3, h5.indent3, h6.indent3 {
+  margin-left: 4.5em;
+}
+p.indent4, ul.indent4, ol.indent4, h1.indent4, h2.indent4, h3.indent4, h4.indent4, h5.indent4, h6.indent4 {
+  margin-left: 6em;
+}
+p.indent5, ul.indent5, ol.indent5, h1.indent5, h2.indent5, h3.indent5, h4.indent5, h5.indent5, h6.indent5 {
+  margin-left: 7.5em;
+}
+p.indent6, ul.indent6, ol.indent6, h1.indent6, h2.indent6, h3.indent6, h4.indent6, h5.indent6, h6.indent6 {
+  margin-left: 9em;
+}
+
+ul.indent0 {
+  list-style-type: disc;
+}
+ul.indent1 {
+  list-style-type: circle;
+}
+ul.indent2 {
+  list-style-type: square;
+}
+ul.indent3 {
+  list-style-type: disc;
+}
+ul.indent4 {
+  list-style-type: circle;
+}
+ul.indent5 {
+  list-style-type: square;
+}
+
+ol.indent0 {
+  list-style-type: decimal;
+}
+ol.indent1 {
+  list-style-type: lower-alpha;
+}
+ol.indent2 {
+  list-style-type: lower-greek;
+}
+ol.indent3 {
+  list-style-type: decimal;
+}
+ol.indent4 {
+  list-style-type: lower-alpha;
+}
+ol.indent5 {
+  list-style-type: lower-greek;
+}
+
 /* Extra Styles */
 img.shadow {
   -moz-border-radius: 3px;
@@ -167,6 +263,9 @@ html, body, #wrapwrap {
 #wrapwrap {
   display: table;
   width: 100%;
+}
+#wrapwrap > main {
+  min-height: 6px;
 }
 
 header, main, footer {
@@ -689,8 +788,6 @@ div.media_iframe_video {
 div.media_iframe_video iframe {
   width: 100%;
   height: 100%;
-  position: absolute;
-  margin-left: -50%;
 }
 div.media_iframe_video .css_editable_mode_display {
   position: absolute;

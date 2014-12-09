@@ -1,43 +1,42 @@
 @import "common"
 
-/* ---- CKEditor Minimal Reset ---- {{{ */
+/* ---- SummerNote Minimal Reset ---- {{{ */
 
-.navbar.navbar-inverse .cke_chrome
-    border: none
-
-.navbar.navbar-inverse .cke_inner
-    background: transparent
-
-.navbar.navbar-inverse
-    .cke_toolbar
-        position: relative
-        top: 1px
-    .cke_combo_button
-        padding-top: 3px
-        padding-bottom: 3px
-    .cke_button
-        padding-top: 7px
-        padding-bottom: 7px
-
-.navbar.navbar-inverse .cke_top
-    background: transparent
-    border: none
-    +box-shadow(none)
-    -ms-filter: "alpha(opacity=50)"
-
-#cke_1_top
-    padding: 0
-
-#cke_wrapwrap
-    -moz-box-shadow: none
-    -webkit-box-shadow: none
-    box-shadow: none
-    .cke_button
-        padding-top: 5px
-        padding-bottom: 5px
-    .cke_combo_button
-        padding-top: 1px
-        padding-bottom: 1px
+.note-popover
+    .popover
+        position: fixed !important
+        top: -9px !important
+        right: 20px !important
+        left: auto !important
+        border: 0
+        background: transparent
+        box-shadow: none
+        -webkit-box-shadow: none
+    .popover-content
+        padding: 0 !important
+        margin: 0 0 0 6px !important
+        > div
+            padding-top: 0 !important
+            margin-top: 0 !important
+        > a
+            border-radius: 3px
+            background-color: #fff
+            border-color: #ccc
+            padding: 4px 10px
+            font-size: 14px
+            line-height: 1.5
+        .note-para .dropdown-menu
+            min-width: 148px !important
+            padding: 5px 0 5px 5px !important
+        .note-ul .dropdown-menu
+            min-width: 150px !important
+            padding: 5px 0 5px 5px !important
+            .note-li
+                margin-right: 5px
+    .popover .popover-content .dropdown-menu a
+        display: block
+    .arrow
+        display: none
 
 // }}}
  
@@ -88,10 +87,10 @@
 .css_editable_hidden
     display: none !important
 
-.cke_editable .css_editable_mode_hidden
+.note-editable .css_editable_mode_hidden
     display: none
 
-.cke_editable .css_editable_mode_display
+.note-editable .css_editable_mode_display
     display: block !important
 
 .oe_structure.oe_empty:empty, [data-oe-type=html]:empty, .oe_structure.oe_empty > .oe_drop_zone.oe_insert:only-child, [data-oe-type=html] > .oe_drop_zone.oe_insert:only-child
@@ -292,28 +291,6 @@ $attachment-border-color: #848490
                 border-width: 5px
                 border-color: rgb(0, 248, 248)
 
-// wrapper positioned relatively for drag&drop widget which is disabled below.
-// Breaks completely horribly crazy products listing page, so take it out.
-.cke_widget_wrapper
-    position: static !important
-
-.cke_widget_inline
-    display: inline !important
-
-// prevent inline widgets from entirely disappearing when their (textual)
-// content is removed
-.cke_widget_editable
-    // basic config
-    &:empty:after
-        opacity: 0.3
-        white-space: pre-wrap
-    // no @placeholder -> just add some padding
-    &:not([placeholder]):empty::after
-        content: " "
-    // with placeholder and when not (yet) focused -> display placeholder
-    &[placeholder]:not(:focus):empty::after
-        content: attr(placeholder)
-
 .oe_carlos_danger
     outline: 1px solid red !important
     background-color: #ffd9dd !important
@@ -336,11 +313,14 @@ $attachment-border-color: #848490
         display: inline-block
 
 // fontawesome
-.cke_editable .fa
+.note-editable .fa
     cursor: pointer
 
 .img-responsive
     text-align: center
+
+.col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-md-10, .col-md-11, .col-md-12
+    min-height: 24px
 
 // }}}
 
@@ -569,4 +549,16 @@ body.theme_customize_css_loading
 
 // }}}
 
-// vim:tabstop=4:shiftwidth=4:softtabstop=4:fdm=marker:
+/* ---- EDITOR ---- {{{ */
+
+#oe_main_menu_navbar
+    min-height: 34px
+    z-index: 1001
+    +border-radius(0px)
+    margin-bottom: 0px
+    li a, li button
+        padding: 4px 8px 4px 8px
+        margin-top: 2px
+        font-size: 13px
+    .navbar-nav.navbar-right:last-child
+        margin-right: 0 !important

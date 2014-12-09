@@ -1,50 +1,46 @@
-/* ---- CKEditor Minimal Reset ---- {{{ */
-.navbar.navbar-inverse .cke_chrome {
-  border: none;
-}
-
-.navbar.navbar-inverse .cke_inner {
+/* ---- SummerNote Minimal Reset ---- {{{ */
+.note-popover .popover {
+  position: fixed !important;
+  top: -9px !important;
+  right: 20px !important;
+  left: auto !important;
+  border: 0;
   background: transparent;
-}
-
-.navbar.navbar-inverse .cke_toolbar {
-  position: relative;
-  top: 1px;
-}
-.navbar.navbar-inverse .cke_combo_button {
-  padding-top: 3px;
-  padding-bottom: 3px;
-}
-.navbar.navbar-inverse .cke_button {
-  padding-top: 7px;
-  padding-bottom: 7px;
-}
-
-.navbar.navbar-inverse .cke_top {
-  background: transparent;
-  border: none;
-  -webkit-box-shadow: none;
-  -moz-box-shadow: none;
   box-shadow: none;
-  -ms-filter: "alpha(opacity=50)";
-}
-
-#cke_1_top {
-  padding: 0;
-}
-
-#cke_wrapwrap {
-  -moz-box-shadow: none;
   -webkit-box-shadow: none;
-  box-shadow: none;
 }
-#cke_wrapwrap .cke_button {
-  padding-top: 5px;
-  padding-bottom: 5px;
+.note-popover .popover-content {
+  padding: 0 !important;
+  margin: 0 0 0 6px !important;
 }
-#cke_wrapwrap .cke_combo_button {
-  padding-top: 1px;
-  padding-bottom: 1px;
+.note-popover .popover-content > div {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+.note-popover .popover-content > a {
+  border-radius: 3px;
+  background-color: white;
+  border-color: #cccccc;
+  padding: 4px 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.note-popover .popover-content .note-para .dropdown-menu {
+  min-width: 148px !important;
+  padding: 5px 0 5px 5px !important;
+}
+.note-popover .popover-content .note-ul .dropdown-menu {
+  min-width: 150px !important;
+  padding: 5px 0 5px 5px !important;
+}
+.note-popover .popover-content .note-ul .dropdown-menu .note-li {
+  margin-right: 5px;
+}
+.note-popover .popover .popover-content .dropdown-menu a {
+  display: block;
+}
+.note-popover .arrow {
+  display: none;
 }
 
 /* ---- OpenERP Style ---- {{{ */
@@ -108,11 +104,11 @@
   display: none !important;
 }
 
-.cke_editable .css_editable_mode_hidden {
+.note-editable .css_editable_mode_hidden {
   display: none;
 }
 
-.cke_editable .css_editable_mode_display {
+.note-editable .css_editable_mode_display {
   display: block !important;
 }
 
@@ -348,25 +344,6 @@ ul.oe_menu_editor .disclose {
   border-color: #00f8f8;
 }
 
-.cke_widget_wrapper {
-  position: static !important;
-}
-
-.cke_widget_inline {
-  display: inline !important;
-}
-
-.cke_widget_editable:empty:after {
-  opacity: 0.3;
-  white-space: pre-wrap;
-}
-.cke_widget_editable:not([placeholder]):empty::after {
-  content: " ";
-}
-.cke_widget_editable[placeholder]:not(:focus):empty::after {
-  content: attr(placeholder);
-}
-
 .oe_carlos_danger {
   outline: 1px solid red !important;
   background-color: #ffd9dd !important;
@@ -392,12 +369,16 @@ ul.oe_menu_editor .disclose {
   display: inline-block;
 }
 
-.cke_editable .fa {
+.note-editable .fa {
   cursor: pointer;
 }
 
 .img-responsive {
   text-align: center;
+}
+
+.col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-md-10, .col-md-11, .col-md-12 {
+  min-height: 24px;
 }
 
 /* ---- MOBILE PREVIEW ---- {{{ */
@@ -660,4 +641,24 @@ body.theme_customize_css_loading {
 }
 body.theme_customize_css_loading #wrapwrap {
   magin-top: -1px;
+}
+
+/* ---- EDITOR ---- {{{ */
+#oe_main_menu_navbar {
+  min-height: 34px;
+  z-index: 1001;
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  -ms-border-radius: 0px;
+  -o-border-radius: 0px;
+  border-radius: 0px;
+  margin-bottom: 0px;
+}
+#oe_main_menu_navbar li a, #oe_main_menu_navbar li button {
+  padding: 4px 8px 4px 8px;
+  margin-top: 2px;
+  font-size: 13px;
+}
+#oe_main_menu_navbar .navbar-nav.navbar-right:last-child {
+  margin-right: 0 !important;
 }

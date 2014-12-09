@@ -17,7 +17,6 @@
 }
 #oe_snippets .scroll {
   white-space: nowrap;
-  overflow-y: none;
 }
 #oe_snippets .nav {
   display: inline-block;
@@ -64,11 +63,11 @@
   -ms-transform: translate(-39px, 44px);
   -o-transform: translate(-39px, 44px);
   transform: translate(-39px, 44px);
-  -webkit-transform-origin: 50% 50% 50%;
-  -moz-transform-origin: 50% 50% 50%;
-  -ms-transform-origin: 50% 50% 50%;
-  -o-transform-origin: 50% 50% 50%;
-  transform-origin: 50% 50% 50%;
+  -webkit-transform-origin: 50% 50%;
+  -moz-transform-origin: 50% 50%;
+  -ms-transform-origin: 50% 50%;
+  -o-transform-origin: 50% 50%;
+  transform-origin: 50% 50%;
 }
 
 .oe_snippet {
@@ -282,7 +281,7 @@
   height: 100%;
 }
 .oe_overlay .oe_handle.e:before, .oe_overlay .oe_handle.w:before {
-  content: "\f0d9-\f0da";
+  content: "\f07e";
   line-height: 16px;
 }
 .oe_overlay .oe_handle.e > div, .oe_overlay .oe_handle.w > div {
@@ -685,41 +684,36 @@
   height: 0;
 }
 
-.cke_panel_container table.colorpicker tr:first-child td {
-  padding-top: 6px;
-}
-.cke_panel_container table.colorpicker tr:last-child td {
-  padding-bottom: 6px;
+/* ---- Table Snippet ----  {{{ */
+.table_desc {
+  margin: 0 0 20px 0;
+  width: 100%;
+  word-break: break-all;
+  border: 1px solid #dddddd;
 }
 
-/* ---- Table Snippet ----  {{{ */
-.table_desc{
-    margin: 0 0 20px 0;
-    width: 100%;
-    word-break: break-all;
-    border: 1px solid #dddddd;
+.table_heading {
+  background-color: whitesmoke;
+  border: 1px solid #dddddd;
+  color: #666666;
+  font-size: 14px;
+  padding: 4px;
 }
-.table_heading{
-    background-color: #f5f5f5;
-    border: 1px solid #dddddd;
-    color: #666666;
-    font-size: 14px;
-    padding: 4px;
+
+table.table_desc tr td {
+  text-align: left;
+  padding: 5px;
+  font-size: 13px;
 }
-table.table_desc tr td{
-    text-align: left;
-    padding: 5px;
-    font-size: 13px;
+table.table_desc tr td:first-child {
+  width: 25%;
+  font-weight: bold;
+  border-bottom: 1px solid #c9c9c9;
+  border-right: 1px solid #c9c9c9;
+  border-left: none;
 }
-table.table_desc tr td:first-child{
-    width: 25%;
-    font-weight: bold;
-    border-bottom: 1px solid #c9c9c9;
-    border-right: 1px solid #c9c9c9;
-    border-left: none;
-}
-table.table_desc tr td:last-child{
-    border-bottom: 1px solid #c9c9c9;
+table.table_desc tr td:last-child {
+  border-bottom: 1px solid #c9c9c9;
 }
 
 /* ---- thumbnail ----  {{{ */
