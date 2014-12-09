@@ -108,21 +108,6 @@ class resource_calendar(osv.osv):
                 intervals.append((current_interval[0], current_interval[1],))
         return intervals
 
-
-    def get_attendances_for_weekday_date(self, cr, uid, id, weekdays, date, context=None):
-        """
-            Different possibilities
-        """
-        calendar = self.browse(cr, uid, id, context=None)
-        res = [att for att in calendar.attendance_ids if int(att.dayofweek) in weekdays]
-        date = date.strftime(DEFAULT_SERVER_DATE_FORMAT)
-        res = []
-        for att in calendar.attendance_ids:
-            if int(att.dayofweek) in weekdays:
-                if not ((att.date_from and date < att.date_from) or (att.date_to and date > att.date_to)):
-                    res.append(att)
-        return res
-
     # --------------------------------------------------
     # Days scheduling
     # --------------------------------------------------
@@ -256,7 +241,7 @@ class resource_calendar(osv.osv):
             return intervals
 
         working_intervals = []
-        for calendar_working_day in self.get_attendances_for_weekday_date(cr, uid, id, [start_dt.weekday()], start_dt,
+        for calendar_working_day in self.get_attendances_for_weekdays(cr, uid, id, [start_dt.weekday()], start_dt,
                                                                           context):
             if context and context.get('no_round_hours'):
                 min_from = int((calendar_working_day.hour_from - int(calendar_working_day.hour_from)) * 60)
@@ -291,7 +276,6 @@ class resource_calendar_attendance(osv.osv):
     _inherit = "resource.calendar.attendance"
 
     _columns = {
-        'date_to': fields.date('End Date'),
         'group_id': fields.many2one('procurement.group', 'Procurement Group'),
     }
 

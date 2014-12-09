@@ -1,16 +1,5 @@
 <openerp>
     <data>
-        <record id="procurement_group_form_view_purchase" model="ir.ui.view">
-            <field name="name">procurement.group.form.purchase</field>
-            <field name="model">procurement.group</field>
-            <field name="inherit_id" ref="procurement.procurement_group_form_view"/>
-            <field name="arch" type="xml">
-                <field name="move_type" position="after">
-                    <field name="propagate_to_purchase"/>
-                </field>
-            </field>
-        </record>
-
         <record id="view_warehouse_orderpoint_form_inherit" model="ir.ui.view">
             <field name="name">stock.warehouse.orderpoint.form.inherit</field>
             <field name="model">stock.warehouse.orderpoint</field>
@@ -29,8 +18,7 @@
             <field name="inherit_id" ref="resource.view_resource_calendar_attendance_tree"/>
             <field name="model">resource.calendar.attendance</field>
             <field name="arch" type="xml">
-                <field name="date_from" position="after">
-                    <field name="date_to"/>
+                <field name="date_to" position="after">
                     <field name="group_id"/>
                 </field>
             </field>

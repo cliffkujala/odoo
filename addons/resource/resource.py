@@ -22,6 +22,7 @@
 import datetime
 from dateutil import rrule
 from dateutil.relativedelta import relativedelta
+from openerp.tools import DEFAULT_SERVER_DATE_FORMAT
 from operator import itemgetter
 
 from openerp import tools
@@ -172,7 +173,13 @@ class resource_calendar(osv.osv):
     def get_attendances_for_weekdays(self, cr, uid, id, weekdays, context=None):
         """ Given a list of weekdays, return matching resource.calendar.attendance"""
         calendar = self.browse(cr, uid, id, context=None)
-        return [att for att in calendar.attendance_ids if int(att.dayofweek) in weekdays]
+        date = date.strftime(DEFAULT_SERVER_DATE_FORMAT)
+        res = []
+        for att in calendar.attendance_ids:
+            if int(att.dayofweek) in weekdays:
+                if not ((att.date_from and date < att.date_from) or (att.date_to and date > att.date_to)):
+                    res.append(att)
+        return res
 
     def get_weekdays(self, cr, uid, id, default_weekdays=None, context=None):
         """ Return the list of weekdays that contain at least one working interval.
@@ -671,13 +678,13 @@ class resource_resource(osv.osv):
         'time_efficiency' : fields.float('Efficiency Factor', size=8, required=True, help="This field depict the efficiency of the resource to complete tasks. e.g  resource put alone on a phase of 5 days with 5 tasks assigned to him, will show a load of 100% for this phase by default, but if we put a efficiency of 200%, then his load will only be 50%."),
         'calendar_id' : fields.many2one("resource.calendar", "Working Time", help="Define the schedule of resource"),
     }
+
     _defaults = {
         'resource_type' : 'user',
         'time_efficiency' : 1,
         'active' : True,
         'company_id': lambda self, cr, uid, context: self.pool.get('res.company')._company_default_get(cr, uid, 'resource.resource', context=context)
     }
-
 
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
