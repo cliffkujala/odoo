@@ -1057,7 +1057,7 @@ class product_product(osv.osv):
                     ids.update(self.search(cr, user, args + [('name', operator, name), ('id', 'not in', list(ids))], limit=limit2, context=context))
                 ids = list(ids)
             elif not ids and operator in expression.NEGATIVE_TERM_OPERATORS:
-                ids = self.search(cr, user, args + ['&', '|', ('default_code', operator, name), ('name', operator, name), ('attribute_value_ids.name', operator, name)], limit=limit, context=context)
+                ids = self.search(cr, user, args + ['&', '&', ('default_code', operator, name), ('name', operator, name), '|', ('attribute_value_ids.name', operator, name), ('attribute_value_ids', '=', False)], limit=limit, context=context)
             if not ids and operator in positive_operators:
                 ptrn = re.compile('(\[(.*?)\])')
                 res = ptrn.search(name)
