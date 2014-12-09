@@ -173,7 +173,6 @@ class linkedin(models.AbstractModel):
             records_to_update[res['id']] = records.get(res['linkedin_id'])
         return records_to_create, records_to_update
 
-    @api.model
     def create_contacts(self, records_to_create):
         for record in records_to_create:
             if record['id'] != 'private':
