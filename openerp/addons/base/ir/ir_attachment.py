@@ -125,7 +125,7 @@ class ir_attachment(osv.osv):
             else:
                 r = open(full_path,'rb').read().encode('base64')
         except IOError:
-            _logger.exception("_read_file reading %s", full_path)
+            _logger.info("_read_file reading %s", full_path, exc_info=True)
         return r
 
     def _file_write(self, cr, uid, value):
@@ -136,7 +136,7 @@ class ir_attachment(osv.osv):
                 with open(full_path, 'wb') as fp:
                     fp.write(bin_value)
             except IOError:
-                _logger.exception("_file_write writing %s", full_path)
+                _logger.info("_file_write writing %s", full_path, exc_info=True)
         return fname
 
     def _file_delete(self, cr, uid, fname):
@@ -146,10 +146,10 @@ class ir_attachment(osv.osv):
             try:
                 os.unlink(full_path)
             except OSError:
-                _logger.exception("_file_delete could not unlink %s", full_path)
+                _logger.info("_file_delete could not unlink %s", full_path, exc_info=True)
             except IOError:
                 # Harmless and needed for race conditions
-                _logger.exception("_file_delete could not unlink %s", full_path)
+                _logger.info("_file_delete could not unlink %s", full_path, exc_info=True)
 
     def _data_get(self, cr, uid, ids, name, arg, context=None):
         if context is None:
