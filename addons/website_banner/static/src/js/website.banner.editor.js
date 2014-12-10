@@ -36,19 +36,14 @@
                 var self = this;
                 $('.popover').remove();
                 this._super();
-                var vHeight = $(window).height();
-                $('body').on('click','#edit_dialog',_.bind(this.edit_dialog, self.rte.editor, vHeight));
+                $('body').on('click','#edit_dialog',_.bind(this.edit_dialog, self.rte.editor));
                 $('body').on('click','.dialog-close',_.bind(this.close_dialog, self.rte.editor));
             },
             save : function() {
-                var res = this._super();
-                //debugger
                 $('.bouncebanner-content.active').removeClass('active');
-                return res;
+                return this._super();;
             },
-            edit_dialog : function(vHeight) {
-                var self  = this;
-
+            edit_dialog : function() {
                 var $target = $($('#edit_dialog').data('target'));
                 var $button = $('#edit_dialog')
 
@@ -66,10 +61,6 @@
 
             },
             close_dialog: function() {
-                var self  = this;
-
-                var $target = $($('#edit_dialog').data('target'));
-                var $button = $('#edit_dialog')
                 $('body').removeClass('bouncebanner-modal-active');
                 $('.bouncebanner-content').removeClass('active');
             },

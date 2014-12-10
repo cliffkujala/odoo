@@ -23,17 +23,26 @@
                     </div>
 
                     <div class="bounce_banner" id="banner_modal" data-list-id="0">
-                        <div class="alert alert-warning alert-dismissible fade in" role="alert" contenteditable="false">
+                        <div class="alert alert-warning alert-dismissible fade in css_editable_mode_display" style="display: none;" role="alert" contenteditable="false">
                             <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
                             <strong>Bounce Banner! </strong> Bounce banner snippet effect is active on this page. Click Here To <a id="edit_dialog" data-target="#bounce_banner"> Edit Dialog</a>
                         </div>
                         <div id="bounce_banner" class="bouncebanner-content">
                             <div class="bouncebanner-header">
-                                <center><h2 class=""><img src="/logo.png" alt="Logo of YourCompany" title="YourCompany" class="banner_image"/> Presents:</h2></center>
+                                <center><h2 class=""><img src="/logo.png" alt="Logo of YourCompany" title="YourCompany" class="banner_image"/><strong class="bouncebanner-logo-app">P<strong class="bouncebanner-logo">resents:</strong></strong></h2></center>
                                 <button type="button" class="dialog-close"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
                             </div>
-                            <div class="bouncebanner-cascade">
-                                <p>TEstingm the element Wit hofoo .</p>
+                            <div class="bouncebanner-cascade text-center">
+                                <center><h1>Grow Your Business With Odoo Apps</h1></center>
+                                <center><h3>Join my private Odoo newsletter &amp; get answer instantly.</h3></center>
+                                <h3>Where Should We Send Your</h3>
+                                <h1>FREE</h1>
+                                Guide with sample Theme
+                                <h1> Odoo Design Templates</h1><br/><br/>
+                                <div>
+                                    <input class="form-control bouncebanner-email" type="email" name="email" placeholder="Enter your email here" size="20"/>
+                                    <a name="submit" class="btn btn-danger bouncebanner-subscribe">Subscribe</a>
+                                </div>
                             </div>
                         </div>
                     </div>
