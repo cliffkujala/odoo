@@ -343,8 +343,7 @@ class resource_calendar(osv.osv):
             return intervals
 
         working_intervals = []
-        for calendar_working_day in self.get_attendances_for_weekdays(cr, uid, id, [start_dt.weekday()], start_dt,
-                                                                          context):
+        for calendar_working_day in self.get_attendances_for_weekday(cr, uid, id, start_dt, context=context):
             if context and context.get('no_round_hours'):
                 min_from = int((calendar_working_day.hour_from - int(calendar_working_day.hour_from)) * 60)
                 min_to = int((calendar_working_day.hour_to - int(calendar_working_day.hour_to)) * 60)
