@@ -145,13 +145,12 @@ instance.web.DataExport = instance.web.Widget.extend({
                 self.$el.find('#fields_list option').remove();
                 var export_id = self.$el.find('#saved_export_list option:selected').val();
                 if (export_id) {
-                    $("#delete_export_list").show();
+                    self.$el.find("#delete_export_list").show();
                     self.rpc('/web/export/namelist', {
                         'model': self.action.params.model, export_id: parseInt(export_id, 10)
                     }).done(self.do_load_export_field);
                 }else {
-                    $('#delete_export_list').hide();
-                    $("#oe_export_list_update").show();
+                    self.$el.find('#delete_export_list').hide();
                 }
             });
             self.$el.find('#delete_export_list').click(function() {
