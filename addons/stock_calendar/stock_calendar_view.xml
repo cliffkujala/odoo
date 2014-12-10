@@ -31,7 +31,7 @@
             <field name="inherit_id" ref="procurement.procurement_form_view"/>
             <field name="arch" type="xml">
                 <xpath expr="//div[@name='button_box']" position="inside">
-                    <button name="assign_group_date" string="Add Group according to Orderpoint" type="object"/>
+                    <button name="assign_group_date" string="Calculate dates according to Orderpoint" type="object"/>
                 </xpath>
             </field>
         </record>

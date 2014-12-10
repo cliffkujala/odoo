@@ -7,6 +7,7 @@ from openerp.tools import DEFAULT_SERVER_DATETIME_FORMAT, DEFAULT_SERVER_DATE_FO
 class resource_calendar(osv.osv):
     _inherit = "resource.calendar"
 
+    #Could remove this as it does not help a lot
     def _calculate_next_day(self, cr, uid, ids, fields, names, context=None):
         res = {}
         for calend in self.browse(cr, uid, ids, context=context):
@@ -21,6 +22,7 @@ class resource_calendar(osv.osv):
             'next_day': fields.function(_calculate_next_day, string='Next day it should trigger', type='datetime'),
         }
 
+    # Keep as it takes into account times
     def get_leave_intervals(self, cr, uid, id, resource_id=None,
                             start_datetime=None, end_datetime=None,
                             context=None):
@@ -108,168 +110,6 @@ class resource_calendar(osv.osv):
                 intervals.append((current_interval[0], current_interval[1],))
         return intervals
 
-    # --------------------------------------------------
-    # Days scheduling
-    # --------------------------------------------------
-
-    def _schedule_days(self, cr, uid, id, days, day_date=None, compute_leaves=False,
-                       resource_id=None, default_interval=None, context=None):
-        """Schedule days of work, using a calendar and an optional resource to
-        compute working and leave days. This method can be used backwards, i.e.
-        scheduling days before a deadline.
-
-        :param int days: number of days to schedule. Use a negative number to
-                         compute a backwards scheduling.
-        :param date day_date: reference date to compute working days. If days is > 0
-                              date is the starting date. If days is < 0 date is the
-                              ending date.
-        :param boolean compute_leaves: if set, compute the leaves based on calendar
-                                       and resource. Otherwise no leaves are taken
-                                       into account.
-        :param int resource_id: the id of the resource to take into account when
-                                computing the leaves. If not set, only general
-                                leaves are computed. If set, generic and
-                                specific leaves are computed.
-        :param tuple default_interval: if no id, try to return a default working
-                                       day using default_interval[0] as beginning
-                                       hour, and default_interval[1] as ending hour.
-                                       Example: default_interval = (8, 16).
-                                       Otherwise, a void list of working intervals
-                                       is returned when id is None.
-
-        :return tuple (datetime, intervals): datetime is the beginning/ending date
-                                             of the schedulign; intervals are the
-                                             working intervals of the scheduling.
-
-        Implementation note: rrule.rrule is not used because rrule it des not seem
-        to allow getting back in time.
-        """
-        if day_date is None:
-            day_date = datetime.datetime.now()
-        backwards = (days < 0)
-        days = abs(days)
-        intervals = []
-        planned_days = 0
-        iterations = 0
-
-        # if backwards:
-        #     current_datetime = day_date.replace(hour=23, minute=59, second=59)
-        # else:
-        current_datetime = day_date.replace(hour=0, minute=0, second=0)
-
-        while planned_days < days and iterations < 100:
-            working_intervals = self.get_working_intervals_of_day(
-                cr, uid, id, current_datetime,
-                compute_leaves=compute_leaves, resource_id=resource_id,
-                default_interval=default_interval,
-                context=context)
-            if id is None or working_intervals:  # no calendar -> no working hours, but day is considered as worked
-                planned_days += 1
-                intervals += working_intervals
-            # get next day
-            if backwards:
-                current_datetime = self.get_previous_day(cr, uid, id, current_datetime, context)
-            else:
-                current_datetime = self.get_next_day(cr, uid, id, current_datetime, context)
-            # avoid infinite loops
-            iterations += 1
-
-        return intervals
-
-    def get_working_intervals_of_day(self, cr, uid, id, start_dt=None, end_dt=None,
-                                     leaves=None, compute_leaves=False, resource_id=None,
-                                     default_interval=None, context=None):
-        """ Get the working intervals of the day based on calendar. This method
-        handle leaves that come directly from the leaves parameter or can be computed.
-
-        :param int id: resource.calendar id; take the first one if is a list
-        :param datetime start_dt: datetime object that is the beginning hours
-                                  for the working intervals computation; any
-                                  working interval beginning before start_dt
-                                  will be truncated. If not set, set to end_dt
-                                  or today() if no end_dt at 00.00.00.
-        :param datetime end_dt: datetime object that is the ending hour
-                                for the working intervals computation; any
-                                working interval ending after end_dt
-                                will be truncated. If not set, set to start_dt()
-                                at 23.59.59.
-        :param list leaves: a list of tuples(start_datetime, end_datetime) that
-                            represent leaves.
-        :param boolean compute_leaves: if set and if leaves is None, compute the
-                                       leaves based on calendar and resource.
-                                       If leaves is None and compute_leaves false
-                                       no leaves are taken into account.
-        :param int resource_id: the id of the resource to take into account when
-                                computing the leaves. If not set, only general
-                                leaves are computed. If set, generic and
-                                specific leaves are computed.
-        :param tuple default_interval: if no id, try to return a default working
-                                       day using default_interval[0] as beginning
-                                       hour, and default_interval[1] as ending hour.
-                                       Example: default_interval = (8, 16).
-                                       Otherwise, a void list of working intervals
-                                       is returned when id is None.
-
-        :return list intervals: a list of tuples (start_datetime, end_datetime)
-                                of work intervals """
-        if isinstance(id, (list, tuple)):
-            id = id[0]
-
-        # Computes start_dt, end_dt (with default values if not set) + off-interval work limits
-        work_limits = []
-        if start_dt is None and end_dt is not None:
-            start_dt = end_dt.replace(hour=0, minute=0, second=0)
-        elif start_dt is None:
-            start_dt = datetime.datetime.now().replace(hour=0, minute=0, second=0)
-        else:
-            work_limits.append((start_dt.replace(hour=0, minute=0, second=0), start_dt))
-        if end_dt is None:
-            end_dt = start_dt.replace(hour=23, minute=59, second=59)
-        else:
-            work_limits.append((end_dt, end_dt.replace(hour=23, minute=59, second=59)))
-        assert start_dt.date() == end_dt.date(), 'get_working_intervals_of_day is restricted to one day'
-
-        intervals = []
-        work_dt = start_dt.replace(hour=0, minute=0, second=0)
-
-        # no calendar: try to use the default_interval, then return directly
-        if id is None:
-            if default_interval:
-                working_interval = (start_dt.replace(hour=default_interval[0], minute=0, second=0),
-                                    start_dt.replace(hour=default_interval[1], minute=0, second=0))
-            intervals = self.interval_remove_leaves(working_interval, work_limits)
-            return intervals
-
-        working_intervals = []
-        for calendar_working_day in self.get_attendances_for_weekdays(cr, uid, id, [start_dt.weekday()], start_dt,
-                                                                          context):
-            if context and context.get('no_round_hours'):
-                min_from = int((calendar_working_day.hour_from - int(calendar_working_day.hour_from)) * 60)
-                min_to = int((calendar_working_day.hour_to - int(calendar_working_day.hour_to)) * 60)
-                working_interval = (
-                    work_dt.replace(hour=int(calendar_working_day.hour_from), minute=min_from),
-                    work_dt.replace(hour=int(calendar_working_day.hour_to), minute=min_to),
-                    calendar_working_day.id,
-                )
-            else:
-                working_interval = (
-                    work_dt.replace(hour=int(calendar_working_day.hour_from)),
-                    work_dt.replace(hour=int(calendar_working_day.hour_to)),
-                    calendar_working_day.id,
-                )
-
-            working_intervals += self.interval_remove_leaves(working_interval, work_limits)
-
-        # find leave intervals
-        if leaves is None and compute_leaves:
-            leaves = self.get_leave_intervals(cr, uid, id, resource_id=resource_id, context=context)
-
-        # filter according to leaves
-        for interval in working_intervals:
-            work_intervals = self.interval_remove_leaves(interval, leaves)
-            intervals += work_intervals
-
-        return intervals
 
 
 class resource_calendar_attendance(osv.osv):
