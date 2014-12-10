@@ -184,7 +184,7 @@ class email_template(osv.osv):
         try:
             template = mako_template_env.from_string(tools.ustr(template))
         except Exception:
-            _logger.exception("Failed to load template %r", template)
+            _logger.info("Failed to load template %r", template, exc_info=True)
             return results
 
         # prepare template variables
