@@ -6,7 +6,7 @@
         <template id="crm_planner">
             <!--Javascript-->
             <script>
-                openerp.web.planner_crm();
+                openerp.planner.planner_crm();
             </script>
 
 

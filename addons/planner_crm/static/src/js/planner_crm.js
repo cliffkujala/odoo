@@ -26,7 +26,7 @@
             '', '', '', '', '', '', '']
     }
 
-    openerp.web.planner_crm = function() {
+    openerp.planner.planner_crm = function() {
         $('#input_element_pipeline').change(function(ev) {
             var option = $(ev.target).find(":selected").val();
             if (_.has(stages, option)) {
