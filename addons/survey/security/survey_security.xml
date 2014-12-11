@@ -1,19 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data noupdate="1">
-        <!-- Survey users -->
-        <record model="res.groups" id="base.group_marketing_user">
-            <field name="name">User</field>
-            <field name="category_id" ref="base.module_category_marketing"/>
-        </record>
-
-        <!-- Survey managers -->
-        <record model="res.groups" id="base.group_marketing_manager">
-            <field name="name">Manager</field>
-            <field name="implied_ids" eval="[(4, ref('base.group_marketing_user'))]"/>
-            <field name="users" eval="[(4, ref('base.user_root'))]"/>
-            <field name="category_id" ref="base.module_category_marketing"/>
-        </record>
 
         <!-- Record rules -->
         <record id="survey_users_access" model="ir.rule">
