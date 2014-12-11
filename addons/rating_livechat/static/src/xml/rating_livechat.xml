@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<templates xml:space="preserve">
+
+    <t t-name="rating_livechat.feedback">
+        <div class="oe_rating_livechat">
+            <div class="oe_im_feedback_text">
+                Did we correctly answer your question ?
+            </div>
+            <div class="oe_rating_livechat_choices">
+                <img src='/rating/static/src/img/rating_10.png' alt="Good" data-value="10"/>
+                <img src='/rating/static/src/img/rating_5.png' alt="OK" data-value="5"/>
+                <img src='/rating/static/src/img/rating_0.png' alt="Bad" data-value="0" />
+            </div>
+            <div class="oe_rating_livechat_reason">
+                <textarea id="reason" placeholder="Explain your note"></textarea>
+            </div>
+            <div class="oe_rating_livechat_reason_button">
+                <input type="button" id="submit" value="Send" />
+            </div>
+        </div>
+    </t>
+
+</templates>

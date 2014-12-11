@@ -247,8 +247,6 @@ class im_chat_session(osv.Model):
         'create_date': fields.datetime('Create Date', required=True, select=True),
         'channel_id': fields.many2one("im_livechat.channel", "Channel"),
         'fullname' : fields.function(_get_fullname, type="char", string="Complete name"),
-        'feedback_rating': fields.selection([('10','Good'),('5','Ok'),('1','Bad')], 'Grade', help='Feedback from user (Bad, Ok or Good)'),
-        'feedback_reason': fields.text('Reason', help="Reason explaining the rating."),
     }
 
     def is_in_session(self, cr, uid, uuid, user_id, context=None):
@@ -338,14 +336,4 @@ class LiveChatController(http.Controller):
         reg = openerp.modules.registry.RegistryManager.get(db)
         with reg.cursor() as cr:
             return len(reg.get('im_livechat.channel').get_available_users(cr, uid, channel)) > 0
-
-
-    @http.route('/im_livechat/feedback', type='json', auth="none")
-    def feedback(self, uuid, rating, reason=None):
-        cr, uid, context, db = request.cr, request.uid or openerp.SUPERUSER_ID, request.context, request.db
-        registry = openerp.modules.registry.RegistryManager.get(db)
-        Session = registry['im_chat.session']
-        session_ids = Session.search(cr, uid, [('uuid','=',uuid)], context=context)
-        Session.write(cr, uid, session_ids, {'feedback_rating' : str(rating), 'feedback_reason' : reason}, context=context)
-
 

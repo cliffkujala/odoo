@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<openerp>
+    <data>
+        <template id="assets" name="rating_livechat assets" inherit_id="im_livechat.internal_lib">
+            <xpath expr="." position="inside">
+                <link rel="stylesheet" href="/rating_livechat/static/src/css/rating_livechat.css"/>
+                <script type="text/javascript" src="/rating_livechat/static/src/js/rating_livechat.js"></script>
+            </xpath>
+        </template>
+    </data>
+</openerp>

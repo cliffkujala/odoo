@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <!-- inherit get state button on channel form -->
+        <record id="im_livechat_channel_form" model="ir.ui.view">
+            <field name="name">im_livechat.channel.form.with.rating</field>
+            <field name="model">im_livechat.channel</field>
+            <field name="inherit_id" ref="im_livechat.support_channel_form"/>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@name='buttons']" position="inside">
+                     <button name="action_view_rating"
+                         class="oe_stat_button"
+                         type="object"
+                         icon="fa-smile-o">
+                         <field string="% Happy" name="rating_percentage_satisfaction" widget="statinfo"/>
+                     </button>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="im_chat_session_rating_form_view" model="ir.ui.view">
+            <field name="name">im_chat.session.form.with.rating</field>
+            <field name="model">im_chat.session</field>
+            <field name="inherit_id" ref="im_livechat.im_chat_session_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@string='General']" position="after">
+                    <group string="Feedback">
+                        <field name="rating_ids" mode="kanban" nolabel="1">
+                            <kanban>
+                                <field name="rating"/>
+                                <field name="feedback"/>
+                                <field name="res_name"/>
+                                <field name="create_date"/>
+                                <templates>
+                                    <t t-name="kanban-box">
+                                        <div class="oe_group_details" style="min-height: 40px">
+                                            <img t-attf-src="rating/static/src/img/rating_#{record.rating.raw_value and record.rating.raw_value or 0}.png" class="oe_kanban_image" style="float:left; margin-right: 10px;"/>
+                                            <span t-if="record.feedback.raw_value">
+                                                <t t-esc="record.feedback.raw_value"/>
+                                            </span>
+                                        </div>
+                                    </t>
+                                </templates>
+                            </kanban>
+                        </field>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>

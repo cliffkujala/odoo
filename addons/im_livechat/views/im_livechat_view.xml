@@ -40,7 +40,6 @@
                     <field name="id"/>
                     <field name="fullname"/>
                     <field name="create_date"/>
-                    <field name="feedback_rating"/>
                 </tree>
             </field>
         </record>
@@ -51,14 +50,12 @@
             <field name="arch" type="xml">
                 <form string="Session Form" create="false" edit="false">
                     <sheet>
-                       <group string="General">
-                            <field name="id"/>
-                            <field name="fullname" />
-                            <field name="create_date" readonly="1"/>
-                        </group>
-                        <group string="Feedback">
-                            <field name="feedback_rating"/>
-                            <field name="feedback_reason"/>
+                        <group>
+                            <group string="General">
+                                <field name="id"/>
+                                <field name="fullname" />
+                                <field name="create_date" readonly="1"/>
+                            </group>
                         </group>
                         <field name="message_ids" type="tree">
                             <tree string="History">
@@ -266,10 +263,9 @@
         <!-- Menu items -->
         <menuitem name="Live Chat" parent="mail.mail_feeds_main" id="im_livechat" groups="group_im_livechat"/>
 
-        <menuitem name="History" parent="im_livechat" id="session_history" action="action_session_history" groups="group_im_livechat"/>
+        <menuitem name="Channels" parent="im_livechat" id="support_channels" action="action_support_channels" groups="group_im_livechat" sequence="5"/>
 
-        <menuitem name="Channels" parent="im_livechat" id="support_channels" action="action_support_channels" groups="group_im_livechat"/>
-
+        <menuitem name="History" parent="im_livechat" id="session_history" action="action_session_history" groups="group_im_livechat" sequence="10"/>
 
     </data>
 </openerp>
