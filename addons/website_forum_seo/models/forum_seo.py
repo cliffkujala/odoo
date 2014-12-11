@@ -86,6 +86,13 @@ class ForumSEO(models.Model):
 class Post(models.Model):
     _inherit = 'forum.post'
 
+    # @api.onchange('content')
+    # def onchange_content(self):
+    #     print "content_______________1", content
+    #     content = self.env['forum.seo'].update_seo_word(content)
+    #     print "content_______________2", content
+    #     return {'value': {'content': content}}
+
     @api.model
     def create(self, vals):
         if vals.get('content'):
