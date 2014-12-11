@@ -143,7 +143,8 @@ class BlogPost(models.Model):
         return html, mapping
 
     @api.model
-    def _postproces_content(self, content=None):
+    def _postprocess_content(self, content=None):
+        #(_postproces_content = _postprocess_content)
         if not content:
             return False
         content, mapping = self.html_tag_nodes(content, attribute='data-chatter-id', tags=['p'])
@@ -174,7 +175,7 @@ class BlogPost(models.Model):
     @api.model
     def create(self, vals):
         if 'content' in vals:
-            vals['content'] = self._postproces_content(vals['content'])
+            vals['content'] = self._postprocess_content(vals['content'])
         post = super(BlogPost, self.with_context(mail_create_nolog=True)).create(vals)
         post._check_for_publication(vals)
         return post
@@ -182,7 +183,7 @@ class BlogPost(models.Model):
     @api.multi
     def write(self, vals):
         if 'content' in vals:
-            vals['content'] = self._postproces_content(vals['content'])
+            vals['content'] = self._postprocess_content(vals['content'])
         result = super(BlogPost, self).write(vals)
         self._check_for_publication(vals)
         return result

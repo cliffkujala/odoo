@@ -286,15 +286,15 @@ class WebsiteBlog(http.Controller):
 
     @http.route('/blogpost/get_discussion/', type='json', auth="public", website=True)
     def discussion(self, post_id=0, path=None, count=False, **post):
+        mail_message = request.env['mail.message'].sudo()
         domain = [('res_id', '=', int(post_id)), ('model', '=', 'blog.post'), ('path', '=', path)]
         #check current user belongs to website publisher group
         publish = request.env['res.users'].has_group('base.group_website_publisher')
         if not publish:
             domain.append(('website_published', '=', True))
-        messages = request.env['mail.message'].sudo().search(domain)
         if count:
-            return len(messages)
-        return self._get_discussion_detail(messages, publish)
+            return mail_message.search_count(domain)
+        return self._get_discussion_detail(mail_message.search(domain), publish)
 
     @http.route('/blogpost/get_discussions/', type='json', auth="public", website=True)
     def discussions(self, post_id=0, paths=None, count=False, **post):
