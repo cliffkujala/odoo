@@ -84,6 +84,7 @@ class crm_lead(format_address, models.Model):
         team_id = self._get_default_team_id()
         return self.stage_find(team_id, [('fold', '=', False)])
 
+    @api.model
     def _resolve_team_id_from_context(self):
         """ Returns ID of team based on the value of 'team_id'
             context key, or None if it cannot be resolved to a single
@@ -462,6 +463,7 @@ class crm_lead(format_address, models.Model):
 
         return 'lead'
 
+    @api.model
     def _merge_data(self, oldest, fields):
         """
         Prepare lead/opp data into a dictionary for merging.  Different types
