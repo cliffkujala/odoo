@@ -98,7 +98,6 @@
     instance.planner.PlannerDialog = instance.web.Widget.extend({
         template: "PlannerDialog",
         events: {
-            'show.bs.modal': 'show',
             'hide.bs.modal': 'hide',
             'click .oe_planner div[id^="planner_page"] a[href^="#planner_page"]': 'next_page',
             'click .oe_planner li a[href^="#planner_page"]': 'onclick_menu',
@@ -113,8 +112,13 @@
             this.set('progress', 0);
         },
         start: function() {
+            var self = this;
             this.load_page();
             this.on('change:progress', this, this.update_ui_progress_bar);
+            $(window).on('resize', function() {
+                self.resize_dialog();
+            });
+           
             return this._super.apply(this, arguments);
         },
         onclick_menu: function(ev) {
@@ -284,9 +288,8 @@
                 }
 
                 /*==== Stefano ====  Call resize function at the beginning*/
-                self.winDim();
-
-                $(document).on('keyup load change', "textarea", function() {
+                self.resize_dialog();
+                self.$el.on('keyup', "textarea", function() {
                     if (this.scrollHeight != this.clientHeight) {
                         this.style.height = this.scrollHeight + "px";
                     }
@@ -294,18 +297,12 @@
             });
         },
         // ==== Stefano ==== Resize function for dinamically fix columns height
-        winDim: function() {
+        resize_dialog: function() {
             var winH  = $(window).height();
             var $modal = this.$('.planner-dialog');
             $modal.height(winH/1.1);
             this.$('.pages').height($modal.height() - 60);
             this.$('.side').height($modal.height() - 75);
-        },
-        show: function() {
-            var self = this;
-            $(window).on('resize', function() {
-                self.winDim();
-            });
         },
         hide: function() {
             //store updated input values when modal is close.
