@@ -71,8 +71,10 @@ class crm_lead2opportunity_partner(models.TransientModel):
             else:
                 user_in_team = False
             if not user_in_team:
-                result = self.env['crm.lead'].on_change_user()
-                team_id = result.get('value') and result['value'].get('team_id') and result['value']['team_id'] or False
+                crm_lead = self.env['crm.lead'].browse(self._context.get('active_id'))
+                crm_lead.user_id = self.user_id
+                crm_lead.on_change_user()
+                team_id = crm_lead.team_id
         self.team_id = team_id
 
     @api.multi
@@ -197,9 +199,8 @@ class crm_lead2opportunity_mass_convert(models.TransientModel):
         partners_duplicated_leads = {}
         for partner_id, email in partner_ids:
             duplicated_leads = self._get_duplicated_leads(partner_id, email)
-            # duplicated_leads = [rs.id for rs in record_set]
             if len(duplicated_leads) > 1:
-                partners_duplicated_leads.setdefault((partner_id, email), []).extend(duplicated_leads)
+                partners_duplicated_leads.setdefault((partner_id, email), []).extend(duplicated_leads.ids)
         leads_with_duplicates = []
         for lead in active_leads:
             lead_tuple = (lead.partner_id.id, lead.partner_id.email if lead.partner_id else lead.email_from)
@@ -233,7 +234,7 @@ class crm_lead2opportunity_mass_convert(models.TransientModel):
                     duplicated_lead_rec = self._get_duplicated_leads(lead.partner_id.id, lead.partner_id and lead.partner_id.email or lead.email_from)
                     if len(duplicated_lead_rec) > 1:
                         lead = duplicated_lead_rec.merge_opportunity()
-                        merged_lead_ids.extend([rec.id for rec in duplicated_lead_rec])
+                        merged_lead_ids.extend(duplicated_lead_rec.ids)
                         remaining_lead_ids.append(lead.id)
 
             active_ids = set(self._context.get('active_ids', []))
