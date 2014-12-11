@@ -188,7 +188,7 @@ function openerp_pos_models(instance, module){ //module is instance.point_of_sal
             },
         },{
             model:  'account.tax',
-            fields: ['name','amount', 'price_include', 'type'],
+            fields: ['name','amount', 'price_include', 'include_base_amount', 'type'],
             domain: null,
             loaded: function(self,taxes){ self.taxes = taxes; },
         },{
@@ -868,6 +868,8 @@ function openerp_pos_models(instance, module){ //module is instance.point_of_sal
                     tmp = round_pr(tmp,currency_rounding);
                     taxtotal += tmp;
                     totalTax += tmp;
+                    if (tax.include_base_amount)
+                        base += tmp;
                     taxdetail[tax.id] = tmp;
                 }
             });
