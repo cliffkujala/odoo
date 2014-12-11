@@ -41,7 +41,7 @@
     .zero_min_height {
         min-height: 0px !important;
     }
-    .oe-avoid-page-break{
+    .report-page-break-inside{
         page-break-inside:avoid;
     }
 </template>

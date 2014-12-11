@@ -8,7 +8,9 @@
         <t t-call="report.external_layout">
             <t t-foreach="docs" t-as="quotation">
                 <div class="page">
-                    <t t-call="website_quote.so_quotation"/>
+                    <t t-call="website_quote.so_quotation_content"/>
+                    <t t-call="website_quote.pricing"/>
+                    <t t-call="website_quote.optional_products"/>
                 </div> 
             </t>
         </t>

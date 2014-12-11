@@ -14,7 +14,7 @@
 <div id="snippet_structure" class="tab-pane active">
 
     <div name="Banner" class="o_block_banner">
-        <div id="myCarousel" class="carousel slide mb32 oe-avoid-page-break" data-interval="10000" style="height: 320px;">
+        <div id="myCarousel" class="carousel slide mb32 report-page-break-inside" data-interval="10000" style="height: 320px;">
             <!-- Indicators -->
             <ol class="carousel-indicators hidden">
                 <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
@@ -137,7 +137,7 @@
     </div>
 
     <div name="Big Message" class="o_block_jumbotron">
-        <section class="jumbotron mt16 mb16 oe-avoid-page-break">
+        <section class="jumbotron mt16 mb16 report-page-break-inside">
             <div class="container">
                 <h1>Sell Online. Easily.</h1>
                 <p>
@@ -200,7 +200,7 @@
         </section>
     </div>
 
-    <div name="Features" class="o_block_features oe-avoid-page-break">
+    <div name="Features" class="o_block_features report-page-break-inside">
         <section class="mb16">
             <div class="container">
                 <div class="row mt16 mb16">
@@ -255,7 +255,7 @@
         </section>
     </div>
 
-    <div name="Three Columns" class="o_block_three_columns oe-avoid-page-break">
+    <div name="Three Columns" class="o_block_three_columns report-page-break-inside">
         <section class="mt16 mb16">
             <div class="container">
                 <div class="row">
@@ -316,7 +316,7 @@
 
 
     <div name="Panel" class="o_block_panel">
-        <div class="panel panel-default oe-avoid-page-break">
+        <div class="panel panel-default report-page-break-inside">
             <div class="panel-heading">
                 <h3 class="panel-title">Feature Title</h3>
             </div>
@@ -361,7 +361,7 @@
         </div>
     </div>
 
-    <div name="Table" class="o_block_table oe-avoid-page-break">
+    <div name="Table" class="o_block_table report-page-break-inside">
         <section class="oe_snippet_body mt16 mb16">
             <div class="container">
                 <div class="row">
@@ -394,7 +394,7 @@
 <div id="snippet_feature" class="tab-pane">
 
     <div name="Image Gallery" class="o_block_image_gallery">
-        <section class="o_gallery o_nomode o_spc-none oe-avoid-page-break">
+        <section class="o_gallery o_nomode o_spc-none report-page-break-inside">
             <div class="container">
                 <div class="row">
                     <div class="col-md-6 col-xs-6">
@@ -436,7 +436,7 @@
                 </div>
 
                 <div class="col-md-4 col-xs-4">
-                    <div class="panel panel-info oe-avoid-page-break">
+                    <div class="panel panel-info report-page-break-inside">
 
                       <div class="panel-heading text-center">
                           <h3 style="margin: 0">Beginner</h3>
@@ -465,7 +465,7 @@
                     </div>
                 </div>
                 <div class="col-md-4 col-xs-4">
-                    <div class="panel panel-primary oe-avoid-page-break">
+                    <div class="panel panel-primary report-page-break-inside">
 
                       <div class="panel-heading text-center">
                           <h3 style="margin: 0">Professional</h3>
@@ -494,7 +494,7 @@
                     </div>
                 </div>
                 <div class="col-md-4 col-xs-4">
-                    <div class="panel panel-info oe-avoid-page-break">
+                    <div class="panel panel-info report-page-break-inside">
 
                       <div class="panel-heading text-center">
                           <h3 style="margin: 0">Expert</h3>
@@ -530,7 +530,7 @@
 
 
     <div name="Button" class="o_block_button">
-        <section class="jumbotron oe-avoid-page-break">
+        <section class="jumbotron report-page-break-inside">
             <div class="container">
                 <div class="row">
                     <div class="col-md-9 col-xs-9 text-muted">
@@ -646,7 +646,7 @@
     </div>
 
     <div name="Quotes Slider" class="o_block_quotes_slider">
-        <div id="myQuoteCarousel" class="carousel quotecarousel slide mb0 oe-avoid-page-break" data-interval="10000">
+        <div id="myQuoteCarousel" class="carousel quotecarousel slide mb0 report-page-break-inside" data-interval="10000">
             <!-- Indicators -->
             <ol class="carousel-indicators mb0">
                 <li data-target="#myQuoteCarousel" data-slide-to="0" class="active"></li>
@@ -763,7 +763,7 @@
                  style="background-image: url('/website/static/src/img/parallax/quote.png')"
                 data-scroll-background-ratio="0.3">
             <div><div><div class="oe_structure">
-                    <div id="myQuoteCarousel" class="carousel quotecarousel slide mb0 oe-avoid-page-break" data-interval="10000">
+                    <div id="myQuoteCarousel" class="carousel quotecarousel slide mb0 report-page-break-inside" data-interval="10000">
                         <!-- Indicators -->
                         <ol class="carousel-indicators mb0">
                             <li data-target="#myQuoteCarousel" data-slide-to="0" class="active"></li>

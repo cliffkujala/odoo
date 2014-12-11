@@ -81,7 +81,7 @@
                 <section>
                     <div class="row mt32">
                         <div class="col-md-4 col-xs-4">
-                            <div class="panel panel-info oe-avoid-page-break">
+                            <div class="panel panel-info report-page-break-inside">
                                 <div class="panel-heading">
                                    <h3 class="panel-title">A Valuable Product</h3>
                                 </div>
@@ -98,7 +98,7 @@
                             </div>
                         </div>
                         <div class="col-md-4 col-xs-4">
-                            <div class="panel panel-info oe-avoid-page-break">
+                            <div class="panel panel-info report-page-break-inside">
                                 <div class="panel-heading">
                                    <h3 class="panel-title">A Strong Demand</h3>
                                 </div>
@@ -114,7 +114,7 @@
                             </div>
                         </div>
                         <div class="col-md-4 col-xs-4">
-                            <div class="panel panel-info oe-avoid-page-break">
+                            <div class="panel panel-info report-page-break-inside">
                                 <div class="panel-heading">
                                    <h3 class="panel-title">High Margins</h3>
                                 </div>
@@ -319,7 +319,7 @@
                                 <h2>What you will learn?</h2>
                             </div>
                             <div class="col-md-4 col-xs-4">                           
-                                <div class="panel panel-info oe-avoid-page-break">
+                                <div class="panel panel-info report-page-break-inside">
                                     <div class="panel-heading text-center">
                                         <h3 style="margin: 0">Day 1</h3>
                                         <p class="text-muted" style="margin: 0">Introduction to Javascript</p>
@@ -338,7 +338,7 @@
                                 </div>
                             </div>
                             <div class="col-md-4 col-xs-4">
-                                <div class="panel panel-info oe-avoid-page-break">
+                                <div class="panel panel-info report-page-break-inside">
                                     <div class="panel-heading text-center">
                                         <h3 style="margin: 0">Day 2</h3>
 
@@ -359,7 +359,7 @@
                                 </div>
                             </div>
                             <div class="col-md-4 col-xs-4">
-                                <div class="panel panel-info oe-avoid-page-break">
+                                <div class="panel panel-info report-page-break-inside">
                                     <div class="panel-heading text-center">
                                         <h3 style="margin: 0">Day 3</h3>
 
@@ -458,7 +458,7 @@
                                 <h2>What you will learn?</h2>
                             </div>
                             <div class="col-md-4 col-xs-4">
-                                <div class="panel panel-info oe-avoid-page-break">
+                                <div class="panel panel-info report-page-break-inside">
                                     <div class="panel-heading text-center">
                                         <h3 style="margin: 0">Day 1</h3>
                                     </div>
@@ -474,7 +474,7 @@
                                 </div>
                             </div>
                             <div class="col-md-4 col-xs-4">
-                                <div class="panel panel-info oe-avoid-page-break">
+                                <div class="panel panel-info report-page-break-inside">
                                     <div class="panel-heading text-center">
                                         <h3 style="margin: 0">Day 2</h3>
                                     </div>
@@ -490,7 +490,7 @@
                                 </div>
                             </div>
                             <div class="col-md-4 col-xs-4">
-                                <div class="panel panel-info oe-avoid-page-break">
+                                <div class="panel panel-info report-page-break-inside">
                                     <div class="panel-heading text-center">
                                         <h3 style="margin: 0">Day 3</h3>
                                     </div>
